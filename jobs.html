@@ -1,126 +1,176 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teaching Jobs | Lets Teach</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-      background: #f4f4f4;
-    }
-
-    .card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 12px;
-      border-radius: 5px;
-    }
-
-    button {
-      padding: 6px 12px;
-      background: #27ae60;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    .login-hint {
-      background: #fff3cd;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 4px;
-      color: #856404;
-    }
-  </style>
+  <!-- ✅ Same Professional Theme -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<h2>Teaching Jobs</h2>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <a class="brand" href="index.html">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </a>
 
-<!-- 🔔 PUBLIC MODE MESSAGE -->
-<div id="loginHint" class="login-hint" style="display:none;">
-  Please login as a Teacher to apply for jobs.
-</div>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="interview/index.html">Interview Preps</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<input id="city" placeholder="City">
-<input id="subject" placeholder="Subject">
-<select id="role">
-  <option value="">Any</option>
-  <option value="part-time">Part-time</option>
-  <option value="full-time">Full-time</option>
-</select>
+  <div class="container">
 
-<button onclick="loadJobs()">Search</button>
+    <!-- HERO -->
+    <div class="hero">
+      <div class="card cardPad">
+        <h1 class="hTitle" style="font-size:34px;margin-bottom:8px;">Teaching Jobs</h1>
+        <p class="hSub" style="margin-top:0;">
+          Public job browsing. Apply karne ke liye teacher login required.
+        </p>
 
-<hr>
+        <!-- PUBLIC MODE MESSAGE -->
+        <div id="loginHint" class="kpi" style="display:none;">
+          <b>Login Required</b>
+          <span>Please login as a Teacher to apply for jobs.</span>
+        </div>
 
-<div id="jobs"></div>
+        <hr class="sep" />
+
+        <!-- FILTERS -->
+        <div class="sectionTitle">Search Filters</div>
+        <div class="searchGrid">
+          <input class="input" id="city" placeholder="City (e.g. Delhi)" autocomplete="off" />
+          <input class="input" id="subject" placeholder="Subject (e.g. Math)" autocomplete="off" />
+          <select class="input" id="role">
+            <option value="">Any Role</option>
+            <option value="part-time">Part-time</option>
+            <option value="full-time">Full-time</option>
+          </select>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+          <button class="btn" onclick="loadJobs()">Search</button>
+          <button class="btn" style="border-color:rgba(148,163,184,.35);background:rgba(15,26,51,.55);color:var(--text);font-weight:700;"
+                  onclick="clearFilters()">Clear</button>
+        </div>
+
+        <p class="meta" style="margin-top:10px;">
+          Tip: Blank filters chhodoge to latest/open jobs aayenge.
+        </p>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="card cardPad">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <div class="sectionTitle" style="margin:0;">Open Jobs</div>
+        <span id="jobCount" class="badge">0</span>
+      </div>
+
+      <hr class="sep" />
+
+      <div id="jobs" class="list"></div>
+    </div>
+
+    <div class="footer">
+      <a class="smallLink" href="index.html">Home</a> ·
+      <a class="smallLink" href="login.html">Login</a> ·
+      <a class="smallLink" href="interview/index.html">Interview</a>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 
-/* 🔐 AUTH STATE (FINAL STANDARD) */
+/* 🔐 AUTH STATE */
 const uid = localStorage.getItem("uid");
-const userType = localStorage.getItem("role"); // ✅ FIXED
+const role = localStorage.getItem("role"); // ✅ correct key
 
 /* SHOW HINT IF NOT LOGGED-IN TEACHER */
-if (!uid || userType !== "teacher") {
+if (!uid || role !== "teacher") {
   document.getElementById("loginHint").style.display = "block";
+}
+
+function clearFilters() {
+  document.getElementById("city").value = "";
+  document.getElementById("subject").value = "";
+  document.getElementById("role").value = "";
+  loadJobs();
 }
 
 /* LOAD JOBS (PUBLIC) */
 function loadJobs() {
-  const city = document.getElementById("city").value;
-  const subject = document.getElementById("subject").value;
-  const role = document.getElementById("role").value;
+  const city = document.getElementById("city").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+  const jobRole = document.getElementById("role").value.trim();
 
-  let url = `${BASE_URL}/api/job/browse?`;
-  if (city) url += `city=${encodeURIComponent(city)}&`;
-  if (subject) url += `subject=${encodeURIComponent(subject)}&`;
-  if (role) url += `role=${encodeURIComponent(role)}`;
+  const params = [];
+  if (city) params.push(`city=${encodeURIComponent(city)}`);
+  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+  if (jobRole) params.push(`role=${encodeURIComponent(jobRole)}`);
+
+  let url = `${BASE_URL}/api/job/browse`;
+  if (params.length) url += `?${params.join("&")}`;
+
+  const box = document.getElementById("jobs");
+  box.innerHTML = `<div class="meta">Loading jobs...</div>`;
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      const box = document.getElementById("jobs");
-      box.innerHTML = "";
+      const list = (data && data.jobs) ? data.jobs : [];
+      document.getElementById("jobCount").innerText = list.length;
 
-      if (!data.jobs || data.jobs.length === 0) {
-        box.innerHTML = "<p>No jobs found</p>";
+      if (!list.length) {
+        box.innerHTML = `<div class="meta">No jobs found</div>`;
         return;
       }
 
-      data.jobs.forEach(j => {
+      box.innerHTML = "";
+      list.forEach(j => {
         const div = document.createElement("div");
-        div.className = "card";
+        div.className = "item";
+
+        const title = escapeHtml(j.title || "Teaching Job");
+        const subj = escapeHtml(j.subject || "—");
+        const cty = escapeHtml(j.city || "—");
+        const r = escapeHtml(j.role || "both");
+        const sal = escapeHtml(j.salary || "Negotiable");
 
         div.innerHTML = `
-          <h3>${j.title}</h3>
-          <p><b>Subject:</b> ${j.subject}</p>
-          <p><b>City:</b> ${j.city}</p>
-          <p><b>Role:</b> ${j.role || "Both"}</p>
-          <p><b>Salary:</b> ${j.salary || "Negotiable"}</p>
-
-          <button onclick="applyJob('${j._id}')">
-            Apply
-          </button>
+          <div>
+            <div style="font-weight:800;font-size:15px;">${title}</div>
+            <div class="meta">${subj} · ${cty} · Role: ${r} · Salary: ${sal}</div>
+            <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;">
+              <a class="smallLink" href="login.html">Login</a>
+              <button class="btn" onclick="applyJob('${j._id}')">Apply</button>
+            </div>
+          </div>
+          <span class="badge">Open</span>
         `;
 
         box.appendChild(div);
       });
     })
     .catch(() => {
-      document.getElementById("jobs").innerHTML =
-        "<p>Error loading jobs</p>";
+      document.getElementById("jobCount").innerText = "0";
+      box.innerHTML = `<div class="meta">Error loading jobs</div>`;
     });
 }
 
 /* APPLY JOB (TEACHER ONLY) */
 function applyJob(jobId) {
-  if (!uid || userType !== "teacher") {
+  if (!uid || role !== "teacher") {
     alert("Please login as Teacher to apply");
     window.location.href = "login.html";
     return;
@@ -129,10 +179,7 @@ function applyJob(jobId) {
   fetch(`${BASE_URL}/api/job/apply`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jobId: jobId,
-      teacherUid: uid
-    })
+    body: JSON.stringify({ jobId, teacherUid: uid })
   })
   .then(res => res.json())
   .then(data => {
@@ -141,6 +188,16 @@ function applyJob(jobId) {
   .catch(() => {
     alert("Server error. Please try again later.");
   });
+}
+
+/* HELPERS */
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 /* INITIAL LOAD */
