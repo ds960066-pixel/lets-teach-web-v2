@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<link rel="stylesheet" href="styles.css">
-
-  <title>Lets Teach | Find Teachers & Institutes</title>
-
+<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lets Teach | Find Teachers & Institutes</title>
+
+  <link rel="stylesheet" href="styles.css" />
 
   <meta name="description"
         content="Find teachers and institutes by city and subject. Lets Teach is a free public platform for education hiring." />
@@ -66,7 +66,7 @@ function applyFilter() {
   loadInstitutes(city);
 }
 
-/* ================= LOAD TEACHERS (SEMI-PUBLIC) ================= */
+/* ================= LOAD TEACHERS (PUBLIC) ================= */
 function loadTeachers(city = "", subject = "") {
   let url = `${BASE_URL}/api/teacher/public`;
 
@@ -74,9 +74,7 @@ function loadTeachers(city = "", subject = "") {
   if (city) params.push(`city=${encodeURIComponent(city)}`);
   if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
 
-  if (params.length) {
-    url += "?" + params.join("&");
-  }
+  if (params.length) url += "?" + params.join("&");
 
   fetch(url)
     .then(res => res.json())
@@ -90,17 +88,12 @@ function loadTeachers(city = "", subject = "") {
       }
 
       data.teachers.forEach(t => {
-        const statusTag =
-          t.verificationStatus !== "verified"
-            ? " <small style='color:red'>(Unverified)</small>"
-            : " <small style='color:green'>(Verified)</small>";
-
         const li = document.createElement("li");
         li.innerHTML = `
-          <b>${t.name}</b>${statusTag}<br>
+          <b>${t.name}</b><br>
           ${t.subject} — ${t.city}<br>
           Experience: ${t.experience || 0} yrs<br>
-          <a href="teacher.html?uid=${t.uid}">View Profile</a>
+          <a href="teacher-public.html?uid=${t.uid}">View Profile</a>
           <hr>
         `;
         ul.appendChild(li);
@@ -112,13 +105,10 @@ function loadTeachers(city = "", subject = "") {
     });
 }
 
-/* ================= LOAD INSTITUTES (SEMI-PUBLIC) ================= */
+/* ================= LOAD INSTITUTES (PUBLIC) ================= */
 function loadInstitutes(city = "") {
-  let url = `${BASE_URL}/api/institute/public`;
-
-  if (city) {
-    url += `?city=${encodeURIComponent(city)}`;
-  }
+  let url = `${BASE_URL}/api/institute/browse`;
+  if (city) url += `?city=${encodeURIComponent(city)}`;
 
   fetch(url)
     .then(res => res.json())
@@ -132,17 +122,12 @@ function loadInstitutes(city = "") {
       }
 
       data.institutes.forEach(i => {
-        const statusTag =
-          i.verificationStatus !== "verified"
-            ? " <small style='color:red'>(Unverified)</small>"
-            : " <small style='color:green'>(Verified)</small>";
-
         const li = document.createElement("li");
         li.innerHTML = `
-          <b>${i.name}</b>${statusTag}<br>
+          <b>${i.name}</b><br>
           ${i.city}<br>
           Subjects Needed: ${(i.subjectsNeeded || []).join(", ") || "—"}<br>
-          <a href="institute.html?uid=${i.uid}">View Profile</a>
+          <a href="institute-public.html?uid=${i.uid}">View Profile</a>
           <hr>
         `;
         ul.appendChild(li);
