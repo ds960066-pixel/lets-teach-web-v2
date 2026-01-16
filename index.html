@@ -5,60 +5,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lets Teach | Find Teachers & Institutes</title>
 
-  <link rel="stylesheet" href="styles.css" />
-
   <meta name="description"
-        content="Find teachers and institutes by city and subject. Lets Teach is a free public platform for education hiring." />
+        content="Browse verified teachers & institutes. Login only for actions (invite, chat, job apply). Lets Teach is a free public platform for education hiring." />
 
-  <meta name="keywords"
-        content="teachers, institutes, teaching jobs, school hiring, lets teach" />
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
-<h1>Lets Teach</h1>
-<p>Find Teachers & Institutes — <b>No Login Required</b></p>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<hr>
+      <div class="navLinks">
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="interview/index.html">Interview Prep</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<h3>Search</h3>
+  <div class="container">
 
-<input
-  id="city"
-  placeholder="Enter city (e.g. Patna, Delhi)"
-  autocomplete="off"
-/>
+    <!-- HERO -->
+    <div class="hero heroGrid">
+      <div>
+        <h1 class="hTitle">Find teachers & institutes in your city.</h1>
+        <p class="hSub">
+          Public browsing is open. <b>Login only when you want to take action</b>
+          (send invite, chat, apply job).
+        </p>
 
-<input
-  id="subject"
-  placeholder="Enter subject (e.g. Math, Physics)"
-  autocomplete="off"
-/>
+        <div class="card cardPad">
+          <div class="sectionTitle">Search (Public)</div>
 
-<button onclick="applyFilter()">Search</button>
+          <div class="searchGrid">
+            <input class="input" id="city" placeholder="City (e.g. Patna, Delhi)" autocomplete="off" />
+            <input class="input" id="subject" placeholder="Subject (e.g. Math, English)" autocomplete="off" />
+            <button class="btn" onclick="applyFilter()">Search</button>
+          </div>
 
-<hr>
+          <div class="kpis">
+            <div class="kpi">
+              <b id="kpiTeachers">—</b>
+              <span>Teachers shown</span>
+            </div>
+            <div class="kpi">
+              <b id="kpiInstitutes">—</b>
+              <span>Institutes shown</span>
+            </div>
+            <div class="kpi">
+              <b>Secure</b>
+              <span>Chat unlocks after invite accept</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<h2>Teachers</h2>
-<ul id="teachers"></ul>
+      <div class="card cardPad">
+        <div class="sectionTitle">How it works</div>
+        <div class="meta">
+          ✅ Browse teachers/institutes without login<br>
+          🔒 Invite / Chat requires login<br>
+          🧾 Resume required before job apply (teacher)<br>
+          🛡️ Safety: blocked users are hidden
+        </div>
 
-<hr>
+        <hr class="sep">
 
-<h2>Institutes</h2>
-<ul id="institutes"></ul>
+        <div class="sectionTitle">Quick links</div>
+        <div class="meta">
+          • <a class="smallLink" href="teacher.html">Browse Teachers</a><br>
+          • <a class="smallLink" href="institutes.html">Browse Institutes</a><br>
+          • <a class="smallLink" href="jobs.html">Browse Jobs</a>
+        </div>
+      </div>
+    </div>
 
-<hr>
+    <hr class="sep">
 
-<p>
-  <a href="login.html">Login</a> |
-  <a href="jobs.html">Browse Jobs</a>
-</p>
+    <!-- RESULTS -->
+    <div class="grid2">
+
+      <!-- Teachers -->
+      <div class="card cardPad">
+        <div class="sectionTitle">Verified Teachers</div>
+        <ul class="list" id="teachers"></ul>
+      </div>
+
+      <!-- Institutes -->
+      <div class="card cardPad">
+        <div class="sectionTitle">Verified Institutes</div>
+        <ul class="list" id="institutes"></ul>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      © <span id="year"></span> Lets Teach • Built for public discovery + safe actions
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 
-/* ================= APPLY FILTER ================= */
-function applyFilter() {
+document.getElementById("year").innerText = new Date().getFullYear();
+
+/* ===== APPLY FILTER ===== */
+function applyFilter(){
   const city = document.getElementById("city").value.trim();
   const subject = document.getElementById("subject").value.trim();
 
@@ -66,80 +124,111 @@ function applyFilter() {
   loadInstitutes(city);
 }
 
-/* ================= LOAD TEACHERS (PUBLIC) ================= */
-function loadTeachers(city = "", subject = "") {
-  let url = `${BASE_URL}/api/teacher/public`;
+/* ===== LOAD VERIFIED TEACHERS (PUBLIC) ===== */
+async function loadTeachers(city="", subject=""){
+  const ul = document.getElementById("teachers");
+  ul.innerHTML = `<li class="item"><div>Loading...</div><span class="badge">Please wait</span></li>`;
 
-  const params = [];
-  if (city) params.push(`city=${encodeURIComponent(city)}`);
-  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+  try{
+    let url = `${BASE_URL}/api/teacher/public`;
+    const params = [];
+    if(city) params.push(`city=${encodeURIComponent(city)}`);
+    if(subject) params.push(`subject=${encodeURIComponent(subject)}`);
+    if(params.length) url += `?${params.join("&")}`;
 
-  if (params.length) url += "?" + params.join("&");
+    const res = await fetch(url);
+    const data = await res.json();
 
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const ul = document.getElementById("teachers");
-      ul.innerHTML = "";
+    ul.innerHTML = "";
 
-      if (!data.teachers || data.teachers.length === 0) {
-        ul.innerHTML = "<li>No teachers found</li>";
-        return;
-      }
+    const teachers = data.teachers || [];
+    document.getElementById("kpiTeachers").innerText = teachers.length;
 
-      data.teachers.forEach(t => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <b>${t.name}</b><br>
-          ${t.subject} — ${t.city}<br>
-          Experience: ${t.experience || 0} yrs<br>
-          <a href="teacher-public.html?uid=${t.uid}">View Profile</a>
-          <hr>
-        `;
-        ul.appendChild(li);
-      });
-    })
-    .catch(() => {
-      document.getElementById("teachers").innerHTML =
-        "<li>Error loading teachers</li>";
+    if(!teachers.length){
+      ul.innerHTML = `<li class="item"><div>No verified teachers found</div><span class="badge">Public</span></li>`;
+      return;
+    }
+
+    teachers.slice(0, 20).forEach(t=>{
+      const li = document.createElement("li");
+      li.className = "item";
+      li.innerHTML = `
+        <div>
+          <div><b>${escapeHtml(t.name)}</b> <span class="badge">Verified</span></div>
+          <div class="meta">${escapeHtml(t.subject)} • ${escapeHtml(t.city)} • ${Number(t.experience || 0)} yrs</div>
+          <div class="meta">
+            <a class="smallLink" href="teacher-public.html?uid=${encodeURIComponent(t.uid)}">View profile</a>
+            &nbsp;•&nbsp;
+            <a class="smallLink" href="login.html">Invite / Chat</a>
+          </div>
+        </div>
+        <div class="badge">Teacher</div>
+      `;
+      ul.appendChild(li);
     });
+  }catch(e){
+    ul.innerHTML = `<li class="item"><div>Error loading teachers</div><span class="badge">Retry</span></li>`;
+    document.getElementById("kpiTeachers").innerText = "—";
+  }
 }
 
-/* ================= LOAD INSTITUTES (PUBLIC) ================= */
-function loadInstitutes(city = "") {
-  let url = `${BASE_URL}/api/institute/browse`;
-  if (city) url += `?city=${encodeURIComponent(city)}`;
+/* ===== LOAD VERIFIED INSTITUTES (PUBLIC) ===== */
+async function loadInstitutes(city=""){
+  const ul = document.getElementById("institutes");
+  ul.innerHTML = `<li class="item"><div>Loading...</div><span class="badge">Please wait</span></li>`;
 
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const ul = document.getElementById("institutes");
-      ul.innerHTML = "";
+  try{
+    let url = `${BASE_URL}/api/institute/browse`;
+    if(city) url += `?city=${encodeURIComponent(city)}`;
 
-      if (!data.institutes || data.institutes.length === 0) {
-        ul.innerHTML = "<li>No institutes found</li>";
-        return;
-      }
+    const res = await fetch(url);
+    const data = await res.json();
 
-      data.institutes.forEach(i => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <b>${i.name}</b><br>
-          ${i.city}<br>
-          Subjects Needed: ${(i.subjectsNeeded || []).join(", ") || "—"}<br>
-          <a href="institute-public.html?uid=${i.uid}">View Profile</a>
-          <hr>
-        `;
-        ul.appendChild(li);
-      });
-    })
-    .catch(() => {
-      document.getElementById("institutes").innerHTML =
-        "<li>Error loading institutes</li>";
+    ul.innerHTML = "";
+
+    const institutes = data.institutes || [];
+    document.getElementById("kpiInstitutes").innerText = institutes.length;
+
+    if(!institutes.length){
+      ul.innerHTML = `<li class="item"><div>No verified institutes found</div><span class="badge">Public</span></li>`;
+      return;
+    }
+
+    institutes.slice(0, 20).forEach(i=>{
+      const subjects = (i.subjectsNeeded || []).join(", ");
+      const li = document.createElement("li");
+      li.className = "item";
+      li.innerHTML = `
+        <div>
+          <div><b>${escapeHtml(i.name)}</b> <span class="badge">Verified</span></div>
+          <div class="meta">${escapeHtml(i.city)}${subjects ? " • " + escapeHtml(subjects) : ""}</div>
+          <div class="meta">
+            <a class="smallLink" href="institute-public.html?uid=${encodeURIComponent(i.uid)}">View profile</a>
+            &nbsp;•&nbsp;
+            <a class="smallLink" href="login.html">Invite / Chat</a>
+          </div>
+        </div>
+        <div class="badge">Institute</div>
+      `;
+      ul.appendChild(li);
     });
+  }catch(e){
+    ul.innerHTML = `<li class="item"><div>Error loading institutes</div><span class="badge">Retry</span></li>`;
+    document.getElementById("kpiInstitutes").innerText = "—";
+  }
 }
 
-/* ================= INITIAL LOAD ================= */
+/* ===== small safety for UI text ===== */
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* ===== initial load ===== */
 loadTeachers();
 loadInstitutes();
 </script>
