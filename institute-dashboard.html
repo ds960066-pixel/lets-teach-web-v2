@@ -2,68 +2,94 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Institute Dashboard | Lets Teach</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #f4f4f4;
-      padding: 20px;
-    }
-
-    .card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 12px;
-      border-radius: 6px;
-    }
-
-    button {
-      padding: 6px 12px;
-      background: #2e86de;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    .resume {
-      background: #f8f9fa;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 4px;
-    }
-
-    a { color: #2e86de; }
-  </style>
+  <!-- ✅ Same Professional Theme -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<script>
-/* ================= AUTH + ROLE GUARD ================= */
-if (!localStorage.uid || localStorage.role !== "institute") {
-  window.location.href = "login.html";
-}
-</script>
+  <!-- AUTH + ROLE GUARD -->
+  <script>
+    if (!localStorage.uid || localStorage.role !== "institute") {
+      window.location.href = "login.html";
+    }
+  </script>
 
-<h2>Institute Dashboard</h2>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <a class="brand" href="index.html">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </a>
 
-<button onclick="logout()">Logout</button>
+      <div class="navLinks">
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="interview/index.html">Interview Preps</a>
+        <a class="pill" href="#" onclick="logout();return false;">Logout</a>
+      </div>
+    </div>
+  </div>
 
-<hr>
+  <div class="container">
 
-<h3>Browse Teachers</h3>
-<button onclick="browseTeachers()">Load Teachers</button>
+    <!-- HERO -->
+    <div class="hero">
+      <div class="card cardPad">
+        <h1 class="hTitle" style="font-size:34px;margin-bottom:8px;">Institute Dashboard</h1>
+        <p class="hSub" style="margin-top:0;">
+          Teachers browse karo, invite bhejo, job applications me resume + PDF view/download karo.
+        </p>
 
-<div id="teachers"></div>
+        <div class="kpis">
+          <div class="kpi">
+            <b id="teacherBadge">—</b>
+            <span>Teachers Loaded</span>
+          </div>
+          <div class="kpi">
+            <b id="appBadge">—</b>
+            <span>Applications</span>
+          </div>
+          <div class="kpi">
+            <b id="lastAction">Ready</b>
+            <span>Status</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<hr>
+    <!-- BROWSE TEACHERS -->
+    <div class="card cardPad">
+      <div class="sectionTitle">👩‍🏫 Browse Teachers</div>
 
-<h3>Job Applications</h3>
-<button onclick="loadApplications()">View Applications</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" onclick="browseTeachers()">Load Teachers</button>
+      </div>
 
-<div id="applications"></div>
+      <div id="teachers" class="list" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- APPLICATIONS -->
+    <div class="card cardPad" style="margin-top:14px;">
+      <div class="sectionTitle">📥 Job Applications</div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" onclick="loadApplications()">View Applications</button>
+      </div>
+
+      <div id="applications" class="list" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="footer">
+      <a class="smallLink" href="index.html">Home</a> ·
+      <a class="smallLink" href="jobs.html">Jobs</a> ·
+      <a class="smallLink" href="interview/index.html">Interview</a>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
@@ -75,11 +101,21 @@ function logout() {
   window.location.href = "login.html";
 }
 
+/* ================= UI HELPERS ================= */
+function setLastAction(txt){ document.getElementById("lastAction").innerText = txt; }
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
 /* ================= HELPER: BUILD RESUME LINK ================= */
 function buildResumeLink(resumeUrl) {
   if (!resumeUrl) return null;
-
-  // resumeUrl may be "/uploads/abc.pdf" or "uploads/abc.pdf"
   if (resumeUrl.startsWith("http")) return resumeUrl;
   if (resumeUrl.startsWith("/")) return `${BASE_URL}${resumeUrl}`;
   return `${BASE_URL}/${resumeUrl}`;
@@ -87,44 +123,60 @@ function buildResumeLink(resumeUrl) {
 
 /* ================= BROWSE TEACHERS ================= */
 async function browseTeachers() {
+  const box = document.getElementById("teachers");
+  box.innerHTML = `<div class="meta">Loading teachers...</div>`;
+  setLastAction("Loading teachers…");
+
   try {
     const res = await fetch(`${BASE_URL}/api/teacher/browse`);
     const data = await res.json();
 
-    const box = document.getElementById("teachers");
-    box.innerHTML = "";
+    const list = (data && data.teachers) ? data.teachers : [];
+    document.getElementById("teacherBadge").innerText = list.length;
 
-    if (!data.teachers || data.teachers.length === 0) {
-      box.innerHTML = "<p>No teachers found</p>";
+    if (!list.length) {
+      box.innerHTML = `<div class="meta">No teachers found</div>`;
+      setLastAction("No teachers");
       return;
     }
 
-    data.teachers.forEach(t => {
+    box.innerHTML = "";
+    list.forEach(t => {
       const div = document.createElement("div");
-      div.className = "card";
+      div.className = "item";
 
-      // NOTE: browse API may not return resumeUrl.
-      // So we keep a "View Profile" link and resume view page can fetch by uid.
       div.innerHTML = `
-        <b>${t.name}</b> – ${t.subject} (${t.city || ""})<br>
-        <a href="teacher-resume-view.html?uid=${t.uid}" target="_blank">
-          View Resume Page
-        </a>
-        <br><br>
-        <button onclick="sendInvite('${t.uid}')">
-          Send Invite
-        </button>
+        <div>
+          <div style="font-weight:800;">${escapeHtml(t.name)}</div>
+          <div class="meta">${escapeHtml(t.subject)} · ${escapeHtml(t.city || "—")} · ${Number(t.experience || 0)} yrs</div>
+          <div class="meta">
+            <a class="smallLink" href="teacher-resume-view.htm?uid=${encodeURIComponent(t.uid)}" target="_blank">
+              View Resume Page
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <button class="btn" onclick="sendInvite('${encodeURIComponent(t.uid)}')">Send Invite</button>
+        </div>
       `;
 
       box.appendChild(div);
     });
-  } catch {
-    alert("Failed to load teachers");
+
+    setLastAction("Teachers loaded");
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = `<div class="meta">Failed to load teachers</div>`;
+    document.getElementById("teacherBadge").innerText = "0";
+    setLastAction("Error");
   }
 }
 
 /* ================= SEND INVITE ================= */
 async function sendInvite(teacherUid) {
+  setLastAction("Sending invite…");
+
   try {
     const res = await fetch(`${BASE_URL}/api/invite/create`, {
       method: "POST",
@@ -133,84 +185,107 @@ async function sendInvite(teacherUid) {
         fromType: "institute",
         fromUid: uid,
         toType: "teacher",
-        toUid: teacherUid
+        toUid: decodeURIComponent(teacherUid)
       })
     });
 
     const data = await res.json();
     alert(data.message || "Invite sent");
-  } catch {
+    setLastAction("Invite sent");
+  } catch (e) {
+    console.error(e);
     alert("Invite failed");
+    setLastAction("Invite failed");
   }
 }
 
 /* ================= LOAD JOB APPLICATIONS ================= */
 async function loadApplications() {
+  const box = document.getElementById("applications");
+  box.innerHTML = `<div class="meta">Loading applications...</div>`;
+  setLastAction("Loading applications…");
+
   try {
     const res = await fetch(`${BASE_URL}/api/job/applications/institute/${uid}`);
     const data = await res.json();
 
-    const box = document.getElementById("applications");
-    box.innerHTML = "";
+    const apps = (data && data.applications) ? data.applications : [];
+    document.getElementById("appBadge").innerText = apps.length;
 
-    if (!data.applications || data.applications.length === 0) {
-      box.innerHTML = "<p>No applications yet</p>";
+    if (!apps.length) {
+      box.innerHTML = `<div class="meta">No applications yet</div>`;
+      setLastAction("No applications");
       return;
     }
 
-    data.applications.forEach(app => {
+    box.innerHTML = "";
+    apps.forEach(app => {
       const div = document.createElement("div");
-      div.className = "card";
+      div.className = "item";
 
       const resume = app.resumeSnapshot || {};
       const t = app.teacher || null;
 
-      // ✅ Teacher resume PDF link (from teacher.resumeUrl)
+      const teacherName = t ? `${t.name} (${app.teacherUid})` : app.teacherUid;
       const resumePdf = t ? buildResumeLink(t.resumeUrl) : null;
 
       div.innerHTML = `
-        <b>Teacher:</b> ${t ? (t.name + " (" + app.teacherUid + ")") : app.teacherUid}<br>
-        <b>Status:</b> ${app.status || "applied"}<br>
+        <div style="width:100%;">
+          <div style="font-weight:800;">Teacher: ${escapeHtml(teacherName)}</div>
+          <div class="meta">Status: ${escapeHtml(app.status || "applied")}</div>
 
-        <div class="resume">
-          <b>Education:</b> ${resume.education || "—"}<br>
-          <b>Skills:</b> ${(resume.skills || []).join(", ") || "—"}<br>
-          <b>About:</b> ${resume.about || "—"}
-          <br><br>
+          <div class="kpi" style="margin-top:10px;">
+            <b>Resume Snapshot</b>
+            <span>
+              Education: ${escapeHtml(resume.education || "—")}<br>
+              Skills: ${escapeHtml((resume.skills || []).join(", ") || "—")}<br>
+              About: ${escapeHtml(resume.about || "—")}
+            </span>
+          </div>
+
+          <div class="meta" style="margin-top:10px;">
+            ${
+              resumePdf
+                ? `✅ <b>Resume PDF:</b>
+                   <a class="smallLink" href="${resumePdf}" target="_blank">View</a>
+                   ·
+                   <a class="smallLink" href="${resumePdf}" download>Download</a>`
+                : `❌ <b>Resume PDF:</b> Not uploaded`
+            }
+          </div>
 
           ${
-            resumePdf
-              ? `
-                ✅ <b>Resume PDF:</b>
-                <a href="${resumePdf}" target="_blank">View</a>
-                |
-                <a href="${resumePdf}" download>Download</a>
-              `
-              : `❌ <b>Resume PDF:</b> Not uploaded`
+            (app.status === "pending" || app.status === "applied" || !app.status)
+              ? `<div style="margin-top:10px;">
+                   <button class="btn" onclick="shortlist('${app._id}')">Shortlist</button>
+                 </div>`
+              : ""
           }
         </div>
-
-        ${
-          app.status === "pending" || app.status === "applied" || !app.status
-            ? `<br><button onclick="shortlist('${app._id}')">Shortlist</button>`
-            : ""
-        }
       `;
 
       box.appendChild(div);
     });
+
+    setLastAction("Applications loaded");
   } catch (e) {
     console.error(e);
-    alert("Failed to load applications");
+    box.innerHTML = `<div class="meta">Failed to load applications</div>`;
+    document.getElementById("appBadge").innerText = "0";
+    setLastAction("Error");
   }
 }
 
 /* ================= SHORTLIST ================= */
 async function shortlist(id) {
+  setLastAction("Shortlisting…");
+
   await fetch(`${BASE_URL}/api/job/application/shortlist/${id}`, {
     method: "POST"
   });
+
   alert("Applicant shortlisted");
+  setLastAction("Shortlisted");
   loadApplications();
 }
 </script>
