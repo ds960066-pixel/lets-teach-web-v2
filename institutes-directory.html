@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Institutes Directory | Lets Teach</title>
+</head>
+<body>
+
+<h2>Institutes Directory</h2>
+
+<input id="city" placeholder="Enter city">
+<button onclick="load()">Search</button>
+
+<hr>
+<ul id="list"></ul>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+function load() {
+  const city = document.getElementById("city").value.trim();
+  let url = `${BASE_URL}/api/manual-institute/browse`;
+  if (city) url += `?city=${encodeURIComponent(city)}`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(d => {
+      list.innerHTML = "";
+
+      if (!d.institutes || d.institutes.length === 0) {
+        list.innerHTML = "<li>No institutes found</li>";
+        return;
+      }
+
+      d.institutes.forEach(i => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+          <b>${i.name}</b> (${i.city})<br>
+        `;
+
+        if (i.isRegistered && i.linkedInstituteUid) {
+          li.innerHTML += `
+            <a href="institute.html?uid=${i.linkedInstituteUid}">
+              View Profile / Invite
+            </a>
+          `;
+        } else {
+          li.innerHTML += `
+            📞 ${i.phone || "N/A"}<br>
+            ✉️ ${i.email || "N/A"}
+          `;
+        }
+
+        li.innerHTML += "<hr>";
+        list.appendChild(li);
+      });
+    });
+}
+</script>
+
+</body>
+</html>

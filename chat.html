@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lets Teach Chat</title>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      padding: 15px;
+    }
+
+    #chatBox {
+      background: #fff;
+      height: 350px;
+      overflow-y: auto;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .me {
+      align-self: flex-end;
+      background: #dcf8c6;
+      padding: 6px 10px;
+      margin: 4px 0;
+      border-radius: 6px;
+      max-width: 70%;
+    }
+
+    .other {
+      align-self: flex-start;
+      background: #eee;
+      padding: 6px 10px;
+      margin: 4px 0;
+      border-radius: 6px;
+      max-width: 70%;
+    }
+
+    input {
+      width: 75%;
+      padding: 8px;
+    }
+
+    button {
+      padding: 8px 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<script>
+/* ================= AUTH + CONTEXT GUARD ================= */
+if (
+  !localStorage.uid ||
+  !localStorage.role ||
+  !localStorage.chatWith
+) {
+  window.location.href = "login.html";
+}
+</script>
+
+<h3>Chat</h3>
+
+<div id="chatBox"></div>
+
+<input id="message" placeholder="Type message..." />
+<button onclick="sendMessage()">Send</button>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* ---------- SOURCE OF TRUTH ---------- */
+const senderUid = localStorage.getItem("uid");
+const receiverUid = localStorage.getItem("chatWith");
+
+/* ---------- ROOM ID (DETERMINISTIC) ---------- */
+const roomId =
+  senderUid < receiverUid
+    ? `${senderUid}_${receiverUid}`
+    : `${receiverUid}_${senderUid}`;
+
+/* ---------- SOCKET ---------- */
+const socket = io(BASE_URL);
+
+socket.on("connect", () => {
+  socket.emit("joinRoom", roomId);
+});
+
+/* ---------- UI HELPER ---------- */
+function appendMessage(from, text) {
+  const box = document.getElementById("chatBox");
+  const div = document.createElement("div");
+  div.className = from === senderUid ? "me" : "other";
+  div.innerText = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+/* ---------- SEND ---------- */
+function sendMessage() {
+  const input = document.getElementById("message");
+  const text = input.value.trim();
+  if (!text) return;
+
+  // show instantly
+  appendMessage(senderUid, text);
+
+  socket.emit("sendMessage", {
+    senderUid,
+    receiverUid,
+    text
+  });
+
+  input.value = "";
+}
+
+/* ---------- RECEIVE ---------- */
+socket.on("receiveMessage", (msg) => {
+  // avoid duplicate self-message
+  if (msg.senderUid !== senderUid) {
+    appendMessage(msg.senderUid, msg.text);
+  }
+});
+</script>
+
+</body>
+</html>

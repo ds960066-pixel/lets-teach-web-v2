@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Institute Profile | Lets Teach</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+
+    .card {
+      max-width: 650px;
+      margin: auto;
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 { margin-top: 0; }
+
+    .badge {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .field { margin: 12px 0; }
+
+    .label {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .value {
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    ul { padding-left: 18px; }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .job  { background: #1976d2; color: #fff; }
+    .chat { background: #075e54; color: #fff; }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="badge">Institute Profile</div>
+  <h2 id="name">Loading...</h2>
+
+  <div class="field">
+    <div class="label">City</div>
+    <div class="value" id="city"></div>
+  </div>
+
+  <div class="field">
+    <div class="label">Address</div>
+    <div class="value" id="address"></div>
+  </div>
+
+  <div class="field">
+    <div class="label">Subjects Needed</div>
+    <ul id="subjects"></ul>
+  </div>
+
+  <div class="actions">
+    <button class="job" onclick="viewJobs()">View Jobs</button>
+    <button class="chat" onclick="openChat()">Chat</button>
+  </div>
+</div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* -------- AUTH STATE -------- */
+const uid = localStorage.getItem("uid");
+const userType = localStorage.getItem("userType");
+
+/* -------- GET INSTITUTE UID FROM URL -------- */
+const params = new URLSearchParams(window.location.search);
+const instituteUid = params.get("uid");
+
+/* -------- LOAD INSTITUTE PROFILE -------- */
+fetch(`${BASE_URL}/api/institute/${instituteUid}`)
+  .then(res => res.json())
+  .then(data => {
+    const i = data.institute;
+    document.getElementById("name").innerText = i.name;
+    document.getElementById("city").innerText = i.city;
+    document.getElementById("address").innerText = i.address || "—";
+
+    const list = document.getElementById("subjects");
+    list.innerHTML = "";
+    (i.subjectsNeeded || []).forEach(s => {
+      const li = document.createElement("li");
+      li.innerText = s;
+      list.appendChild(li);
+    });
+  });
+
+/* -------- ACTIONS (STEP-5 FLOW) -------- */
+
+function viewJobs() {
+  // anyone can view jobs (public)
+  window.location.href = "job.html";
+}
+
+function openChat() {
+  // 🔒 only teacher can start chat from here
+  if (!uid || userType !== "teacher") {
+    window.location.href =
+      `login.html?redirect=institute-profile&uid=${instituteUid}`;
+    return;
+  }
+
+  window.location.href =
+    `chat.html?senderUid=${uid}&receiverUid=${instituteUid}`;
+}
+</script>
+
+</body>
+</html>

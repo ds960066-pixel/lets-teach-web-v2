@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard | Lets Teach</title>
+</head>
+<body>
+
+<script>
+/* ===== AUTH GUARD ===== */
+if (!localStorage.uid || localStorage.role !== "teacher") {
+  window.location.href = "login.html";
+}
+</script>
+
+<h2>Teacher Dashboard</h2>
+
+<button onclick="logout()">Logout</button>
+
+<hr>
+
+<!-- ✅ PDF UPLOAD -->
+<h3>📎 Upload Resume (PDF)</h3>
+<input type="file" id="resumeFile" accept="application/pdf" />
+<button onclick="uploadResume()">Upload Resume</button>
+<p id="uploadStatus"></p>
+
+<hr>
+
+<!-- ✅ RESUME STATUS + ACTIONS -->
+<h3>📄 My Resume</h3>
+<p id="resumeStatus">Checking resume status...</p>
+
+<button onclick="openResume()">Create / Update Resume</button>
+<button onclick="viewResume()">View Resume</button>
+
+<hr>
+
+<h3>📨 My Invites</h3>
+<ul id="inviteList"></ul>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+const uid = localStorage.getItem("uid");
+
+/* ===== LOGOUT ===== */
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+/* ===== PDF UPLOAD ===== */
+async function uploadResume() {
+  const file = document.getElementById("resumeFile").files[0];
+  if (!file) {
+    alert("Select PDF file");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("resume", file);
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/teacher/upload-resume/${uid}`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    document.getElementById("uploadStatus").innerText =
+      data.message || "Uploaded";
+
+    // re-check status after upload
+    loadResumeStatus();
+  } catch (err) {
+    document.getElementById("uploadStatus").innerText =
+      "Upload failed. Server error.";
+  }
+}
+
+/* ===== CHECK RESUME STATUS (for job apply) ===== */
+async function loadResumeStatus() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/teacher/${uid}`);
+    const data = await res.json();
+
+    if (!data.success) {
+      document.getElementById("resumeStatus").innerText =
+        "Error loading resume status";
+      return;
+    }
+
+    const t = data.teacher;
+
+    const complete =
+      t.about &&
+      t.education &&
+      t.skills &&
+      t.skills.length > 0 &&
+      t.resumeUrl; // ✅ PDF mandatory too
+
+    document.getElementById("resumeStatus").innerHTML =
+      complete
+        ? "✅ Resume Completed (PDF uploaded)"
+        : "❌ Resume Incomplete (Fill resume + upload PDF to apply jobs)";
+  } catch {
+    document.getElementById("resumeStatus").innerText =
+      "Error loading resume status";
+  }
+}
+
+/* ===== RESUME BUTTONS ===== */
+function openResume() {
+  window.location.href = "teacher-resume-edit.html";
+}
+
+function viewResume() {
+  window.location.href = "teacher-resume-view.html";
+}
+
+/* ===== LOAD INVITES ===== */
+async function loadInvites() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/invite/teacher/${uid}`);
+    const data = await res.json();
+
+    const list = document.getElementById("inviteList");
+    list.innerHTML = "";
+
+    if (!data.invites || data.invites.length === 0) {
+      list.innerHTML = "<li>No invites</li>";
+      return;
+    }
+
+    data.invites.forEach(inv => {
+      const li = document.createElement("li");
+
+      let action = "";
+      if (inv.status === "pending") {
+        action = `<button onclick="acceptInvite('${inv._id}')">Accept</button>`;
+      }
+      if (inv.status === "accepted") {
+        action = `<button onclick="openChat('${inv.fromUid}')">Chat</button>`;
+      }
+
+      li.innerHTML = `
+        <b>From:</b> ${inv.fromUid}<br>
+        <b>Status:</b> ${inv.status}<br>
+        ${action}
+        <hr>
+      `;
+
+      list.appendChild(li);
+    });
+  } catch {
+    alert("Failed to load invites");
+  }
+}
+
+async function acceptInvite(id) {
+  await fetch(`${BASE_URL}/api/invite/accept/${id}`, { method: "POST" });
+  loadInvites();
+}
+
+function openChat(otherUid) {
+  window.location.href = `chat.html?senderUid=${uid}&receiverUid=${otherUid}`;
+}
+
+/* ===== INIT ===== */
+loadResumeStatus();
+loadInvites();
+</script>
+
+</body>
+</html>

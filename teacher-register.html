@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Registration | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    input {
+      padding: 8px;
+      width: 260px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 16px;
+      background: #2e86de;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1b4f72;
+    }
+  </style>
+</head>
+
+<body>
+
+<script>
+/* ================= AUTH + ROLE GUARD ================= */
+if (!localStorage.uid || localStorage.role !== "teacher") {
+  window.location.href = "login.html";
+}
+</script>
+
+<h2>Teacher Registration</h2>
+<p>Please complete your profile</p>
+
+<p><b>UID:</b> <span id="uidText"></span></p>
+
+<input id="name" placeholder="Name" />
+<input id="phone" placeholder="Phone" />
+<input id="subject" placeholder="Subject" />
+<input id="city" placeholder="City" />
+<input id="experience" placeholder="Experience (years)" />
+
+<br>
+<button onclick="registerTeacher()">Register & Continue</button>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* ================= SOURCE OF TRUTH ================= */
+const uid = localStorage.getItem("uid");
+document.getElementById("uidText").innerText = uid;
+
+/* ================= REGISTER ================= */
+async function registerTeacher() {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+  const city = document.getElementById("city").value.trim();
+  const experience = document.getElementById("experience").value.trim();
+
+  if (!name || !phone || !subject || !city) {
+    alert("Please fill all required fields");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/teacher/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        uid,
+        name,
+        phone,
+        subject,
+        city,
+        experience
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(data.message || "Registration failed");
+      return;
+    }
+
+    // ✅ AUTO REDIRECT TO DASHBOARD
+    window.location.href = "teacher-dashboard.html";
+  } catch (err) {
+    alert("Server error");
+  }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Institute Dashboard | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 6px 12px;
+      background: #2e86de;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .resume {
+      background: #f8f9fa;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+
+    a { color: #2e86de; }
+  </style>
+</head>
+
+<body>
+
+<script>
+/* ================= AUTH + ROLE GUARD ================= */
+if (!localStorage.uid || localStorage.role !== "institute") {
+  window.location.href = "login.html";
+}
+</script>
+
+<h2>Institute Dashboard</h2>
+
+<button onclick="logout()">Logout</button>
+
+<hr>
+
+<h3>Browse Teachers</h3>
+<button onclick="browseTeachers()">Load Teachers</button>
+
+<div id="teachers"></div>
+
+<hr>
+
+<h3>Job Applications</h3>
+<button onclick="loadApplications()">View Applications</button>
+
+<div id="applications"></div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+const uid = localStorage.getItem("uid");
+
+/* ================= LOGOUT ================= */
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+/* ================= HELPER: BUILD RESUME LINK ================= */
+function buildResumeLink(resumeUrl) {
+  if (!resumeUrl) return null;
+
+  // resumeUrl may be "/uploads/abc.pdf" or "uploads/abc.pdf"
+  if (resumeUrl.startsWith("http")) return resumeUrl;
+  if (resumeUrl.startsWith("/")) return `${BASE_URL}${resumeUrl}`;
+  return `${BASE_URL}/${resumeUrl}`;
+}
+
+/* ================= BROWSE TEACHERS ================= */
+async function browseTeachers() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/teacher/browse`);
+    const data = await res.json();
+
+    const box = document.getElementById("teachers");
+    box.innerHTML = "";
+
+    if (!data.teachers || data.teachers.length === 0) {
+      box.innerHTML = "<p>No teachers found</p>";
+      return;
+    }
+
+    data.teachers.forEach(t => {
+      const div = document.createElement("div");
+      div.className = "card";
+
+      // NOTE: browse API may not return resumeUrl.
+      // So we keep a "View Profile" link and resume view page can fetch by uid.
+      div.innerHTML = `
+        <b>${t.name}</b> – ${t.subject} (${t.city || ""})<br>
+        <a href="teacher-resume-view.html?uid=${t.uid}" target="_blank">
+          View Resume Page
+        </a>
+        <br><br>
+        <button onclick="sendInvite('${t.uid}')">
+          Send Invite
+        </button>
+      `;
+
+      box.appendChild(div);
+    });
+  } catch {
+    alert("Failed to load teachers");
+  }
+}
+
+/* ================= SEND INVITE ================= */
+async function sendInvite(teacherUid) {
+  try {
+    const res = await fetch(`${BASE_URL}/api/invite/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fromType: "institute",
+        fromUid: uid,
+        toType: "teacher",
+        toUid: teacherUid
+      })
+    });
+
+    const data = await res.json();
+    alert(data.message || "Invite sent");
+  } catch {
+    alert("Invite failed");
+  }
+}
+
+/* ================= LOAD JOB APPLICATIONS ================= */
+async function loadApplications() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/job/applications/institute/${uid}`);
+    const data = await res.json();
+
+    const box = document.getElementById("applications");
+    box.innerHTML = "";
+
+    if (!data.applications || data.applications.length === 0) {
+      box.innerHTML = "<p>No applications yet</p>";
+      return;
+    }
+
+    data.applications.forEach(app => {
+      const div = document.createElement("div");
+      div.className = "card";
+
+      const resume = app.resumeSnapshot || {};
+      const t = app.teacher || null;
+
+      // ✅ Teacher resume PDF link (from teacher.resumeUrl)
+      const resumePdf = t ? buildResumeLink(t.resumeUrl) : null;
+
+      div.innerHTML = `
+        <b>Teacher:</b> ${t ? (t.name + " (" + app.teacherUid + ")") : app.teacherUid}<br>
+        <b>Status:</b> ${app.status || "applied"}<br>
+
+        <div class="resume">
+          <b>Education:</b> ${resume.education || "—"}<br>
+          <b>Skills:</b> ${(resume.skills || []).join(", ") || "—"}<br>
+          <b>About:</b> ${resume.about || "—"}
+          <br><br>
+
+          ${
+            resumePdf
+              ? `
+                ✅ <b>Resume PDF:</b>
+                <a href="${resumePdf}" target="_blank">View</a>
+                |
+                <a href="${resumePdf}" download>Download</a>
+              `
+              : `❌ <b>Resume PDF:</b> Not uploaded`
+          }
+        </div>
+
+        ${
+          app.status === "pending" || app.status === "applied" || !app.status
+            ? `<br><button onclick="shortlist('${app._id}')">Shortlist</button>`
+            : ""
+        }
+      `;
+
+      box.appendChild(div);
+    });
+  } catch (e) {
+    console.error(e);
+    alert("Failed to load applications");
+  }
+}
+
+/* ================= SHORTLIST ================= */
+async function shortlist(id) {
+  await fetch(`${BASE_URL}/api/job/application/shortlist/${id}`, {
+    method: "POST"
+  });
+  alert("Applicant shortlisted");
+  loadApplications();
+}
+</script>
+
+</body>
+</html>

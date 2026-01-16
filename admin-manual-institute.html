@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin – Manual Institute Entry</title>
+</head>
+<body>
+
+<h2>Add Manual Institute</h2>
+
+<input id="name" placeholder="Institute Name"><br><br>
+<input id="city" placeholder="City"><br><br>
+<input id="phone" placeholder="Phone"><br><br>
+<input id="email" placeholder="Email"><br><br>
+
+<label>
+  <input type="checkbox" id="isRegistered">
+  Already Registered?
+</label><br><br>
+
+<input id="linkedUid" placeholder="Linked Institute UID (optional)"><br><br>
+
+<button onclick="save()">Save</button>
+
+<p id="msg"></p>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+function save() {
+  const payload = {
+    name: document.getElementById("name").value.trim(),
+    city: document.getElementById("city").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    isRegistered: document.getElementById("isRegistered").checked,
+    linkedInstituteUid:
+      document.getElementById("linkedUid").value.trim() || null
+  };
+
+  if (!payload.name || !payload.city) {
+    msg.innerText = "Name and City are required ❌";
+    return;
+  }
+
+  fetch(`${BASE_URL}/api/manual-institute/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(r => r.json())
+    .then(d => {
+      msg.innerText = d.success
+        ? "Saved successfully ✅"
+        : d.message || "Error ❌";
+    })
+    .catch(() => {
+      msg.innerText = "Server error ❌";
+    });
+}
+</script>
+
+</body>
+</html>

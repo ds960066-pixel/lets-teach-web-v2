@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Browse Institutes | Lets Teach</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    button {
+      padding: 7px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #1976d2;
+      color: #fff;
+    }
+
+    .blocked {
+      background: #eee;
+      color: #777;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Browse Institutes</h2>
+<p class="note">Institutes in your city</p>
+
+<input id="city" placeholder="Enter city">
+<button onclick="loadInstitutes()">Search</button>
+
+<hr>
+
+<div id="list"></div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* AUTH CHECK */
+const teacherUid = localStorage.getItem("uid");
+const userType = localStorage.getItem("userType");
+
+if (!teacherUid || userType !== "teacher") {
+  alert("Please login as Teacher");
+  window.location.href = "login.html";
+}
+
+/* LOAD INSTITUTES */
+function loadInstitutes() {
+  const city = document.getElementById("city").value.trim();
+  const box = document.getElementById("list");
+
+  if (!city) {
+    alert("Enter city");
+    return;
+  }
+
+  box.innerHTML = "Loading institutes...";
+
+  fetch(`${BASE_URL}/api/institute/browse?city=${encodeURIComponent(city)}`)
+    .then(res => res.json())
+    .then(data => {
+      box.innerHTML = "";
+
+      if (!data.institutes || data.institutes.length === 0) {
+        box.innerHTML = "<p>No institutes found</p>";
+        return;
+      }
+
+      data.institutes.forEach(i => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        let actionHTML = "";
+
+        if (i.registered) {
+          actionHTML = `
+            <button onclick="sendInvite('${i.uid}')">
+              Send Invite
+            </button>
+          `;
+        } else {
+          actionHTML = `
+            <div class="blocked">
+              This institute is not registered yet.<br>
+              Contact: ${i.phone || "Not available"}
+            </div>
+          `;
+        }
+
+        div.innerHTML = `
+          <h3>${i.name}</h3>
+          <p><b>City:</b> ${i.city}</p>
+          <p><b>Subjects Needed:</b> ${(i.subjectsNeeded || []).join(", ") || "—"}</p>
+          ${actionHTML}
+        `;
+
+        box.appendChild(div);
+      });
+    })
+    .catch(() => {
+      box.innerHTML = "<p>Error loading institutes</p>";
+    });
+}
+
+/* SEND INVITE */
+function sendInvite(instituteUid) {
+  fetch(`${BASE_URL}/api/invite/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fromType: "teacher",
+      fromUid: teacherUid,
+      toType: "institute",
+      toUid: instituteUid
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message || "Invite sent");
+  })
+  .catch(() => {
+    alert("Server error");
+  });
+}
+</script>
+
+</body>
+</html>

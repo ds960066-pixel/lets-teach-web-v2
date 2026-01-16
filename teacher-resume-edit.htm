@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Resume | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      max-width: 700px;
+      margin: auto;
+      padding: 25px;
+      border-radius: 6px;
+    }
+
+    textarea, input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 16px;
+      background: #27ae60;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<script>
+if (!localStorage.uid || localStorage.role !== "teacher") {
+  window.location.href = "login.html";
+}
+</script>
+
+<div class="card">
+  <h2>📄 Teacher Resume</h2>
+
+  <label>About You</label>
+  <textarea id="about" rows="4"
+    placeholder="Brief professional summary"></textarea>
+
+  <label>Education</label>
+  <input id="education"
+    placeholder="B.Ed, M.Sc Mathematics, etc">
+
+  <label>Skills (comma separated)</label>
+  <input id="skills"
+    placeholder="Maths, Physics, Online Teaching">
+
+  <button onclick="saveResume()">Save Resume</button>
+
+  <p id="msg"></p>
+</div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+const uid = localStorage.getItem("uid");
+
+/* ===== LOAD EXISTING DATA ===== */
+fetch(`${BASE_URL}/api/teacher/${uid}`)
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) return;
+    const t = data.teacher;
+
+    document.getElementById("about").value = t.about || "";
+    document.getElementById("education").value = t.education || "";
+    document.getElementById("skills").value =
+      (t.skills || []).join(", ");
+  });
+
+/* ===== SAVE RESUME ===== */
+function saveResume() {
+  const about = document.getElementById("about").value.trim();
+  const education = document.getElementById("education").value.trim();
+  const skills = document.getElementById("skills").value.trim();
+
+  if (!about || !education || !skills) {
+    alert("All fields are required");
+    return;
+  }
+
+  fetch(`${BASE_URL}/api/teacher/resume`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      uid,
+      about,
+      education,
+      skills
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("msg").innerText =
+      data.success
+        ? "✅ Resume saved successfully"
+        : data.message;
+  })
+  .catch(() => {
+    document.getElementById("msg").innerText =
+      "Server error";
+  });
+}
+</script>
+
+</body>
+</html>

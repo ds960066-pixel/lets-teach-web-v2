@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Institute | View Teacher Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      max-width: 700px;
+      margin: auto;
+      padding: 25px;
+      border-radius: 6px;
+    }
+    h1 { color: #2e86de; }
+    button {
+      padding: 10px 16px;
+      background: #8e44ad;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    .success {
+      color: green;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1 id="name">Teacher Name</h1>
+  <p><b>Subject:</b> <span id="subject"></span></p>
+  <p><b>City:</b> <span id="city"></span></p>
+  <p><b>Experience:</b> <span id="experience"></span> years</p>
+
+  <button onclick="sendInvite()">Invite Teacher</button>
+  <div class="success" id="msg"></div>
+</div>
+
+<script>
+  // Demo public profile (later backend se aayega)
+  const teacher = {
+    uid: "uid_rahul",
+    name: "Rahul Sharma",
+    subject: "Mathematics",
+    city: "Delhi",
+    experience: "5"
+  };
+
+  // Load profile
+  document.getElementById("name").innerText = teacher.name;
+  document.getElementById("subject").innerText = teacher.subject;
+  document.getElementById("city").innerText = teacher.city;
+  document.getElementById("experience").innerText = teacher.experience;
+
+  function sendInvite() {
+    const invites = JSON.parse(localStorage.getItem("instituteInvites")) || [];
+
+    invites.push({
+      teacherUid: teacher.uid,
+      teacherName: teacher.name,
+      status: "pending",
+      sentAt: new Date().toISOString()
+    });
+
+    localStorage.setItem("instituteInvites", JSON.stringify(invites));
+
+    document.getElementById("msg").innerText =
+      "Invite sent successfully ✅ (Pending)";
+  }
+</script>
+
+</body>
+</html>

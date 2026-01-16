@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Lets Teach | Find Teachers & Institutes</title>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="description"
+        content="Find teachers and institutes by city and subject. Lets Teach is a free public platform for education hiring." />
+
+  <meta name="keywords"
+        content="teachers, institutes, teaching jobs, school hiring, lets teach" />
+</head>
+
+<body>
+
+<h1>Lets Teach</h1>
+<p>Find Teachers & Institutes — <b>No Login Required</b></p>
+
+<hr>
+
+<h3>Search</h3>
+
+<input
+  id="city"
+  placeholder="Enter city (e.g. Patna, Delhi)"
+  autocomplete="off"
+/>
+
+<input
+  id="subject"
+  placeholder="Enter subject (e.g. Math, Physics)"
+  autocomplete="off"
+/>
+
+<button onclick="applyFilter()">Search</button>
+
+<hr>
+
+<h2>Teachers</h2>
+<ul id="teachers"></ul>
+
+<hr>
+
+<h2>Institutes</h2>
+<ul id="institutes"></ul>
+
+<hr>
+
+<p>
+  <a href="login.html">Login</a> |
+  <a href="jobs.html">Browse Jobs</a>
+</p>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* ================= APPLY FILTER ================= */
+function applyFilter() {
+  const city = document.getElementById("city").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+
+  loadTeachers(city, subject);
+  loadInstitutes(city);
+}
+
+/* ================= LOAD TEACHERS (SEMI-PUBLIC) ================= */
+function loadTeachers(city = "", subject = "") {
+  let url = `${BASE_URL}/api/teacher/public`;
+
+  const params = [];
+  if (city) params.push(`city=${encodeURIComponent(city)}`);
+  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+
+  if (params.length) {
+    url += "?" + params.join("&");
+  }
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const ul = document.getElementById("teachers");
+      ul.innerHTML = "";
+
+      if (!data.teachers || data.teachers.length === 0) {
+        ul.innerHTML = "<li>No teachers found</li>";
+        return;
+      }
+
+      data.teachers.forEach(t => {
+        const statusTag =
+          t.verificationStatus !== "verified"
+            ? " <small style='color:red'>(Unverified)</small>"
+            : " <small style='color:green'>(Verified)</small>";
+
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <b>${t.name}</b>${statusTag}<br>
+          ${t.subject} — ${t.city}<br>
+          Experience: ${t.experience || 0} yrs<br>
+          <a href="teacher.html?uid=${t.uid}">View Profile</a>
+          <hr>
+        `;
+        ul.appendChild(li);
+      });
+    })
+    .catch(() => {
+      document.getElementById("teachers").innerHTML =
+        "<li>Error loading teachers</li>";
+    });
+}
+
+/* ================= LOAD INSTITUTES (SEMI-PUBLIC) ================= */
+function loadInstitutes(city = "") {
+  let url = `${BASE_URL}/api/institute/public`;
+
+  if (city) {
+    url += `?city=${encodeURIComponent(city)}`;
+  }
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const ul = document.getElementById("institutes");
+      ul.innerHTML = "";
+
+      if (!data.institutes || data.institutes.length === 0) {
+        ul.innerHTML = "<li>No institutes found</li>";
+        return;
+      }
+
+      data.institutes.forEach(i => {
+        const statusTag =
+          i.verificationStatus !== "verified"
+            ? " <small style='color:red'>(Unverified)</small>"
+            : " <small style='color:green'>(Verified)</small>";
+
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <b>${i.name}</b>${statusTag}<br>
+          ${i.city}<br>
+          Subjects Needed: ${(i.subjectsNeeded || []).join(", ") || "—"}<br>
+          <a href="institute.html?uid=${i.uid}">View Profile</a>
+          <hr>
+        `;
+        ul.appendChild(li);
+      });
+    })
+    .catch(() => {
+      document.getElementById("institutes").innerHTML =
+        "<li>Error loading institutes</li>";
+    });
+}
+
+/* ================= INITIAL LOAD ================= */
+loadTeachers();
+loadInstitutes();
+</script>
+
+</body>
+</html>

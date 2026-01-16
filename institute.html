@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Browse Institutes | Lets Teach</title>
+</head>
+<body>
+
+<h2>Browse Institutes</h2>
+
+<input id="city" placeholder="Enter city">
+<button onclick="loadInstitutes()">Search</button>
+
+<hr>
+
+<ul id="list"></ul>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* ================= LOAD INSTITUTES ================= */
+function loadInstitutes() {
+  const city = document.getElementById("city").value.trim();
+  let url = `${BASE_URL}/api/institute/browse`;
+
+  if (city) {
+    url += `?city=${encodeURIComponent(city)}`;
+  }
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const ul = document.getElementById("list");
+      ul.innerHTML = "";
+
+      if (!data.institutes || data.institutes.length === 0) {
+        ul.innerHTML = "<li>No institutes found</li>";
+        return;
+      }
+
+      const myRole = localStorage.getItem("role");
+      const myUid = localStorage.getItem("uid");
+
+      data.institutes.forEach(i => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+          <b>${i.name}</b> (${i.city})<br>
+          Subjects: ${(i.subjectsNeeded || []).join(", ") || "—"}<br>
+          <a href="institute.html?uid=${i.uid}">
+            View Profile
+          </a>
+          <br>
+        `;
+
+        if (myRole === "teacher" && myUid) {
+          li.innerHTML += `
+            <small>
+              <a href="login.html">
+                Go to dashboard to invite
+              </a>
+            </small>
+          `;
+        } else {
+          li.innerHTML += `
+            <small>
+              <a href="login.html">
+                Login as teacher to invite
+              </a>
+            </small>
+          `;
+        }
+
+        li.innerHTML += "<hr>";
+        ul.appendChild(li);
+      });
+    })
+    .catch(() => alert("Server error"));
+}
+
+/* ================= INITIAL LOAD ================= */
+loadInstitutes();
+</script>
+
+</body>
+</html>

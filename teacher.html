@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Browse Teachers | Lets Teach</title>
+</head>
+<body>
+
+<h2>Browse Teachers</h2>
+
+<input id="city" placeholder="City">
+<input id="subject" placeholder="Subject">
+<button onclick="loadTeachers()">Search</button>
+
+<hr>
+
+<ul id="list"></ul>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* ================= LOAD TEACHERS ================= */
+function loadTeachers() {
+  const city = document.getElementById("city").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+
+  let url = `${BASE_URL}/api/teacher/browse`;
+  const params = [];
+
+  if (city) params.push(`city=${encodeURIComponent(city)}`);
+  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+
+  if (params.length) {
+    url += "?" + params.join("&");
+  }
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const ul = document.getElementById("list");
+      ul.innerHTML = "";
+
+      if (!data.teachers || data.teachers.length === 0) {
+        ul.innerHTML = "<li>No teachers found</li>";
+        return;
+      }
+
+      const myRole = localStorage.getItem("role");
+      const myUid = localStorage.getItem("uid");
+
+      data.teachers.forEach(t => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+          <b>${t.name}</b> (${t.subject})<br>
+          City: ${t.city}<br>
+          Experience: ${t.experience ?? 0} yrs<br>
+          Role: ${t.role || "Both"}<br>
+          <a href="teacher.html?uid=${t.uid}">
+            View Profile
+          </a>
+          <br>
+        `;
+
+        if (myRole === "institute" && myUid) {
+          li.innerHTML += `
+            <button onclick="sendInvite('${t.uid}')">
+              Invite Teacher
+            </button>
+          `;
+        } else {
+          li.innerHTML += `
+            <small>
+              <a href="login.html">
+                Login as institute to invite
+              </a>
+            </small>
+          `;
+        }
+
+        li.innerHTML += "<hr>";
+        ul.appendChild(li);
+      });
+    })
+    .catch(() => alert("Server error"));
+}
+
+/* ================= SEND INVITE ================= */
+function sendInvite(teacherUid) {
+  const instituteUid = localStorage.getItem("uid");
+
+  if (!instituteUid) {
+    alert("Please login as institute");
+    window.location.href = "login.html";
+    return;
+  }
+
+  fetch(`${BASE_URL}/api/invite/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fromType: "institute",
+      fromUid: instituteUid,
+      toType: "teacher",
+      toUid: teacherUid
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message || "Invite sent");
+  })
+  .catch(() => alert("Error sending invite"));
+}
+
+/* ================= INITIAL LOAD ================= */
+loadTeachers();
+</script>
+
+</body>
+</html>

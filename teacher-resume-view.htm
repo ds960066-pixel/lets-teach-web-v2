@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Resume | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ececec;
+      padding: 20px;
+    }
+
+    .resume {
+      background: white;
+      max-width: 800px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 6px;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+      color: #2e86de;
+    }
+
+    h3 {
+      border-bottom: 2px solid #2e86de;
+      padding-bottom: 5px;
+      margin-top: 25px;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #d6eaf8;
+      padding: 6px 10px;
+      margin: 5px 5px 0 0;
+      border-radius: 4px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background: #27ae60;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="resume">
+
+  <h1 id="name">Loading...</h1>
+  <p><b>📞 Phone:</b> <span id="phone"></span></p>
+  <p><b>📍 City:</b> <span id="city"></span></p>
+
+  <h3>Professional Summary</h3>
+  <p id="about">—</p>
+
+  <h3>Education</h3>
+  <p id="education">—</p>
+
+  <h3>Skills</h3>
+  <div id="skills"></div>
+
+  <button onclick="window.print()">Download Resume (PDF)</button>
+
+</div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* ================= GET UID ================= */
+const params = new URLSearchParams(window.location.search);
+const uid = params.get("uid") || localStorage.getItem("uid");
+
+if (!uid) {
+  alert("Teacher UID missing");
+  window.location.href = "login.html";
+}
+
+/* ================= LOAD RESUME ================= */
+fetch(`${BASE_URL}/api/teacher/${uid}`)
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) {
+      alert("Teacher not found");
+      return;
+    }
+
+    const t = data.teacher;
+
+    document.getElementById("name").innerText = t.name;
+    document.getElementById("phone").innerText = t.phone || "—";
+    document.getElementById("city").innerText = t.city || "—";
+    document.getElementById("about").innerText =
+      t.about || "No summary added yet";
+    document.getElementById("education").innerText =
+      t.education || "—";
+
+    const skillsBox = document.getElementById("skills");
+    skillsBox.innerHTML = "";
+
+    if (t.skills && t.skills.length) {
+      t.skills.forEach(s => {
+        const span = document.createElement("span");
+        span.className = "tag";
+        span.innerText = s;
+        skillsBox.appendChild(span);
+      });
+    } else {
+      skillsBox.innerText = "—";
+    }
+  })
+  .catch(() => alert("Server error"));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Applications | Lets Teach</title>
+</head>
+<body>
+
+<script>
+if (!localStorage.uid || localStorage.role !== "institute") {
+  window.location.href = "login.html";
+}
+</script>
+
+<h2>My Job Applications</h2>
+<button onclick="location.href='institute-dashboard.html'">Back</button>
+
+<hr>
+
+<div id="box">Loading...</div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+const uid = localStorage.getItem("uid");
+
+async function loadApps() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/job/applications/institute/${uid}`);
+    const data = await res.json();
+
+    const box = document.getElementById("box");
+    box.innerHTML = "";
+
+    if (!data.success || !data.applications || data.applications.length === 0) {
+      box.innerHTML = "<p>No applications yet.</p>";
+      return;
+    }
+
+    data.applications.forEach(app => {
+      const t = app.teacher;
+
+      const div = document.createElement("div");
+      div.style.background = "#fff";
+      div.style.padding = "12px";
+      div.style.marginBottom = "10px";
+      div.style.border = "1px solid #ddd";
+
+      const resumeLink = t && t.resumeUrl
+        ? `${BASE_URL}${t.resumeUrl.startsWith("/") ? "" : "/"}${t.resumeUrl}`
+        : null;
+
+      div.innerHTML = `
+        <b>Teacher:</b> ${t ? t.name : app.teacherUid} <br>
+        <b>City:</b> ${t ? t.city : "-"} <br>
+        <b>Subject:</b> ${t ? t.subject : "-"} <br>
+        <b>Status:</b> ${app.status || "applied"} <br>
+        <br>
+        ${
+          resumeLink
+          ? `<a href="${resumeLink}" target="_blank">👁 View Resume PDF</a>
+             &nbsp; | &nbsp;
+             <a href="${resumeLink}" download>⬇ Download</a>`
+          : `<span style="color:red;">❌ Resume PDF not uploaded</span>`
+        }
+        <hr>
+      `;
+
+      box.appendChild(div);
+    });
+  } catch (e) {
+    document.getElementById("box").innerHTML = "<p>Server error</p>";
+  }
+}
+
+loadApps();
+</script>
+
+</body>
+</html>

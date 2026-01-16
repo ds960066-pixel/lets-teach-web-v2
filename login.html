@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | Lets Teach</title>
+</head>
+<body>
+
+<h2>Login to Lets Teach</h2>
+<p>Select your role to continue</p>
+
+<input id="uid" placeholder="Enter UID" />
+<br><br>
+
+<button onclick="loginTeacher()">Login as Teacher</button>
+<br><br>
+
+<button onclick="loginInstitute()">Login as Institute</button>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* ================= UTIL ================= */
+function getUid() {
+  const uid = document.getElementById("uid").value.trim();
+  if (!uid) {
+    alert("Please enter UID");
+    return null;
+  }
+  return uid;
+}
+
+/* ================= ROLE BUTTONS ================= */
+function loginTeacher() {
+  handleLogin("teacher");
+}
+
+function loginInstitute() {
+  handleLogin("institute");
+}
+
+/* ================= CORE LOGIN ================= */
+async function handleLogin(role) {
+  const uid = getUid();
+  if (!uid) return;
+
+  // 🔒 SINGLE SOURCE OF TRUTH
+  localStorage.setItem("uid", uid);
+  localStorage.setItem("role", role);
+
+  const url =
+    role === "teacher"
+      ? `${BASE_URL}/api/teacher/login-check/${uid}`
+      : `${BASE_URL}/api/institute/login-check/${uid}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    /*
+      Backend response expected:
+      { status: "REGISTER_REQUIRED" | "OK" | "BLOCKED" }
+    */
+
+    if (data.status === "REGISTER_REQUIRED") {
+      window.location.href =
+        role === "teacher"
+          ? "teacher-register.html"
+          : "institute-register.html";
+      return;
+    }
+
+    if (data.status === "OK") {
+      window.location.href =
+        role === "teacher"
+          ? "teacher-dashboard.html"
+          : "institute-dashboard.html";
+      return;
+    }
+
+    if (data.status === "BLOCKED") {
+      alert("Your account is blocked. Contact support.");
+      return;
+    }
+
+    alert("Login failed. Invalid response.");
+  } catch (err) {
+    console.error("Login error:", err);
+    alert("Server error. Try again.");
+  }
+}
+</script>
+
+</body>
+</html>

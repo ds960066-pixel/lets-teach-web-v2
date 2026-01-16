@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teaching Jobs | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 6px 12px;
+      background: #27ae60;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .login-hint {
+      background: #fff3cd;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      color: #856404;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Teaching Jobs</h2>
+
+<!-- 🔔 PUBLIC MODE MESSAGE -->
+<div id="loginHint" class="login-hint" style="display:none;">
+  Please login as a Teacher to apply for jobs.
+</div>
+
+<input id="city" placeholder="City">
+<input id="subject" placeholder="Subject">
+<select id="role">
+  <option value="">Any</option>
+  <option value="part-time">Part-time</option>
+  <option value="full-time">Full-time</option>
+</select>
+
+<button onclick="loadJobs()">Search</button>
+
+<hr>
+
+<div id="jobs"></div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* 🔐 AUTH STATE (FINAL STANDARD) */
+const uid = localStorage.getItem("uid");
+const userType = localStorage.getItem("role"); // ✅ FIXED
+
+/* SHOW HINT IF NOT LOGGED-IN TEACHER */
+if (!uid || userType !== "teacher") {
+  document.getElementById("loginHint").style.display = "block";
+}
+
+/* LOAD JOBS (PUBLIC) */
+function loadJobs() {
+  const city = document.getElementById("city").value;
+  const subject = document.getElementById("subject").value;
+  const role = document.getElementById("role").value;
+
+  let url = `${BASE_URL}/api/job/browse?`;
+  if (city) url += `city=${encodeURIComponent(city)}&`;
+  if (subject) url += `subject=${encodeURIComponent(subject)}&`;
+  if (role) url += `role=${encodeURIComponent(role)}`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const box = document.getElementById("jobs");
+      box.innerHTML = "";
+
+      if (!data.jobs || data.jobs.length === 0) {
+        box.innerHTML = "<p>No jobs found</p>";
+        return;
+      }
+
+      data.jobs.forEach(j => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+          <h3>${j.title}</h3>
+          <p><b>Subject:</b> ${j.subject}</p>
+          <p><b>City:</b> ${j.city}</p>
+          <p><b>Role:</b> ${j.role || "Both"}</p>
+          <p><b>Salary:</b> ${j.salary || "Negotiable"}</p>
+
+          <button onclick="applyJob('${j._id}')">
+            Apply
+          </button>
+        `;
+
+        box.appendChild(div);
+      });
+    })
+    .catch(() => {
+      document.getElementById("jobs").innerHTML =
+        "<p>Error loading jobs</p>";
+    });
+}
+
+/* APPLY JOB (TEACHER ONLY) */
+function applyJob(jobId) {
+  if (!uid || userType !== "teacher") {
+    alert("Please login as Teacher to apply");
+    window.location.href = "login.html";
+    return;
+  }
+
+  fetch(`${BASE_URL}/api/job/apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jobId: jobId,
+      teacherUid: uid
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message || "Applied successfully");
+  })
+  .catch(() => {
+    alert("Server error. Please try again later.");
+  });
+}
+
+/* INITIAL LOAD */
+loadJobs();
+</script>
+
+</body>
+</html>

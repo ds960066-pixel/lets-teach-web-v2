@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Send Invite | Lets Teach</title>
+</head>
+<body>
+
+<h2>Teacher → Institute Invite</h2>
+
+<input id="teacherUid" value="demof12345" readonly><br><br>
+
+<input id="instituteUid" placeholder="Enter Institute UID"><br><br>
+
+<button onclick="sendInvite()">Send Invite</button>
+
+<p id="result"></p>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+function sendInvite() {
+  const teacherUid = document.getElementById("teacherUid").value;
+  const instituteUid = document.getElementById("instituteUid").value;
+
+  if (!instituteUid) {
+    alert("Institute UID required");
+    return;
+  }
+
+  fetch(`${BASE_URL}/api/invite/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fromType: "teacher",
+      fromUid: teacherUid,
+      toType: "institute",
+      toUid: instituteUid
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("result").innerText =
+      data.success ? "Invite sent successfully ✅" : data.message;
+  })
+  .catch(() => {
+    document.getElementById("result").innerText =
+      "Error sending invite";
+  });
+}
+</script>
+
+</body>
+</html>

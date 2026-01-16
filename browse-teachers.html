@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Browse Teachers | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #2e86de;
+    }
+
+    input, button {
+      padding: 8px;
+      margin: 5px;
+    }
+
+    button {
+      background: #2e86de;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1b4f72;
+    }
+
+    .teacher {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #2e86de;
+    }
+
+    .teacher b {
+      display: inline-block;
+      width: 90px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Browse Teachers</h2>
+
+<input id="city" placeholder="City">
+<input id="subject" placeholder="Subject">
+<button onclick="search()">Search</button>
+
+<hr>
+
+<div id="list"></div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+function search() {
+  const city = document.getElementById("city").value;
+  const subject = document.getElementById("subject").value;
+
+  let url = `${BASE_URL}/api/teacher/search?`;
+
+  if (city) url += `city=${city}&`;
+  if (subject) url += `subject=${subject}`;
+
+  document.getElementById("list").innerHTML = "Loading...";
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+
+      if (!data.teachers || data.teachers.length === 0) {
+        list.innerHTML = "<p>No teachers found</p>";
+        return;
+      }
+
+      data.teachers.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "teacher";
+
+        div.innerHTML = `
+          <p><b>Name:</b> ${t.name}</p>
+          <p><b>Subject:</b> ${t.subject}</p>
+          <p><b>City:</b> ${t.city}</p>
+          <p><b>Experience:</b> ${t.experience || 0} years</p>
+
+          <button onclick="invite('${t.uid}')">
+            Send Invite
+          </button>
+        `;
+
+        list.appendChild(div);
+      });
+    })
+    .catch(() => {
+      document.getElementById("list").innerHTML =
+        "<p>Error loading teachers</p>";
+    });
+}
+
+function invite(teacherUid) {
+  const instituteUid = prompt("Enter your Institute UID");
+
+  if (!instituteUid) return;
+
+  fetch(`${BASE_URL}/api/invite/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fromType: "institute",
+      fromUid: instituteUid,
+      toType: "teacher",
+      toUid: teacherUid
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message || "Invite sent");
+  });
+}
+</script>
+
+</body>
+</html>

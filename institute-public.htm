@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Institute Profile | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      max-width: 520px;
+      margin: auto;
+      border-radius: 6px;
+    }
+    button {
+      padding: 8px 12px;
+      background: #2e86de;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1b4f72;
+    }
+    ul {
+      padding-left: 18px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2 id="name">Loading...</h2>
+  <p><b>City:</b> <span id="city"></span></p>
+  <p><b>Address:</b> <span id="address"></span></p>
+
+  <p><b>Subjects Needed:</b></p>
+  <ul id="subjects"></ul>
+
+  <hr>
+
+  <h3>Interested in this institute?</h3>
+  <p>
+    To contact, invite, or chat with this institute,
+    please login or register as a teacher.
+  </p>
+
+  <button onclick="goLogin()">Login / Register</button>
+</div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+const params = new URLSearchParams(window.location.search);
+const instituteUid = params.get("uid");
+
+if (!instituteUid) {
+  alert("Invalid profile");
+  window.location.href = "index.html";
+}
+
+/* ================= LOAD INSTITUTE PROFILE ================= */
+fetch(`${BASE_URL}/api/institute/${instituteUid}`)
+  .then(res => res.json())
+  .then(data => {
+    if (!data.institute) {
+      alert("Institute not found");
+      window.location.href = "index.html";
+      return;
+    }
+
+    const i = data.institute;
+
+    document.getElementById("name").innerText = i.name;
+    document.getElementById("city").innerText = i.city;
+    document.getElementById("address").innerText =
+      i.address || "Not provided";
+
+    const ul = document.getElementById("subjects");
+    ul.innerHTML = "";
+
+    if (i.subjectsNeeded && i.subjectsNeeded.length > 0) {
+      i.subjectsNeeded.forEach(s => {
+        const li = document.createElement("li");
+        li.innerText = s;
+        ul.appendChild(li);
+      });
+    } else {
+      ul.innerHTML = "<li>No subjects listed</li>";
+    }
+  })
+  .catch(() => {
+    alert("Failed to load profile");
+    window.location.href = "index.html";
+  });
+
+function goLogin() {
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

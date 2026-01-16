@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Institute Registration | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    input {
+      padding: 8px;
+      width: 260px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 16px;
+      background: #2e86de;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1b4f72;
+    }
+  </style>
+</head>
+
+<body>
+
+<script>
+/* ================= AUTH + ROLE GUARD ================= */
+if (!localStorage.uid || localStorage.role !== "institute") {
+  window.location.href = "login.html";
+}
+</script>
+
+<h2>Institute Registration</h2>
+<p>Please complete your institute details</p>
+
+<p><b>UID:</b> <span id="uidText"></span></p>
+
+<input id="name" placeholder="Institute Name" />
+<input id="phone" placeholder="Phone" />
+<input id="city" placeholder="City" />
+<input id="address" placeholder="Address" />
+<input id="subjectsNeeded" placeholder="Subjects Needed (comma separated)" />
+
+<br>
+<button onclick="registerInstitute()">Register & Continue</button>
+
+<p id="result"></p>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+/* ================= SOURCE OF TRUTH ================= */
+const uid = localStorage.getItem("uid");
+document.getElementById("uidText").innerText = uid;
+
+/* ================= REGISTER ================= */
+async function registerInstitute() {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const city = document.getElementById("city").value.trim();
+  const address = document.getElementById("address").value.trim();
+  const subjectsRaw = document
+    .getElementById("subjectsNeeded")
+    .value.trim();
+
+  if (!name || !phone || !city) {
+    alert("Please fill required fields");
+    return;
+  }
+
+  const subjectsNeeded = subjectsRaw
+    ? subjectsRaw.split(",").map(s => s.trim())
+    : [];
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/institute/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        uid,
+        name,
+        phone,
+        city,
+        address,
+        subjectsNeeded
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      document.getElementById("result").innerText =
+        data.message || "Registration failed";
+      return;
+    }
+
+    // ✅ AUTO REDIRECT TO DASHBOARD
+    window.location.href = "institute-dashboard.html";
+  } catch (err) {
+    document.getElementById("result").innerText =
+      "Server error. Try again.";
+  }
+}
+</script>
+
+</body>
+</html>

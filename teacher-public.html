@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Profile | Lets Teach</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      border-radius: 6px;
+    }
+    button {
+      padding: 8px 12px;
+      background: #2e86de;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1b4f72;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2 id="name">Loading...</h2>
+  <p><b>Subject:</b> <span id="subject"></span></p>
+  <p><b>City:</b> <span id="city"></span></p>
+  <p><b>Experience:</b> <span id="experience"></span> yrs</p>
+
+  <hr>
+
+  <h3>Interested in this teacher?</h3>
+  <p>
+    To invite or chat with this teacher,
+    please login or register as an institute.
+  </p>
+
+  <button onclick="goLogin()">Login / Register</button>
+</div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+const params = new URLSearchParams(window.location.search);
+const teacherUid = params.get("uid");
+
+if (!teacherUid) {
+  alert("Invalid profile");
+  window.location.href = "index.html";
+}
+
+/* ================= LOAD TEACHER PROFILE ================= */
+fetch(`${BASE_URL}/api/teacher/${teacherUid}`)
+  .then(res => res.json())
+  .then(data => {
+    if (!data.teacher) {
+      alert("Teacher not found");
+      window.location.href = "index.html";
+      return;
+    }
+
+    const t = data.teacher;
+    document.getElementById("name").innerText = t.name;
+    document.getElementById("subject").innerText = t.subject;
+    document.getElementById("city").innerText = t.city;
+    document.getElementById("experience").innerText = t.experience || 0;
+  })
+  .catch(() => {
+    alert("Failed to load profile");
+    window.location.href = "index.html";
+  });
+
+function goLogin() {
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

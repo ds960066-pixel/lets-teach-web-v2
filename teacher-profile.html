@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head><title>Teacher Profile</title></head>
+<body>
+
+<h2 id="name">Loading...</h2>
+<p id="info"></p>
+
+<div id="actions">
+  <button onclick="invite()">Invite</button>
+  <button onclick="chat()">Chat</button>
+</div>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+const uid = localStorage.getItem("uid");
+const type = localStorage.getItem("userType");
+const teacherUid = new URLSearchParams(location.search).get("uid");
+
+if (!teacherUid) location.href = "teacher.html";
+if (!(uid && type === "institute"))
+  actions.style.display = "none";
+
+fetch(`${BASE_URL}/api/teacher/${teacherUid}`)
+  .then(r => r.json())
+  .then(d => {
+    const t = d.teacher;
+    name.innerText = t.name;
+    info.innerText =
+      `${t.subject} | ${t.city} | ${t.experience || 0} yrs`;
+  });
+
+function invite() {
+  fetch(`${BASE_URL}/api/invite/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fromType: "institute",
+      fromUid: uid,
+      toType: "teacher",
+      toUid: teacherUid
+    })
+  }).then(r => r.json()).then(d => alert(d.message));
+}
+
+function chat() {
+  location.href =
+    `chat.html?senderUid=${uid}&receiverUid=${teacherUid}`;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Browse Institutes | Lets Teach</title>
+</head>
+<body>
+
+<h2>Browse Institutes</h2>
+
+<input id="city" placeholder="City">
+<button onclick="search()">Search</button>
+
+<ul id="list"></ul>
+
+<script>
+const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+const MY_UID = "demof12345"; // teacher uid
+
+function search() {
+  const city = document.getElementById("city").value;
+  const url = `${BASE_URL}/api/institute/search?city=${encodeURIComponent(city)}`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(d => {
+      const ul = document.getElementById("list");
+      ul.innerHTML = "";
+
+      (d.institutes || []).forEach(i => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <b>${i.name || i.uid}</b> — ${i.city}<br>
+          <button onclick="invite('${i.uid}')">Send Invite</button>
+          <hr>
+        `;
+        ul.appendChild(li);
+      });
+    });
+}
+
+function invite(instituteUid) {
+  fetch(`${BASE_URL}/api/invite/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fromType: "teacher",
+      fromUid: MY_UID,
+      toType: "institute",
+      toUid: instituteUid
+    })
+  })
+  .then(r => r.json())
+  .then(d => alert(d.success ? "Invite sent" : d.message));
+}
+</script>
+
+</body>
+</html>
