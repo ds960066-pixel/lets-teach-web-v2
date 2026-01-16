@@ -2,20 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login | Lets Teach</title>
+
+  <!-- ✅ Same Professional Theme -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
-<h2>Login to Lets Teach</h2>
-<p>Select your role to continue</p>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <a class="brand" href="index.html">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </a>
 
-<input id="uid" placeholder="Enter UID" />
-<br><br>
+      <div class="navLinks">
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="interview/index.html">Interview Preps</a>
+        <a class="pill" href="index.html">Home</a>
+      </div>
+    </div>
+  </div>
 
-<button onclick="loginTeacher()">Login as Teacher</button>
-<br><br>
+  <div class="container">
 
-<button onclick="loginInstitute()">Login as Institute</button>
+    <div class="hero">
+      <div class="heroGrid">
+
+        <!-- LEFT: LOGIN CARD -->
+        <div class="card cardPad">
+          <h1 class="hTitle" style="font-size:34px;">Login</h1>
+          <p class="hSub">
+            Enter your UID and choose your role. If UID not registered, you’ll be redirected to registration.
+          </p>
+
+          <div class="sectionTitle">Your UID</div>
+          <input class="input" id="uid" placeholder="Enter UID (e.g. teacher-demo123)" autocomplete="off" />
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+            <button class="btn" onclick="loginTeacher()">Login as Teacher</button>
+            <button class="btn" onclick="loginInstitute()">Login as Institute</button>
+          </div>
+
+          <p class="meta" style="margin-top:10px;">
+            Tip: UID case-sensitive mat rakho. Same UID se login/register consistent rahega.
+          </p>
+
+          <hr class="sep" />
+
+          <div class="meta">
+            New here? Try:
+            <span class="badge" style="margin-left:6px;">Teacher</span>
+            <span class="badge" style="margin-left:6px;">Institute</span>
+          </div>
+        </div>
+
+        <!-- RIGHT: INFO CARD -->
+        <div class="card cardPad">
+          <div class="sectionTitle">How it works</div>
+          <div class="meta">
+            1) Login with UID<br>
+            2) If not registered → auto register page open<br>
+            3) After registration → dashboard open
+          </div>
+
+          <div class="kpis" style="margin-top:14px;">
+            <div class="kpi">
+              <b>Invite</b>
+              <span>Send / accept invites</span>
+            </div>
+            <div class="kpi">
+              <b>Chat</b>
+              <span>Unlock after acceptance</span>
+            </div>
+            <div class="kpi">
+              <b>Jobs</b>
+              <span>Apply after resume</span>
+            </div>
+          </div>
+
+          <hr class="sep" />
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="pill" href="index.html">Public Search</a>
+            <a class="pill" href="jobs.html">Browse Jobs</a>
+            <a class="pill" href="privacy.html">Privacy</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer">
+      © Lets Teach · <a class="smallLink" href="index.html">Home</a> ·
+      <a class="smallLink" href="jobs.html">Jobs</a> ·
+      <a class="smallLink" href="interview/index.html">Interview</a>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
@@ -34,7 +121,6 @@ function getUid() {
 function loginTeacher() {
   handleLogin("teacher");
 }
-
 function loginInstitute() {
   handleLogin("institute");
 }
@@ -44,29 +130,24 @@ async function handleLogin(role) {
   const uid = getUid();
   if (!uid) return;
 
-  // 🔒 SINGLE SOURCE OF TRUTH
+  // ✅ SINGLE SOURCE OF TRUTH
   localStorage.setItem("uid", uid);
   localStorage.setItem("role", role);
 
   const url =
     role === "teacher"
-      ? `${BASE_URL}/api/teacher/login-check/${uid}`
-      : `${BASE_URL}/api/institute/login-check/${uid}`;
+      ? `${BASE_URL}/api/teacher/login-check/${encodeURIComponent(uid)}`
+      : `${BASE_URL}/api/institute/login-check/${encodeURIComponent(uid)}`;
 
   try {
     const res = await fetch(url);
     const data = await res.json();
 
-    /*
-      Backend response expected:
-      { status: "REGISTER_REQUIRED" | "OK" | "BLOCKED" }
-    */
-
     if (data.status === "REGISTER_REQUIRED") {
       window.location.href =
         role === "teacher"
-          ? "teacher-register.html"
-          : "institute-register.html";
+          ? `teacher-register.html?uid=${encodeURIComponent(uid)}`
+          : `institute-register.html?uid=${encodeURIComponent(uid)}`;
       return;
     }
 
