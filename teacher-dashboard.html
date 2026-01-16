@@ -2,42 +2,101 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Dashboard | Lets Teach</title>
+
+  <!-- ✅ Same Professional Theme -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
-<script>
-/* ===== AUTH GUARD ===== */
-if (!localStorage.uid || localStorage.role !== "teacher") {
-  window.location.href = "login.html";
-}
-</script>
+  <!-- AUTH GUARD -->
+  <script>
+    if (!localStorage.uid || localStorage.role !== "teacher") {
+      window.location.href = "login.html";
+    }
+  </script>
 
-<h2>Teacher Dashboard</h2>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <a class="brand" href="index.html">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </a>
 
-<button onclick="logout()">Logout</button>
+      <div class="navLinks">
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="interview/index.html">Interview Preps</a>
+        <a class="pill" href="#" onclick="logout();return false;">Logout</a>
+      </div>
+    </div>
+  </div>
 
-<hr>
+  <div class="container">
 
-<!-- ✅ PDF UPLOAD -->
-<h3>📎 Upload Resume (PDF)</h3>
-<input type="file" id="resumeFile" accept="application/pdf" />
-<button onclick="uploadResume()">Upload Resume</button>
-<p id="uploadStatus"></p>
+    <div class="hero">
+      <div class="card cardPad">
+        <h1 class="hTitle" style="font-size:34px;margin-bottom:8px;">Teacher Dashboard</h1>
+        <p class="hSub" style="margin-top:0;">
+          Resume complete (details + PDF) hone par hi job apply allow hoga.
+        </p>
 
-<hr>
+        <div class="kpis">
+          <div class="kpi">
+            <b id="resumeBadge">Checking…</b>
+            <span>Resume Status</span>
+          </div>
+          <div class="kpi">
+            <b id="inviteBadge">0</b>
+            <span>Invites</span>
+          </div>
+          <div class="kpi">
+            <b id="pdfBadge">—</b>
+            <span>Resume PDF</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<!-- ✅ RESUME STATUS + ACTIONS -->
-<h3>📄 My Resume</h3>
-<p id="resumeStatus">Checking resume status...</p>
+    <!-- RESUME -->
+    <div class="card cardPad">
+      <div class="sectionTitle">📄 My Resume</div>
+      <div id="resumeStatus" class="meta">Checking resume status...</div>
 
-<button onclick="openResume()">Create / Update Resume</button>
-<button onclick="viewResume()">View Resume</button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+        <button class="btn" onclick="openResume()">Create / Update Resume</button>
+        <button class="btn" style="border-color:rgba(148,163,184,.35);background:rgba(15,26,51,.55);color:var(--text);font-weight:700;"
+                onclick="viewResume()">View Resume</button>
+      </div>
 
-<hr>
+      <hr class="sep" />
 
-<h3>📨 My Invites</h3>
-<ul id="inviteList"></ul>
+      <!-- PDF UPLOAD -->
+      <div class="sectionTitle">📎 Upload Resume (PDF)</div>
+
+      <div class="searchGrid" style="grid-template-columns:1fr auto;">
+        <input class="input" type="file" id="resumeFile" accept="application/pdf" />
+        <button class="btn" onclick="uploadResume()">Upload PDF</button>
+      </div>
+
+      <div id="uploadStatus" class="meta" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- INVITES -->
+    <div class="card cardPad" style="margin-top:14px;">
+      <div class="sectionTitle">📨 My Invites</div>
+      <div id="inviteList" class="list"></div>
+    </div>
+
+    <div class="footer">
+      <a class="smallLink" href="index.html">Home</a> ·
+      <a class="smallLink" href="jobs.html">Jobs</a> ·
+      <a class="smallLink" href="interview/index.html">Interview</a>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
@@ -49,13 +108,29 @@ function logout() {
   window.location.href = "login.html";
 }
 
+/* ===== RESUME BUTTONS ===== */
+function openResume() {
+  window.location.href = "teacher-resume-edit.html";
+}
+function viewResume() {
+  window.location.href = "teacher-resume-view.html";
+}
+
 /* ===== PDF UPLOAD ===== */
 async function uploadResume() {
   const file = document.getElementById("resumeFile").files[0];
+  const status = document.getElementById("uploadStatus");
+
   if (!file) {
     alert("Select PDF file");
     return;
   }
+  if (file.type !== "application/pdf") {
+    alert("Only PDF allowed");
+    return;
+  }
+
+  status.innerText = "Uploading…";
 
   const formData = new FormData();
   formData.append("resume", file);
@@ -67,14 +142,12 @@ async function uploadResume() {
     });
 
     const data = await res.json();
-    document.getElementById("uploadStatus").innerText =
-      data.message || "Uploaded";
+    status.innerText = data.message || "Uploaded";
 
     // re-check status after upload
-    loadResumeStatus();
+    await loadResumeStatus();
   } catch (err) {
-    document.getElementById("uploadStatus").innerText =
-      "Upload failed. Server error.";
+    status.innerText = "Upload failed. Server error.";
   }
 }
 
@@ -85,75 +158,78 @@ async function loadResumeStatus() {
     const data = await res.json();
 
     if (!data.success) {
-      document.getElementById("resumeStatus").innerText =
-        "Error loading resume status";
+      document.getElementById("resumeStatus").innerText = "Error loading resume status";
+      document.getElementById("resumeBadge").innerText = "Error";
+      document.getElementById("pdfBadge").innerText = "—";
       return;
     }
 
     const t = data.teacher;
 
-    const complete =
-      t.about &&
-      t.education &&
-      t.skills &&
-      t.skills.length > 0 &&
-      t.resumeUrl; // ✅ PDF mandatory too
+    const detailsComplete =
+      !!t.about && !!t.education && Array.isArray(t.skills) && t.skills.length > 0;
 
-    document.getElementById("resumeStatus").innerHTML =
-      complete
-        ? "✅ Resume Completed (PDF uploaded)"
-        : "❌ Resume Incomplete (Fill resume + upload PDF to apply jobs)";
+    const pdfComplete = !!t.resumeUrl;
+
+    const complete = detailsComplete && pdfComplete;
+
+    document.getElementById("resumeBadge").innerText = complete ? "✅ Completed" : "❌ Incomplete";
+    document.getElementById("pdfBadge").innerText = pdfComplete ? "✅ Uploaded" : "❌ Missing";
+
+    document.getElementById("resumeStatus").innerHTML = complete
+      ? `✅ Resume Completed (details + PDF). You can apply for jobs.`
+      : `❌ Resume Incomplete. <br>Required: (1) Fill resume details (About, Education, Skills) + (2) Upload PDF.`;
   } catch {
-    document.getElementById("resumeStatus").innerText =
-      "Error loading resume status";
+    document.getElementById("resumeStatus").innerText = "Error loading resume status";
+    document.getElementById("resumeBadge").innerText = "Error";
+    document.getElementById("pdfBadge").innerText = "—";
   }
-}
-
-/* ===== RESUME BUTTONS ===== */
-function openResume() {
-  window.location.href = "teacher-resume-edit.html";
-}
-
-function viewResume() {
-  window.location.href = "teacher-resume-view.html";
 }
 
 /* ===== LOAD INVITES ===== */
 async function loadInvites() {
+  const box = document.getElementById("inviteList");
+  box.innerHTML = `<div class="meta">Loading invites...</div>`;
+
   try {
     const res = await fetch(`${BASE_URL}/api/invite/teacher/${uid}`);
     const data = await res.json();
 
-    const list = document.getElementById("inviteList");
-    list.innerHTML = "";
+    const invites = (data && data.invites) ? data.invites : [];
+    document.getElementById("inviteBadge").innerText = invites.length;
 
-    if (!data.invites || data.invites.length === 0) {
-      list.innerHTML = "<li>No invites</li>";
+    if (!invites.length) {
+      box.innerHTML = `<div class="meta">No invites</div>`;
       return;
     }
 
-    data.invites.forEach(inv => {
-      const li = document.createElement("li");
+    box.innerHTML = "";
+    invites.forEach(inv => {
+      const div = document.createElement("div");
+      div.className = "item";
 
-      let action = "";
+      let actionHtml = "";
       if (inv.status === "pending") {
-        action = `<button onclick="acceptInvite('${inv._id}')">Accept</button>`;
-      }
-      if (inv.status === "accepted") {
-        action = `<button onclick="openChat('${inv.fromUid}')">Chat</button>`;
+        actionHtml = `<button class="btn" onclick="acceptInvite('${inv._id}')">Accept</button>`;
+      } else if (inv.status === "accepted") {
+        actionHtml = `<button class="btn" onclick="openChat('${inv.fromUid}')">Chat</button>`;
+      } else {
+        actionHtml = `<span class="badge">${escapeHtml(inv.status || "—")}</span>`;
       }
 
-      li.innerHTML = `
-        <b>From:</b> ${inv.fromUid}<br>
-        <b>Status:</b> ${inv.status}<br>
-        ${action}
-        <hr>
+      div.innerHTML = `
+        <div>
+          <div style="font-weight:800;">From: ${escapeHtml(inv.fromUid)}</div>
+          <div class="meta">Status: ${escapeHtml(inv.status)}</div>
+        </div>
+        <div>${actionHtml}</div>
       `;
 
-      list.appendChild(li);
+      box.appendChild(div);
     });
   } catch {
-    alert("Failed to load invites");
+    document.getElementById("inviteBadge").innerText = "0";
+    box.innerHTML = `<div class="meta">Failed to load invites</div>`;
   }
 }
 
@@ -166,7 +242,17 @@ function openChat(otherUid) {
   window.location.href = `chat.html?senderUid=${uid}&receiverUid=${otherUid}`;
 }
 
-/* ===== INIT ===== */
+/* HELPERS */
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* INIT */
 loadResumeStatus();
 loadInvites();
 </script>
