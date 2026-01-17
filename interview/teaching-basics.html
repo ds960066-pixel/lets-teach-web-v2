@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Teaching Basics | Lets Teach Interview Prep</title>
+
+  <!-- Same global theme -->
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./interview.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
+
+      <div class="navLinks">
+        <a class="pill" href="../index.html">Home</a>
+        <a class="pill" href="../jobs.html">Jobs</a>
+        <a class="pill" href="../login.html">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- HERO -->
+    <div class="card cardPad">
+      <h1 class="hTitle" style="font-size:34px;margin:0 0 8px;">Teaching Basics</h1>
+      <p class="hSub" style="margin:0;">
+        Most common teacher interview questions + “Ideal Answer Points” (copy your own examples).
+      </p>
+
+      <hr class="sep">
+
+      <div class="searchRow2">
+        <input id="q" class="input" placeholder="Search (e.g. discipline, weak students, methods)" autocomplete="off" />
+        <button class="btn" onclick="applyFilter()">Search</button>
+        <button class="btn ghost" onclick="resetFilter()">Reset</button>
+        <a class="pill" style="text-align:center;" href="index.html">← Back</a>
+      </div>
+
+      <div class="kpis2">
+        <div class="kpi">
+          <b id="count">0</b>
+          <span>Questions</span>
+        </div>
+        <div class="kpi">
+          <b>Answer-ready</b>
+          <span>Points included</span>
+        </div>
+        <div class="kpi">
+          <b>Practice</b>
+          <span>Speak it aloud</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIST -->
+    <div class="card cardPad" style="margin-top:14px;">
+      <div class="sectionTitle">Questions</div>
+      <div id="list" class="list"></div>
+    </div>
+
+    <div class="footer muted">
+      <a href="index.html">Interview Home</a> ·
+      <a href="../index.html">Lets Teach Home</a>
+    </div>
+
+  </div>
+
+<script>
+const QS = [
+  {
+    id: "TB-01",
+    cat: "Teaching Basics",
+    q: "Why did you choose teaching as a profession?",
+    points: [
+      "Connect to purpose: learning impact + mentorship",
+      "Mention your subject passion + student outcomes",
+      "Short real example: student improvement / result",
+      "Close with: long-term growth as educator"
+    ],
+    mistakes: [
+      "Generic answers: “I like kids” only",
+      "No real example / impact"
+    ]
+  },
+  {
+    id: "TB-02",
+    cat: "Teaching Basics",
+    q: "How do you handle weak students in a class?",
+    points: [
+      "Diagnose gaps: basics test / oral questions",
+      "Micro-plan: small goals + extra practice",
+      "Different methods: visuals, analogies, peer support",
+      "Weekly review + motivate + track progress"
+    ],
+    mistakes: [
+      "Shaming / comparing students",
+      "Only more homework, no support"
+    ]
+  },
+  {
+    id: "TB-03",
+    cat: "Teaching Methods",
+    q: "What teaching methods do you use?",
+    points: [
+      "Concept clarity first: step-by-step + examples",
+      "Active learning: questions, activities, discussions",
+      "Differentiation: weak/average/advanced strategies",
+      "Practice + recap + short assessment"
+    ],
+    mistakes: [
+      "Only lecture method",
+      "No checking understanding"
+    ]
+  },
+  {
+    id: "CM-01",
+    cat: "Classroom Management",
+    q: "How do you manage classroom discipline?",
+    points: [
+      "Clear rules from day 1 + consistency",
+      "Engagement: boredom kam = discipline better",
+      "Positive reinforcement + fair consequences",
+      "Talk privately with student + involve mentor/parent if needed"
+    ],
+    mistakes: [
+      "Shouting/punishment heavy approach",
+      "Rules inconsistent / favoritism"
+    ]
+  },
+  {
+    id: "AS-01",
+    cat: "Assessment",
+    q: "How do you assess student performance?",
+    points: [
+      "Mix: class questions + quizzes + assignments",
+      "Concept-based evaluation (not only rote)",
+      "Feedback: what + how to improve",
+      "Re-test / improvement cycle"
+    ],
+    mistakes: [
+      "Only marks focus",
+      "No feedback or follow-up plan"
+    ]
+  }
+];
+
+const listEl = document.getElementById("list");
+const qEl = document.getElementById("q");
+const countEl = document.getElementById("count");
+
+function esc(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function render(items){
+  countEl.textContent = items.length;
+
+  if (!items.length){
+    listEl.innerHTML = `<div class="meta">No questions found. Try another keyword.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = "";
+  items.forEach(x => {
+    const div = document.createElement("div");
+    div.className = "qaCard";
+
+    const pts = (x.points||[]).map(p => `<li>${esc(p)}</li>`).join("");
+    const ms  = (x.mistakes||[]).map(m => `<li>${esc(m)}</li>`).join("");
+
+    div.innerHTML = `
+      <div class="qaTop">
+        <div class="badge">${esc(x.cat)}</div>
+        <div class="qaId">#${esc(x.id)}</div>
+      </div>
+
+      <div class="qaQ">${esc(x.q)}</div>
+
+      <details class="qaDetails" open>
+        <summary>Ideal Answer Points</summary>
+        <ul class="qaList">${pts || "<li>—</li>"}</ul>
+      </details>
+
+      <details class="qaDetails">
+        <summary>Common Mistakes</summary>
+        <ul class="qaList warn">${ms || "<li>—</li>"}</ul>
+      </details>
+    `;
+
+    listEl.appendChild(div);
+  });
+}
+
+function applyFilter(){
+  const q = (qEl.value || "").trim().toLowerCase();
+  if (!q) return render(QS);
+
+  const out = QS.filter(x => {
+    const blob = [x.q, ...(x.points||[]), ...(x.mistakes||[])].join(" ").toLowerCase();
+    return blob.includes(q);
+  });
+  render(out);
+}
+
+function resetFilter(){
+  qEl.value = "";
+  render(QS);
+}
+
+render(QS);
+qEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") applyFilter();
+});
+</script>
+
+</body>
+</html>
