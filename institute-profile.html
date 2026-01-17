@@ -1,146 +1,160 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Institute Profile | Lets Teach</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 20px;
-    }
-
-    .card {
-      max-width: 650px;
-      margin: auto;
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-
-    h2 { margin-top: 0; }
-
-    .badge {
-      display: inline-block;
-      background: #e8f5e9;
-      color: #2e7d32;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      margin-bottom: 10px;
-    }
-
-    .field { margin: 12px 0; }
-
-    .label {
-      font-size: 12px;
-      color: #666;
-    }
-
-    .value {
-      font-size: 15px;
-      font-weight: bold;
-    }
-
-    ul { padding-left: 18px; }
-
-    .actions {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-    }
-
-    button {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .job  { background: #1976d2; color: #fff; }
-    .chat { background: #075e54; color: #fff; }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<div class="card">
-  <div class="badge">Institute Profile</div>
-  <h2 id="name">Loading...</h2>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-  <div class="field">
-    <div class="label">City</div>
-    <div class="value" id="city"></div>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
   </div>
 
-  <div class="field">
-    <div class="label">Address</div>
-    <div class="value" id="address"></div>
-  </div>
+  <div class="container">
 
-  <div class="field">
-    <div class="label">Subjects Needed</div>
-    <ul id="subjects"></ul>
-  </div>
+    <div class="card cardPad" style="max-width: 720px; margin: 0 auto;">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+        <div>
+          <h1 id="name" style="margin:0 0 6px;">Loading...</h1>
+          <div class="meta" id="metaLine">Fetching institute details...</div>
+        </div>
+        <span class="badge" id="statusBadge">Institute</span>
+      </div>
 
-  <div class="actions">
-    <button class="job" onclick="viewJobs()">View Jobs</button>
-    <button class="chat" onclick="openChat()">Chat</button>
+      <hr class="sep" />
+
+      <div class="grid2">
+        <div class="kpi">
+          <b>City</b>
+          <span id="city">—</span>
+        </div>
+        <div class="kpi">
+          <b>Address</b>
+          <span id="address">—</span>
+        </div>
+      </div>
+
+      <div class="sectionTitle">Subjects Needed</div>
+      <ul id="subjects" class="list"></ul>
+
+      <hr class="sep" />
+
+      <div class="kpi" style="background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.28);">
+        <b>Interested in this institute?</b>
+        <span style="display:block;margin-top:6px;">
+          Invite / Chat ke liye teacher login/register required.
+        </span>
+
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn" onclick="goLogin()">Login / Register</button>
+          <a class="pill" href="index.html">Back to Search</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="privacy.html">Privacy</a> ·
+      <a href="interview/index.html">Interview Preps</a>
+    </div>
+
   </div>
-</div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
-
-/* -------- AUTH STATE -------- */
-const uid = localStorage.getItem("uid");
-const userType = localStorage.getItem("userType");
-
-/* -------- GET INSTITUTE UID FROM URL -------- */
 const params = new URLSearchParams(window.location.search);
 const instituteUid = params.get("uid");
 
-/* -------- LOAD INSTITUTE PROFILE -------- */
-fetch(`${BASE_URL}/api/institute/${instituteUid}`)
+if (!instituteUid) {
+  alert("Invalid profile (UID missing)");
+  window.location.href = "index.html";
+}
+
+/* ================= HELPERS ================= */
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function goLogin() {
+  window.location.href = "login.html";
+}
+
+/* ================= LOAD INSTITUTE PROFILE ================= */
+fetch(`${BASE_URL}/api/institute/${encodeURIComponent(instituteUid)}`)
   .then(res => res.json())
   .then(data => {
-    const i = data.institute;
-    document.getElementById("name").innerText = i.name;
-    document.getElementById("city").innerText = i.city;
-    document.getElementById("address").innerText = i.address || "—";
+    // backend response: { success:true, institute } OR { success:false, message }
+    const i = data && (data.institute || (data.success && data.institute));
+    if (!i) {
+      alert(data?.message || "Institute not found");
+      window.location.href = "index.html";
+      return;
+    }
 
-    const list = document.getElementById("subjects");
-    list.innerHTML = "";
-    (i.subjectsNeeded || []).forEach(s => {
+    document.getElementById("name").innerText = i.name || "Institute";
+    document.getElementById("city").innerText = i.city || "—";
+    document.getElementById("address").innerText = i.address || "Not provided";
+
+    // meta line
+    const subjectsTxt = Array.isArray(i.subjectsNeeded) && i.subjectsNeeded.length
+      ? i.subjectsNeeded.join(", ")
+      : "No subjects listed";
+    document.getElementById("metaLine").innerText = `UID: ${i.uid || instituteUid} · ${subjectsTxt}`;
+
+    // subjects list
+    const ul = document.getElementById("subjects");
+    ul.innerHTML = "";
+
+    if (Array.isArray(i.subjectsNeeded) && i.subjectsNeeded.length > 0) {
+      i.subjectsNeeded.forEach(s => {
+        const li = document.createElement("li");
+        li.className = "item";
+        li.innerHTML = `
+          <div>
+            <div class="itemTitle">${escapeHtml(s)}</div>
+            <div class="meta">Required subject</div>
+          </div>
+          <span class="badge">Needed</span>
+        `;
+        ul.appendChild(li);
+      });
+    } else {
       const li = document.createElement("li");
-      li.innerText = s;
-      list.appendChild(li);
-    });
+      li.className = "item";
+      li.innerHTML = `
+        <div>
+          <div class="itemTitle">No subjects listed</div>
+          <div class="meta">Institute ne abhi subjects add nahi kiye</div>
+        </div>
+        <span class="badge">—</span>
+      `;
+      ul.appendChild(li);
+    }
+  })
+  .catch(() => {
+    alert("Failed to load profile (server error)");
+    window.location.href = "index.html";
   });
-
-/* -------- ACTIONS (STEP-5 FLOW) -------- */
-
-function viewJobs() {
-  // anyone can view jobs (public)
-  window.location.href = "job.html";
-}
-
-function openChat() {
-  // 🔒 only teacher can start chat from here
-  if (!uid || userType !== "teacher") {
-    window.location.href =
-      `login.html?redirect=institute-profile&uid=${instituteUid}`;
-    return;
-  }
-
-  window.location.href =
-    `chat.html?senderUid=${uid}&receiverUid=${instituteUid}`;
-}
 </script>
 
 </body>
