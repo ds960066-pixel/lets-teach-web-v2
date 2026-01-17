@@ -1,115 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Browse Teachers | Lets Teach</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-
-    h2 {
-      color: #2e86de;
-    }
-
-    input, button {
-      padding: 8px;
-      margin: 5px;
-    }
-
-    button {
-      background: #2e86de;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #1b4f72;
-    }
-
-    .teacher {
-      background: white;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border-left: 4px solid #2e86de;
-    }
-
-    .teacher b {
-      display: inline-block;
-      width: 90px;
-    }
-  </style>
+  <!-- ✅ same professional theme -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<h2>Browse Teachers</h2>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<input id="city" placeholder="City">
-<input id="subject" placeholder="Subject">
-<button onclick="search()">Search</button>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<hr>
+  <div class="container">
 
-<div id="list"></div>
+    <div class="card cardPad">
+      <h1 class="hTitle" style="font-size:30px;margin:0 0 8px;">Browse Teachers</h1>
+      <p class="hSub" style="margin:0;">
+        Search teachers by city/subject. Invite/Chat sirf institute login ke baad.
+      </p>
+
+      <hr class="sep" />
+
+      <div class="sectionTitle">Search</div>
+      <div class="searchGrid">
+        <input class="input" id="city" placeholder="City (e.g. Patna, Delhi)" autocomplete="off" />
+        <input class="input" id="subject" placeholder="Subject (e.g. Math, Physics)" autocomplete="off" />
+        <button class="btn" onclick="loadTeachers()">Search</button>
+      </div>
+
+      <p id="hint" class="meta" style="margin-top:10px;"></p>
+    </div>
+
+    <div style="height:14px;"></div>
+
+    <div class="card cardPad">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div class="sectionTitle" style="margin:0;">Results</div>
+        <span id="count" class="badge">0</span>
+      </div>
+
+      <hr class="sep" style="margin:12px 0;" />
+
+      <div id="list" class="list"></div>
+    </div>
+
+    <div class="footer muted">
+      <a href="index.html">Home</a> ·
+      <a href="jobs.html">Jobs</a> ·
+      <a href="login.html">Login</a>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 
-function search() {
-  const city = document.getElementById("city").value;
-  const subject = document.getElementById("subject").value;
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
-  let url = `${BASE_URL}/api/teacher/search?`;
+function setHint(msg) {
+  document.getElementById("hint").innerHTML = msg || "";
+}
 
-  if (city) url += `city=${city}&`;
-  if (subject) url += `subject=${subject}`;
+/* ================= LOAD TEACHERS ================= */
+function loadTeachers() {
+  const city = document.getElementById("city").value.trim();
+  const subject = document.getElementById("subject").value.trim();
 
-  document.getElementById("list").innerHTML = "Loading...";
+  // ✅ Use browse (works after login + shows mix)
+  let url = `${BASE_URL}/api/teacher/browse`;
+  const params = [];
+  if (city) params.push(`city=${encodeURIComponent(city)}`);
+  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+  if (params.length) url += `?${params.join("&")}`;
+
+  const box = document.getElementById("list");
+  box.innerHTML = `<div class="meta">Loading...</div>`;
+  setHint("");
+
+  const myUid = localStorage.getItem("uid");
+  const myRole = localStorage.getItem("role");
+
+  if (!(myUid && myRole === "institute")) {
+    setHint(`🔒 Invite/Chat ke liye <a class="smallLink" href="login.html">Login as institute</a>`);
+  } else {
+    setHint(`✅ Logged-in Institute: invites direct yahi se send kar sakte ho.`);
+  }
 
   fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const list = document.getElementById("list");
-      list.innerHTML = "";
+    .then(r => r.json())
+    .then(d => {
+      const teachers = (d && d.teachers) ? d.teachers : [];
+      document.getElementById("count").innerText = teachers.length;
 
-      if (!data.teachers || data.teachers.length === 0) {
-        list.innerHTML = "<p>No teachers found</p>";
+      if (!teachers.length) {
+        box.innerHTML = `<div class="meta">No teachers found</div>`;
         return;
       }
 
-      data.teachers.forEach(t => {
+      box.innerHTML = "";
+      teachers.forEach(t => {
         const div = document.createElement("div");
-        div.className = "teacher";
+        div.className = "item";
+
+        const exp = Number(t.experience || 0);
+        const verified = (t.verificationStatus === "verified");
+        const badge = verified
+          ? `<span class="badge" style="border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.12);color:#bbf7d0;">Verified</span>`
+          : `<span class="badge" style="border-color:rgba(148,163,184,.25);background:rgba(148,163,184,.10);color:#e5e7eb;">Unverified</span>`;
+
+        const inviteBtn = (myUid && myRole === "institute")
+          ? `<button class="btn" style="padding:10px 12px" onclick="invite('${encodeURIComponent(t.uid)}')">Send Invite</button>`
+          : `<a class="smallLink" href="login.html">Login to invite</a>`;
 
         div.innerHTML = `
-          <p><b>Name:</b> ${t.name}</p>
-          <p><b>Subject:</b> ${t.subject}</p>
-          <p><b>City:</b> ${t.city}</p>
-          <p><b>Experience:</b> ${t.experience || 0} years</p>
+          <div style="flex:1;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <div style="font-weight:800;font-size:16px;">
+                ${escapeHtml(t.name || "Teacher")}
+              </div>
+              ${badge}
+            </div>
 
-          <button onclick="invite('${t.uid}')">
-            Send Invite
-          </button>
+            <div class="meta">
+              ${escapeHtml(t.subject || "—")} · ${escapeHtml(t.city || "—")} · ${exp} yrs · ${escapeHtml(t.role || "both")}
+            </div>
+
+            <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <a class="smallLink" href="teacher-public.html?uid=${encodeURIComponent(t.uid)}">View Profile</a>
+              ${inviteBtn}
+            </div>
+          </div>
+          <div class="badge">Teacher</div>
         `;
 
-        list.appendChild(div);
+        box.appendChild(div);
       });
     })
     .catch(() => {
-      document.getElementById("list").innerHTML =
-        "<p>Error loading teachers</p>";
+      document.getElementById("count").innerText = "0";
+      box.innerHTML = `<div class="meta">Server error</div>`;
     });
 }
 
+/* ================= INVITE (INSTITUTE -> TEACHER) ================= */
 function invite(teacherUid) {
-  const instituteUid = prompt("Enter your Institute UID");
+  const instituteUid = localStorage.getItem("uid");
+  const role = localStorage.getItem("role");
 
-  if (!instituteUid) return;
+  if (!instituteUid || role !== "institute") {
+    alert("Login as institute to invite");
+    window.location.href = "login.html";
+    return;
+  }
 
   fetch(`${BASE_URL}/api/invite/create`, {
     method: "POST",
@@ -118,14 +183,16 @@ function invite(teacherUid) {
       fromType: "institute",
       fromUid: instituteUid,
       toType: "teacher",
-      toUid: teacherUid
+      toUid: decodeURIComponent(teacherUid)
     })
   })
-  .then(res => res.json())
-  .then(data => {
-    alert(data.message || "Invite sent");
-  });
+  .then(r => r.json())
+  .then(d => alert(d.message || (d.success ? "Invite sent" : "Invite failed")))
+  .catch(() => alert("Server error"));
 }
+
+/* ================= INITIAL LOAD ================= */
+loadTeachers();
 </script>
 
 </body>
