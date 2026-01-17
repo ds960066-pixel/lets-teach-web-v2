@@ -1,34 +1,221 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Interview Preparation | Lets Teach</title>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interview Prep | Lets Teach</title>
+
+  <!-- Use same main theme -->
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./interview.css" />
 </head>
- 
+
 <body>
 
-<h2>Teacher Interview Preparation</h2>
-<p>Helpful resources for teaching interviews</p>
+  <!-- NAV (same vibe) -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<ul>
-  <li>
-    <a href="teaching-basics.html">
-      Teaching Basics – Common Interview Questions
-    </a>
-  </li>
-  <li>
-    <a href="demo-class.html">
-      Demo Class – Questions & Tips
-    </a>
-  </li>
-</ul>
+      <div class="navLinks">
+        <a class="pill" href="../index.html">Home</a>
+        <a class="pill" href="../jobs.html">Jobs</a>
+        <a class="pill" href="../login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<hr>
+  <div class="container">
 
-<p>
-  These resources are curated to help teachers prepare confidently
-  for interviews with schools and institutes.
-</p>
+    <!-- HERO -->
+    <div class="card cardPad">
+      <h1 class="hTitle" style="font-size:34px;margin:0 0 8px;">Interview Preparation</h1>
+      <p class="hSub" style="margin:0;">
+        Teacher interviews ke liye best questions, ideal answer points, aur demo class tips.
+      </p>
+
+      <hr class="sep">
+
+      <div class="searchRow2">
+        <input id="q" class="input" placeholder="Search (e.g. classroom, demo, salary, parents)" autocomplete="off" />
+        <select id="cat" class="input">
+          <option value="all">All Categories</option>
+        </select>
+        <button class="btn" onclick="applyFilter()">Search</button>
+        <button class="btn ghost" onclick="resetFilter()">Reset</button>
+      </div>
+
+      <div class="kpis2">
+        <div class="kpi">
+          <b id="count">0</b>
+          <span>Questions</span>
+        </div>
+        <div class="kpi">
+          <b>Teacher</b>
+          <span>Role focused</span>
+        </div>
+        <div class="kpi">
+          <b>Hindi + English</b>
+          <span>Easy prep</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRID -->
+    <div class="grid2" style="margin-top:14px;">
+
+      <!-- LEFT: Quick Links -->
+      <div class="card cardPad">
+        <div class="sectionTitle">Quick Modules</div>
+
+        <div class="item" style="margin-top:10px;">
+          <div>
+            <div class="itemTitle">Teaching Basics</div>
+            <div class="meta">Common interview Qs + answer points</div>
+          </div>
+          <div>
+            <a class="smallLink" href="teaching-basics.html">Open</a>
+          </div>
+        </div>
+
+        <div class="item" style="margin-top:10px;">
+          <div>
+            <div class="itemTitle">Demo Class</div>
+            <div class="meta">10-min demo flow + tips</div>
+          </div>
+          <div>
+            <a class="smallLink" href="demo-class.html">Open</a>
+          </div>
+        </div>
+
+        <hr class="sep">
+
+        <div class="sectionTitle">How to use</div>
+        <div class="meta">
+          1) Category choose karo <br>
+          2) Questions read karo <br>
+          3) “Ideal Answer Points” ko apni language me bol ke practice karo.
+        </div>
+      </div>
+
+      <!-- RIGHT: Questions -->
+      <div class="card cardPad">
+        <div class="sectionTitle">Interview Questions (Best Set)</div>
+        <div id="list" class="list"></div>
+      </div>
+
+    </div>
+
+    <div class="footer muted">
+      <a href="../index.html">Home</a> ·
+      <a href="../jobs.html">Jobs</a> ·
+      <a href="../login.html">Login</a>
+    </div>
+
+  </div>
+
+  <script src="./data.js"></script>
+  <script>
+    // data.js provides: window.INTERVIEW_QS = [{id, cat, q, points, mistakes}]
+    const listEl = document.getElementById("list");
+    const catEl = document.getElementById("cat");
+    const qEl = document.getElementById("q");
+    const countEl = document.getElementById("count");
+
+    // Build category dropdown
+    const cats = ["all", ...Array.from(new Set(window.INTERVIEW_QS.map(x => x.cat)))];
+    cats.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c === "all" ? "All Categories" : c;
+      catEl.appendChild(opt);
+    });
+
+    function esc(s){
+      return String(s||"")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function render(items){
+      countEl.textContent = items.length;
+      if (!items.length){
+        listEl.innerHTML = `<div class="meta">No questions found. Try another keyword.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = "";
+      items.forEach(x => {
+        const div = document.createElement("div");
+        div.className = "qaCard";
+
+        const pts = (x.points||[]).map(p => `<li>${esc(p)}</li>`).join("");
+        const ms  = (x.mistakes||[]).map(m => `<li>${esc(m)}</li>`).join("");
+
+        div.innerHTML = `
+          <div class="qaTop">
+            <div class="badge">${esc(x.cat)}</div>
+            <div class="qaId">#${esc(x.id)}</div>
+          </div>
+
+          <div class="qaQ">${esc(x.q)}</div>
+
+          <details class="qaDetails">
+            <summary>Ideal Answer Points</summary>
+            <ul class="qaList">${pts || "<li>—</li>"}</ul>
+          </details>
+
+          <details class="qaDetails">
+            <summary>Common Mistakes</summary>
+            <ul class="qaList warn">${ms || "<li>—</li>"}</ul>
+          </details>
+        `;
+        listEl.appendChild(div);
+      });
+    }
+
+    function applyFilter(){
+      const q = (qEl.value || "").trim().toLowerCase();
+      const cat = catEl.value;
+
+      const out = window.INTERVIEW_QS.filter(x => {
+        const inCat = (cat === "all") || (x.cat === cat);
+        if (!inCat) return false;
+
+        if (!q) return true;
+
+        const blob = [
+          x.q,
+          ...(x.points||[]),
+          ...(x.mistakes||[])
+        ].join(" ").toLowerCase();
+
+        return blob.includes(q);
+      });
+
+      render(out);
+    }
+
+    function resetFilter(){
+      qEl.value = "";
+      catEl.value = "all";
+      render(window.INTERVIEW_QS);
+    }
+
+    // initial
+    render(window.INTERVIEW_QS);
+
+    // Enter key
+    qEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") applyFilter();
+    });
+  </script>
 
 </body>
 </html>
