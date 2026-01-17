@@ -1,73 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Resume | Lets Teach</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #ececec;
-      padding: 20px;
-    }
-
-    .resume {
-      background: white;
-      max-width: 800px;
-      margin: auto;
-      padding: 30px;
-      border-radius: 6px;
-    }
-
-    h1 {
-      margin-bottom: 5px;
-      color: #2e86de;
-    }
-
-    h3 {
-      border-bottom: 2px solid #2e86de;
-      padding-bottom: 5px;
-      margin-top: 25px;
-    }
-
-    .tag {
-      display: inline-block;
-      background: #d6eaf8;
-      padding: 6px 10px;
-      margin: 5px 5px 0 0;
-      border-radius: 4px;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 10px 15px;
-      background: #27ae60;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<div class="resume">
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-  <h1 id="name">Loading...</h1>
-  <p><b>📞 Phone:</b> <span id="phone"></span></p>
-  <p><b>📍 City:</b> <span id="city"></span></p>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-  <h3>Professional Summary</h3>
-  <p id="about">—</p>
+  <div class="container">
 
-  <h3>Education</h3>
-  <p id="education">—</p>
+    <div class="card cardPad">
+      <h2 id="name" style="margin:0 0 6px;">Loading...</h2>
+      <div class="meta" id="metaLine">Fetching resume...</div>
 
-  <h3>Skills</h3>
-  <div id="skills"></div>
+      <hr class="sep">
 
-  <button onclick="window.print()">Download Resume (PDF)</button>
+      <div class="grid2">
 
-</div>
+        <!-- LEFT -->
+        <div class="card cardPad">
+          <div class="sectionTitle">Professional Summary</div>
+          <div id="about" class="meta">—</div>
+
+          <hr class="sep">
+
+          <div class="sectionTitle">Education</div>
+          <div id="education" class="meta">—</div>
+
+          <hr class="sep">
+
+          <div class="sectionTitle">Resume PDF</div>
+          <div id="pdfBox" class="meta">—</div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="card cardPad">
+          <div class="sectionTitle">Skills</div>
+          <div id="skills" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+
+          <hr class="sep">
+
+          <button class="btn" onclick="window.print()">Download (Print to PDF)</button>
+          <div class="meta" style="margin-top:10px;">
+            Tip: Browser print dialog me “Save as PDF” choose kar lo.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="meta">Lets Teach · Teacher Resume</span>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
@@ -81,40 +86,87 @@ if (!uid) {
   window.location.href = "login.html";
 }
 
+/* ================= HELPERS ================= */
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function buildFileUrl(resumeUrl) {
+  if (!resumeUrl) return null;
+  if (resumeUrl.startsWith("http")) return resumeUrl;
+  if (resumeUrl.startsWith("/")) return `${BASE_URL}${resumeUrl}`;
+  return `${BASE_URL}/${resumeUrl}`;
+}
+
 /* ================= LOAD RESUME ================= */
-fetch(`${BASE_URL}/api/teacher/${uid}`)
+fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
   .then(res => res.json())
   .then(data => {
-    if (!data.success) {
+    if (!data.success || !data.teacher) {
       alert("Teacher not found");
+      window.location.href = "index.html";
       return;
     }
 
     const t = data.teacher;
 
-    document.getElementById("name").innerText = t.name;
-    document.getElementById("phone").innerText = t.phone || "—";
-    document.getElementById("city").innerText = t.city || "—";
-    document.getElementById("about").innerText =
-      t.about || "No summary added yet";
-    document.getElementById("education").innerText =
-      t.education || "—";
+    document.getElementById("name").innerText = t.name ? t.name : "Teacher Resume";
 
+    const meta = [];
+    if (t.subject) meta.push(escapeHtml(t.subject));
+    if (t.city) meta.push(escapeHtml(t.city));
+    meta.push(`${Number(t.experience || 0)} yrs`);
+    document.getElementById("metaLine").innerHTML =
+      `<span class="badge">${meta.join(" · ")}</span>
+       <div class="meta" style="margin-top:10px;"><b>Phone:</b> ${escapeHtml(t.phone || "—")}</div>`;
+
+    document.getElementById("about").innerText =
+      t.about ? t.about : "No summary added yet";
+
+    document.getElementById("education").innerText =
+      t.education ? t.education : "—";
+
+    // Skills
     const skillsBox = document.getElementById("skills");
     skillsBox.innerHTML = "";
-
-    if (t.skills && t.skills.length) {
+    if (Array.isArray(t.skills) && t.skills.length) {
       t.skills.forEach(s => {
-        const span = document.createElement("span");
-        span.className = "tag";
-        span.innerText = s;
-        skillsBox.appendChild(span);
+        const tag = document.createElement("span");
+        tag.className = "badge";
+        tag.style.borderColor = "rgba(59,130,246,.32)";
+        tag.style.background = "rgba(59,130,246,.10)";
+        tag.style.color = "#bfdbfe";
+        tag.innerText = s;
+        skillsBox.appendChild(tag);
       });
     } else {
-      skillsBox.innerText = "—";
+      skillsBox.innerHTML = `<div class="meta">—</div>`;
+    }
+
+    // PDF Links
+    const pdfBox = document.getElementById("pdfBox");
+    const pdfUrl = buildFileUrl(t.resumeUrl);
+
+    if (pdfUrl) {
+      pdfBox.innerHTML = `
+        ✅ <b>Uploaded</b><br><br>
+        <a class="smallLink" href="${pdfUrl}" target="_blank">View PDF</a>
+        &nbsp; · &nbsp;
+        <a class="smallLink" href="${pdfUrl}" download>Download PDF</a>
+      `;
+    } else {
+      pdfBox.innerHTML = `❌ <b>Not uploaded</b><br><br>
+        <span class="meta">Teacher ne abhi PDF upload nahi kiya.</span>`;
     }
   })
-  .catch(() => alert("Server error"));
+  .catch(() => {
+    alert("Server error");
+  });
 </script>
 
 </body>
