@@ -2,74 +2,133 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Registration | Lets Teach</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-    input {
-      padding: 8px;
-      width: 260px;
-      margin-bottom: 10px;
-    }
-    button {
-      padding: 10px 16px;
-      background: #2e86de;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1b4f72;
-    }
-  </style>
+  <!-- ✅ SAME THEME -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<script>
-/* ================= AUTH + ROLE GUARD ================= */
-if (!localStorage.uid || localStorage.role !== "teacher") {
-  window.location.href = "login.html";
-}
-</script>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<h2>Teacher Registration</h2>
-<p>Please complete your profile</p>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<p><b>UID:</b> <span id="uidText"></span></p>
+  <div class="container">
 
-<input id="name" placeholder="Name" />
-<input id="phone" placeholder="Phone" />
-<input id="subject" placeholder="Subject" />
-<input id="city" placeholder="City" />
-<input id="experience" placeholder="Experience (years)" />
+    <script>
+      /* ================= AUTH + ROLE GUARD ================= */
+      if (!localStorage.uid || localStorage.role !== "teacher") {
+        window.location.href = "login.html";
+      }
+    </script>
 
-<br>
-<button onclick="registerTeacher()">Register & Continue</button>
+    <div class="card cardPad" style="max-width:760px;margin:0 auto;">
+      <h1 style="margin:0 0 8px;">Teacher Registration</h1>
+      <p class="meta" style="margin-top:0;">
+        Complete your profile to start applying & connecting with institutes.
+      </p>
+
+      <div class="kpi" style="margin-top:10px;">
+        <b>Your UID</b>
+        <span id="uidText">—</span>
+      </div>
+
+      <hr class="sep" />
+
+      <div class="sectionTitle">Basic Details</div>
+
+      <div class="searchGrid">
+        <input class="input" id="name" placeholder="Full Name" autocomplete="name" />
+        <input class="input" id="phone" placeholder="Phone (10 digits)" autocomplete="tel" />
+        <button class="btn" onclick="registerTeacher()">Register</button>
+      </div>
+
+      <div style="height:10px;"></div>
+
+      <div class="searchGrid">
+        <input class="input" id="subject" placeholder="Subject (e.g. Math, Physics)" />
+        <input class="input" id="city" placeholder="City (e.g. Patna, Delhi)" />
+        <input class="input" id="experience" placeholder="Experience (years) e.g. 0, 2, 5" inputmode="numeric" />
+      </div>
+
+      <div class="kpi" style="margin-top:12px;">
+        <b>Note</b>
+        <span>Verification later admin karega. Tum registration ke baad dashboard me aa jaoge.</span>
+      </div>
+
+      <hr class="sep" />
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="pill" href="login.html">Back</a>
+        <a class="pill" href="privacy.html">Privacy</a>
+      </div>
+
+      <div id="msg" class="meta" style="margin-top:12px;"></div>
+    </div>
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 
 /* ================= SOURCE OF TRUTH ================= */
 const uid = localStorage.getItem("uid");
-document.getElementById("uidText").innerText = uid;
+document.getElementById("uidText").innerText = uid || "—";
+
+/* ================= HELPERS ================= */
+function setMsg(text) {
+  document.getElementById("msg").innerText = text || "";
+}
+
+function onlyDigits(s) {
+  return String(s || "").replace(/\D/g, "");
+}
 
 /* ================= REGISTER ================= */
 async function registerTeacher() {
   const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
+  const phoneRaw = document.getElementById("phone").value.trim();
+  const phone = onlyDigits(phoneRaw);
   const subject = document.getElementById("subject").value.trim();
   const city = document.getElementById("city").value.trim();
-  const experience = document.getElementById("experience").value.trim();
+  const expRaw = document.getElementById("experience").value.trim();
+  const experience = expRaw === "" ? 0 : Number(expRaw);
 
-  if (!name || !phone || !subject || !city) {
-    alert("Please fill all required fields");
+  if (!uid) {
+    alert("UID missing. Please login again.");
+    window.location.href = "login.html";
     return;
   }
+
+  if (!name || !phone || !subject || !city) {
+    alert("Name, Phone, Subject, City are required");
+    return;
+  }
+
+  if (phone.length < 10) {
+    alert("Please enter a valid phone number");
+    return;
+  }
+
+  if (Number.isNaN(experience) || experience < 0) {
+    alert("Experience must be a valid number (0 or more)");
+    return;
+  }
+
+  setMsg("Saving...");
 
   try {
     const res = await fetch(`${BASE_URL}/api/teacher/create`, {
@@ -88,13 +147,15 @@ async function registerTeacher() {
     const data = await res.json();
 
     if (!data.success) {
+      setMsg("");
       alert(data.message || "Registration failed");
       return;
     }
 
-    // ✅ AUTO REDIRECT TO DASHBOARD
+    setMsg("✅ Registered! Redirecting...");
     window.location.href = "teacher-dashboard.html";
   } catch (err) {
+    setMsg("");
     alert("Server error");
   }
 }
