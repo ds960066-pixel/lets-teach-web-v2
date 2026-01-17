@@ -1,51 +1,196 @@
 <!DOCTYPE html>
-<html>
-<head><title>Teacher Profile</title></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Teacher Profile | Lets Teach</title>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
 <body>
 
-<h2 id="name">Loading...</h2>
-<p id="info"></p>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<div id="actions">
-  <button onclick="invite()">Invite</button>
-  <button onclick="chat()">Chat</button>
-</div>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="card cardPad" style="max-width: 780px; margin: 0 auto;">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+        <div>
+          <h1 id="name" style="margin:0 0 6px;">Loading...</h1>
+          <div class="meta" id="info">Fetching teacher details...</div>
+        </div>
+        <span class="badge" id="badge">Teacher</span>
+      </div>
+
+      <hr class="sep" />
+
+      <div class="grid2">
+        <div class="kpi">
+          <b>Subject</b>
+          <span id="subject">—</span>
+        </div>
+        <div class="kpi">
+          <b>City</b>
+          <span id="city">—</span>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <b>Experience</b>
+          <span id="exp">—</span>
+        </div>
+        <div class="kpi">
+          <b>Role</b>
+          <span id="role">—</span>
+        </div>
+        <div class="kpi">
+          <b>UID</b>
+          <span id="uidShow">—</span>
+        </div>
+      </div>
+
+      <hr class="sep" />
+
+      <div id="actionsBox" class="kpi" style="display:none;">
+        <b>Actions (Institute Only)</b>
+        <span style="display:block;margin-top:6px;">
+          Invite bhejo ya chat start karo (invite accepted hone ke baad).
+        </span>
+
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn" onclick="invite()">Send Invite</button>
+          <button class="btn" onclick="chat()">Open Chat</button>
+          <a class="pill" href="index.html">Back</a>
+        </div>
+      </div>
+
+      <div id="loginHint" class="kpi" style="display:none;">
+        <b>Want to invite or chat?</b>
+        <span style="display:block;margin-top:6px;">
+          Please login as an <b>Institute</b> to send invite/chat.
+        </span>
+        <div style="margin-top:10px;">
+          <a class="pill" href="login.html">Login</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <a href="privacy.html">Privacy</a> ·
+      <a href="interview/index.html">Interview Preps</a>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
-const uid = localStorage.getItem("uid");
-const type = localStorage.getItem("userType");
+
+const myUid = localStorage.getItem("uid");
+const myRole = localStorage.getItem("role"); // ✅ FIXED (userType nahi)
+
 const teacherUid = new URLSearchParams(location.search).get("uid");
 
-if (!teacherUid) location.href = "teacher.html";
-if (!(uid && type === "institute"))
-  actions.style.display = "none";
+if (!teacherUid) {
+  window.location.href = "index.html";
+}
 
-fetch(`${BASE_URL}/api/teacher/${teacherUid}`)
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* ================= SHOW/HIDE ACTIONS ================= */
+const actionsBox = document.getElementById("actionsBox");
+const loginHint = document.getElementById("loginHint");
+
+if (myUid && myRole === "institute") {
+  actionsBox.style.display = "block";
+} else {
+  loginHint.style.display = "block";
+}
+
+/* ================= LOAD TEACHER ================= */
+fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(teacherUid)}`)
   .then(r => r.json())
   .then(d => {
-    const t = d.teacher;
-    name.innerText = t.name;
-    info.innerText =
-      `${t.subject} | ${t.city} | ${t.experience || 0} yrs`;
+    const t = d.teacher || (d.success && d.teacher);
+    if (!t) {
+      alert("Teacher not found");
+      window.location.href = "index.html";
+      return;
+    }
+
+    document.getElementById("name").innerText = t.name || "Teacher";
+    document.getElementById("info").innerText =
+      `${t.subject || "—"} · ${t.city || "—"} · ${Number(t.experience || 0)} yrs`;
+
+    document.getElementById("subject").innerText = t.subject || "—";
+    document.getElementById("city").innerText = t.city || "—";
+    document.getElementById("exp").innerText = `${Number(t.experience || 0)} yrs`;
+    document.getElementById("role").innerText = t.role || "both";
+    document.getElementById("uidShow").innerText = t.uid || teacherUid;
+
+    // badge (optional)
+    if (t.verificationStatus === "verified") {
+      document.getElementById("badge").innerText = "Verified Teacher";
+    }
+  })
+  .catch(() => {
+    alert("Server error loading teacher");
   });
 
+/* ================= INVITE ================= */
 function invite() {
+  if (!myUid || myRole !== "institute") {
+    alert("Login as institute to invite");
+    window.location.href = "login.html";
+    return;
+  }
+
   fetch(`${BASE_URL}/api/invite/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       fromType: "institute",
-      fromUid: uid,
+      fromUid: myUid,
       toType: "teacher",
       toUid: teacherUid
     })
-  }).then(r => r.json()).then(d => alert(d.message));
+  })
+  .then(r => r.json())
+  .then(d => alert(d.message || "Invite sent"))
+  .catch(() => alert("Invite failed"));
 }
 
+/* ================= CHAT ================= */
 function chat() {
-  location.href =
-    `chat.html?senderUid=${uid}&receiverUid=${teacherUid}`;
+  if (!myUid || myRole !== "institute") {
+    alert("Login as institute to chat");
+    window.location.href = "login.html";
+    return;
+  }
+  location.href = `chat.html?senderUid=${encodeURIComponent(myUid)}&receiverUid=${encodeURIComponent(teacherUid)}`;
 }
 </script>
 
