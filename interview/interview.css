@@ -1,0 +1,79 @@
+/* Extra small layout helpers for interview pages */
+.searchRow2{
+  display:grid;
+  grid-template-columns: 1fr 260px auto auto;
+  gap:10px;
+  margin-top:14px;
+}
+@media (max-width:900px){
+  .searchRow2{grid-template-columns:1fr; }
+}
+
+.btn.ghost{
+  background: rgba(15,26,51,.55);
+  border:1px solid var(--stroke);
+  color: var(--text);
+  font-weight:700;
+}
+
+.kpis2{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
+  margin-top:14px;
+}
+@media (max-width:700px){
+  .kpis2{grid-template-columns:1fr;}
+}
+
+/* QA Cards */
+.qaCard{
+  padding:14px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background:rgba(11,18,32,.28);
+}
+.qaCard + .qaCard{margin-top:10px;}
+
+.qaTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.qaId{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.qaQ{
+  margin-top:10px;
+  font-size:15px;
+  font-weight:800;
+  line-height:1.45;
+}
+
+.qaDetails{
+  margin-top:10px;
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  padding:10px 12px;
+  background:rgba(15,26,51,.35);
+}
+.qaDetails summary{
+  cursor:pointer;
+  font-weight:800;
+}
+.qaList{
+  margin:10px 0 0;
+  padding-left:18px;
+  color:var(--text);
+}
+.qaList li{
+  margin:6px 0;
+  color:rgba(229,231,235,.92);
+}
+.qaList.warn li{
+  color:rgba(251,191,36,.95);
+}
