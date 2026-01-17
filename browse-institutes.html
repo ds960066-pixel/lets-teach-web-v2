@@ -1,57 +1,189 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Browse Institutes | Lets Teach</title>
+
+  <!-- ✅ same theme -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-<h2>Browse Institutes</h2>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<input id="city" placeholder="City">
-<button onclick="search()">Search</button>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<ul id="list"></ul>
+  <div class="container">
+
+    <div class="card cardPad">
+      <h1 class="hTitle" style="font-size:30px;margin:0 0 8px;">Browse Institutes</h1>
+      <p class="hSub" style="margin:0;">
+        City search karke institutes dekho. Invite/Chat ke liye teacher login required.
+      </p>
+
+      <hr class="sep" />
+
+      <div class="sectionTitle">Search</div>
+      <div class="searchGrid" style="grid-template-columns: 1fr auto auto;">
+        <input class="input" id="city" placeholder="City (e.g. Patna, Delhi)" autocomplete="off" />
+        <button class="btn" onclick="loadInstitutes()">Search</button>
+        <button class="btn ghost" onclick="clearFilter()">Clear</button>
+      </div>
+
+      <p id="hint" class="meta" style="margin-top:10px;"></p>
+    </div>
+
+    <div style="height:14px;"></div>
+
+    <div class="card cardPad">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div class="sectionTitle" style="margin:0;">Results</div>
+        <span id="count" class="badge">0</span>
+      </div>
+
+      <hr class="sep" style="margin:12px 0;" />
+
+      <div id="list" class="list"></div>
+    </div>
+
+    <div class="footer muted">
+      <a href="index.html">Home</a> ·
+      <a href="jobs.html">Jobs</a> ·
+      <a href="login.html">Login</a>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
-const MY_UID = "demof12345"; // teacher uid
 
-function search() {
-  const city = document.getElementById("city").value;
-  const url = `${BASE_URL}/api/institute/search?city=${encodeURIComponent(city)}`;
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function setHint(msg) {
+  document.getElementById("hint").innerHTML = msg || "";
+}
+
+function clearFilter() {
+  document.getElementById("city").value = "";
+  loadInstitutes();
+}
+
+/* ================= LOAD INSTITUTES ================= */
+function loadInstitutes() {
+  const city = document.getElementById("city").value.trim();
+
+  let url = `${BASE_URL}/api/institute/browse`;
+  if (city) url += `?city=${encodeURIComponent(city)}`;
+
+  const box = document.getElementById("list");
+  box.innerHTML = `<div class="meta">Loading...</div>`;
+  setHint("");
+
+  const myUid = localStorage.getItem("uid");
+  const myRole = localStorage.getItem("role");
+
+  if (!(myUid && myRole === "teacher")) {
+    setHint(`🔒 Invite/Chat ke liye <a class="smallLink" href="login.html">Login as teacher</a>`);
+  } else {
+    setHint(`✅ Logged-in Teacher: invites direct yahi se send kar sakte ho.`);
+  }
 
   fetch(url)
     .then(r => r.json())
     .then(d => {
-      const ul = document.getElementById("list");
-      ul.innerHTML = "";
+      const institutes = (d && d.institutes) ? d.institutes : [];
+      document.getElementById("count").innerText = institutes.length;
 
-      (d.institutes || []).forEach(i => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <b>${i.name || i.uid}</b> — ${i.city}<br>
-          <button onclick="invite('${i.uid}')">Send Invite</button>
-          <hr>
+      if (!institutes.length) {
+        box.innerHTML = `<div class="meta">No institutes found</div>`;
+        return;
+      }
+
+      box.innerHTML = "";
+      institutes.forEach(i => {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        const subjects = Array.isArray(i.subjectsNeeded) ? i.subjectsNeeded.join(", ") : "—";
+
+        const inviteBtn = (myUid && myRole === "teacher")
+          ? `<button class="btn" style="padding:10px 12px" onclick="invite('${encodeURIComponent(i.uid)}')">Send Invite</button>`
+          : `<a class="smallLink" href="login.html">Login to invite</a>`;
+
+        div.innerHTML = `
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:16px;">
+              ${escapeHtml(i.name || "Institute")}
+            </div>
+            <div class="meta">
+              ${escapeHtml(i.city || "—")} · Needs: ${escapeHtml(subjects)}
+            </div>
+
+            <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <a class="smallLink" href="institute.html?uid=${encodeURIComponent(i.uid)}">View Profile</a>
+              ${inviteBtn}
+            </div>
+          </div>
+          <div class="badge">Institute</div>
         `;
-        ul.appendChild(li);
+
+        box.appendChild(div);
       });
+    })
+    .catch(() => {
+      document.getElementById("count").innerText = "0";
+      box.innerHTML = `<div class="meta">Server error</div>`;
     });
 }
 
+/* ================= INVITE (TEACHER -> INSTITUTE) ================= */
 function invite(instituteUid) {
+  const myUid = localStorage.getItem("uid");
+  const myRole = localStorage.getItem("role");
+
+  if (!myUid || myRole !== "teacher") {
+    alert("Login as teacher to invite");
+    window.location.href = "login.html";
+    return;
+  }
+
   fetch(`${BASE_URL}/api/invite/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       fromType: "teacher",
-      fromUid: MY_UID,
+      fromUid: myUid,
       toType: "institute",
-      toUid: instituteUid
+      toUid: decodeURIComponent(instituteUid)
     })
   })
   .then(r => r.json())
-  .then(d => alert(d.success ? "Invite sent" : d.message));
+  .then(d => alert(d.message || (d.success ? "Invite sent" : "Invite failed")))
+  .catch(() => alert("Server error"));
 }
+
+/* ================= INITIAL LOAD ================= */
+loadInstitutes();
 </script>
 
 </body>
