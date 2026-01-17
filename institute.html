@@ -2,80 +2,167 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Browse Institutes | Lets Teach</title>
+
+  <!-- ✅ SAME PROFESSIONAL THEME -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
-<h2>Browse Institutes</h2>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<input id="city" placeholder="Enter city">
-<button onclick="loadInstitutes()">Search</button>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<hr>
+  <div class="container">
 
-<ul id="list"></ul>
+    <!-- HEADER CARD -->
+    <div class="card cardPad">
+      <h1 class="hTitle" style="font-size:30px;margin:0 0 8px;">Browse Institutes</h1>
+      <p class="hSub" style="margin:0;">
+        City search karke institutes dekho. Invite/Chat ke liye teacher login required.
+      </p>
+
+      <hr class="sep" />
+
+      <!-- SEARCH -->
+      <div class="sectionTitle">Search</div>
+      <div class="searchGrid" style="grid-template-columns: 1fr auto;">
+        <input class="input" id="city" placeholder="City (e.g. Patna, Delhi)" autocomplete="off" />
+        <button class="btn" onclick="loadInstitutes()">Search</button>
+      </div>
+
+      <p class="meta" style="margin-top:10px;">
+        Tip: City blank chhodoge to all institutes show honge.
+      </p>
+    </div>
+
+    <div style="height:14px;"></div>
+
+    <!-- RESULTS CARD -->
+    <div class="card cardPad">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div class="sectionTitle" style="margin:0;">Results</div>
+        <span id="count" class="badge">0</span>
+      </div>
+
+      <hr class="sep" style="margin:12px 0;" />
+
+      <div id="list" class="list"></div>
+
+      <div id="hint" class="meta" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="footer muted">
+      <a href="index.html">Home</a> ·
+      <a href="jobs.html">Jobs</a> ·
+      <a href="login.html">Login</a>
+    </div>
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function setHint(msg) {
+  document.getElementById("hint").innerHTML = msg || "";
+}
 
 /* ================= LOAD INSTITUTES ================= */
 function loadInstitutes() {
   const city = document.getElementById("city").value.trim();
   let url = `${BASE_URL}/api/institute/browse`;
+  if (city) url += `?city=${encodeURIComponent(city)}`;
 
-  if (city) {
-    url += `?city=${encodeURIComponent(city)}`;
-  }
+  const box = document.getElementById("list");
+  box.innerHTML = `<div class="meta">Loading...</div>`;
+  setHint("");
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      const ul = document.getElementById("list");
-      ul.innerHTML = "";
+      const list = (data && data.institutes) ? data.institutes : [];
+      document.getElementById("count").innerText = list.length;
 
-      if (!data.institutes || data.institutes.length === 0) {
-        ul.innerHTML = "<li>No institutes found</li>";
+      if (!list.length) {
+        box.innerHTML = `<div class="meta">No institutes found</div>`;
         return;
       }
 
       const myRole = localStorage.getItem("role");
       const myUid = localStorage.getItem("uid");
 
-      data.institutes.forEach(i => {
-        const li = document.createElement("li");
+      // UX hint
+      if (!(myRole === "teacher" && myUid)) {
+        setHint(`🔒 Invite/Chat ke liye <a class="smallLink" href="login.html">Login as teacher</a>`);
+      } else {
+        setHint(`✅ Logged-in Teacher: Invite/Chat dashboard se hoga`);
+      }
 
-        li.innerHTML = `
-          <b>${i.name}</b> (${i.city})<br>
-          Subjects: ${(i.subjectsNeeded || []).join(", ") || "—"}<br>
-          <a href="institute.html?uid=${i.uid}">
-            View Profile
-          </a>
-          <br>
+      box.innerHTML = "";
+      list.forEach(i => {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        const name = escapeHtml(i.name || "Institute");
+        const cityTxt = escapeHtml(i.city || "—");
+        const subjects = Array.isArray(i.subjectsNeeded) ? i.subjectsNeeded.join(", ") : "—";
+
+        // IMPORTANT: your file name is institute.html ✅
+        const profileLink = `institute.html?uid=${encodeURIComponent(i.uid)}`;
+
+        let actions = `
+          <a class="smallLink" href="${profileLink}">View Profile</a>
         `;
 
         if (myRole === "teacher" && myUid) {
-          li.innerHTML += `
-            <small>
-              <a href="login.html">
-                Go to dashboard to invite
-              </a>
-            </small>
-          `;
+          // your workflow: teacher invites from dashboard
+          actions += ` &nbsp;·&nbsp; <a class="smallLink" href="teacher-institute-browse.html">Go to dashboard invite</a>`;
         } else {
-          li.innerHTML += `
-            <small>
-              <a href="login.html">
-                Login as teacher to invite
-              </a>
-            </small>
-          `;
+          actions += ` &nbsp;·&nbsp; <a class="smallLink" href="login.html">Login to invite</a>`;
         }
 
-        li.innerHTML += "<hr>";
-        ul.appendChild(li);
+        div.innerHTML = `
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:16px;">${name}</div>
+            <div class="meta">
+              ${cityTxt} · Needs: ${escapeHtml(subjects || "—")}
+            </div>
+            <div style="margin-top:8px;">
+              ${actions}
+            </div>
+          </div>
+          <div class="badge">Institute</div>
+        `;
+
+        box.appendChild(div);
       });
     })
-    .catch(() => alert("Server error"));
+    .catch(() => {
+      document.getElementById("count").innerText = "0";
+      box.innerHTML = `<div class="meta">Server error</div>`;
+    });
 }
 
 /* ================= INITIAL LOAD ================= */
