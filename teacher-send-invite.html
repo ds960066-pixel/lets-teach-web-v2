@@ -1,51 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Send Invite | Lets Teach</title>
+
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
-<h2>Teacher → Institute Invite</h2>
+  <!-- AUTH GUARD (Teacher only) -->
+  <script>
+    if (!localStorage.uid || localStorage.role !== "teacher") {
+      window.location.href = "login.html";
+    }
+  </script>
 
-<input id="teacherUid" value="demof12345" readonly><br><br>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<input id="instituteUid" placeholder="Enter Institute UID"><br><br>
+      <div class="navLinks">
+        <a class="pill" href="teacher-dashboard.html">Dashboard</a>
+        <a class="pill" href="browse-institutes.html">Browse Institutes</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+      </div>
+    </div>
+  </div>
 
-<button onclick="sendInvite()">Send Invite</button>
+  <div class="container">
 
-<p id="result"></p>
+    <div class="hero">
+      <h1 class="hTitle">Invite an institute</h1>
+      <p class="hSub">
+        Institute UID डालकर invite भेजो. Invite accept होने के बाद chat unlock होगा.
+      </p>
+    </div>
+
+    <div class="card cardPad">
+
+      <div class="sectionTitle">Your Teacher UID</div>
+      <input class="input" id="teacherUid" readonly />
+
+      <hr class="sep">
+
+      <div class="sectionTitle">Institute UID</div>
+      <input class="input" id="instituteUid" placeholder="Enter institute UID" autocomplete="off" />
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+        <button class="btn" onclick="sendInvite()">Send Invite</button>
+        <a class="pill" href="browse-institutes.html">Find Institutes</a>
+      </div>
+
+      <div id="result" class="meta" style="margin-top:12px;"></div>
+
+    </div>
+
+    <div class="footer">
+      <span class="meta">Lets Teach · Teacher → Institute Invite</span>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 
-function sendInvite() {
-  const teacherUid = document.getElementById("teacherUid").value;
-  const instituteUid = document.getElementById("instituteUid").value;
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+const teacherUid = localStorage.getItem("uid");
+document.getElementById("teacherUid").value = teacherUid || "";
+
+async function sendInvite() {
+  const instituteUid = document.getElementById("instituteUid").value.trim();
+  const result = document.getElementById("result");
 
   if (!instituteUid) {
     alert("Institute UID required");
     return;
   }
 
-  fetch(`${BASE_URL}/api/invite/create`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      fromType: "teacher",
-      fromUid: teacherUid,
-      toType: "institute",
-      toUid: instituteUid
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("result").innerText =
-      data.success ? "Invite sent successfully ✅" : data.message;
-  })
-  .catch(() => {
-    document.getElementById("result").innerText =
-      "Error sending invite";
-  });
+  result.innerHTML = `<span class="meta">Sending...</span>`;
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/invite/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fromType: "teacher",
+        fromUid: teacherUid,
+        toType: "institute",
+        toUid: instituteUid
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      result.innerHTML = `<span class="badge">✅ Invite sent</span>
+        <div class="meta" style="margin-top:8px;">Now wait for institute to accept.</div>`;
+    } else {
+      result.innerHTML = `<span class="meta">❌ ${escapeHtml(data.message || "Invite failed")}</span>`;
+    }
+  } catch (e) {
+    result.innerHTML = `<span class="meta">❌ Error sending invite</span>`;
+  }
 }
 </script>
 
