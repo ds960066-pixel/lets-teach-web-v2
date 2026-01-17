@@ -2,52 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Profile | Lets Teach</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #f4f4f4;
-      padding: 20px;
-    }
-    .card {
-      background: #fff;
-      padding: 20px;
-      max-width: 500px;
-      margin: auto;
-      border-radius: 6px;
-    }
-    button {
-      padding: 8px 12px;
-      background: #2e86de;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1b4f72;
-    }
-  </style>
+  <!-- ✅ Use your global professional UI -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<div class="card">
-  <h2 id="name">Loading...</h2>
-  <p><b>Subject:</b> <span id="subject"></span></p>
-  <p><b>City:</b> <span id="city"></span></p>
-  <p><b>Experience:</b> <span id="experience"></span> yrs</p>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <a class="brand" href="index.html">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </a>
 
-  <hr>
+      <div class="navLinks">
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="interview/index.html">Interview Preps</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-  <h3>Interested in this teacher?</h3>
-  <p>
-    To invite or chat with this teacher,
-    please login or register as an institute.
-  </p>
+  <div class="container">
 
-  <button onclick="goLogin()">Login / Register</button>
-</div>
+    <div class="hero">
+      <h1 class="hTitle">Teacher Profile</h1>
+      <p class="hSub">
+        Public profile view. Invite / chat ke liye institute login required.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="cardPad">
+
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <div>
+            <div id="name" style="font-size:22px;font-weight:800">Loading...</div>
+            <div class="meta" id="metaLine">Fetching details…</div>
+          </div>
+          <span id="statusBadge" class="badge" style="display:none">Verified</span>
+        </div>
+
+        <hr class="sep" />
+
+        <div class="grid2">
+          <div class="kpi">
+            <b id="subject">—</b>
+            <span>Subject</span>
+          </div>
+          <div class="kpi">
+            <b id="city">—</b>
+            <span>City</span>
+          </div>
+          <div class="kpi">
+            <b><span id="experience">0</span> yrs</b>
+            <span>Experience</span>
+          </div>
+        </div>
+
+        <hr class="sep" />
+
+        <div class="card" style="background:rgba(11,18,32,.28);border:1px solid var(--stroke);border-radius:14px">
+          <div class="cardPad">
+            <div style="font-weight:800;margin-bottom:6px">Interested in this teacher?</div>
+            <div class="meta" style="margin:0">
+              Invite / chat start karne ke liye <b>Institute</b> login required.
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+              <a class="btn" href="login.html">Login / Register</a>
+              <a class="pill" href="index.html">Back to Search</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer">
+      © Lets Teach · <a class="smallLink" href="privacy.html">Privacy</a>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
@@ -59,30 +99,61 @@ if (!teacherUid) {
   window.location.href = "index.html";
 }
 
+/* ========= SAFE TEXT ========= */
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
 /* ================= LOAD TEACHER PROFILE ================= */
-fetch(`${BASE_URL}/api/teacher/${teacherUid}`)
+fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(teacherUid)}`)
   .then(res => res.json())
   .then(data => {
-    if (!data.teacher) {
+    if (!data || !data.teacher) {
       alert("Teacher not found");
       window.location.href = "index.html";
       return;
     }
 
     const t = data.teacher;
-    document.getElementById("name").innerText = t.name;
-    document.getElementById("subject").innerText = t.subject;
-    document.getElementById("city").innerText = t.city;
-    document.getElementById("experience").innerText = t.experience || 0;
+
+    document.getElementById("name").innerText = t.name || "Teacher";
+    document.getElementById("subject").innerText = t.subject || "—";
+    document.getElementById("city").innerText = t.city || "—";
+    document.getElementById("experience").innerText = Number(t.experience || 0);
+
+    const meta = [
+      t.subject ? escapeHtml(t.subject) : "—",
+      t.city ? escapeHtml(t.city) : "—",
+      `${Number(t.experience || 0)} yrs`
+    ].join(" · ");
+
+    document.getElementById("metaLine").innerHTML = meta;
+
+    // optional badge if your backend returns verificationStatus
+    if (t.verificationStatus) {
+      const badge = document.getElementById("statusBadge");
+      badge.style.display = "inline-block";
+      badge.textContent =
+        t.verificationStatus === "verified" ? "Verified" :
+        t.verificationStatus === "rejected" ? "Rejected" : "Unverified";
+
+      // quick color tweak using inline (keeps your theme)
+      if (t.verificationStatus !== "verified") {
+        badge.style.borderColor = "rgba(148,163,184,.35)";
+        badge.style.background = "rgba(148,163,184,.10)";
+        badge.style.color = "#e5e7eb";
+      }
+    }
   })
   .catch(() => {
     alert("Failed to load profile");
     window.location.href = "index.html";
   });
-
-function goLogin() {
-  window.location.href = "login.html";
-}
 </script>
 
 </body>
