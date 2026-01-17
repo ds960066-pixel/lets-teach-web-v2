@@ -2,22 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Browse Teachers | Lets Teach</title>
+
+  <!-- ✅ SAME PROFESSIONAL THEME -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
-<h2>Browse Teachers</h2>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<input id="city" placeholder="City">
-<input id="subject" placeholder="Subject">
-<button onclick="loadTeachers()">Search</button>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<hr>
+  <div class="container">
 
-<ul id="list"></ul>
+    <!-- HEADER CARD -->
+    <div class="card cardPad">
+      <h1 class="hTitle" style="font-size:30px;margin:0 0 8px;">Browse Teachers</h1>
+      <p class="hSub" style="margin:0;">
+        City/Subject search karke teachers dekho. Invite/Chat ke liye institute login required.
+      </p>
+
+      <hr class="sep" />
+
+      <!-- SEARCH -->
+      <div class="sectionTitle">Search</div>
+      <div class="searchGrid">
+        <input class="input" id="city" placeholder="City (e.g. Patna, Delhi)" autocomplete="off" />
+        <input class="input" id="subject" placeholder="Subject (e.g. Math, Physics)" autocomplete="off" />
+        <button class="btn" onclick="loadTeachers()">Search</button>
+      </div>
+
+      <p class="meta" style="margin-top:10px;">
+        Tip: City/Subject blank chhodoge to all teachers show honge.
+      </p>
+    </div>
+
+    <div style="height:14px;"></div>
+
+    <!-- RESULTS CARD -->
+    <div class="card cardPad">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div class="sectionTitle" style="margin:0;">Results</div>
+        <span id="count" class="badge">0</span>
+      </div>
+
+      <hr class="sep" style="margin:12px 0;" />
+
+      <div id="list" class="list"></div>
+
+      <div id="hint" class="meta" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="footer muted">
+      <a href="index.html">Home</a> ·
+      <a href="jobs.html">Jobs</a> ·
+      <a href="login.html">Login</a>
+    </div>
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function setHint(msg) {
+  document.getElementById("hint").innerHTML = msg || "";
+}
 
 /* ================= LOAD TEACHERS ================= */
 function loadTeachers() {
@@ -30,66 +101,80 @@ function loadTeachers() {
   if (city) params.push(`city=${encodeURIComponent(city)}`);
   if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
 
-  if (params.length) {
-    url += "?" + params.join("&");
-  }
+  if (params.length) url += `?${params.join("&")}`;
+
+  const box = document.getElementById("list");
+  box.innerHTML = `<div class="meta">Loading...</div>`;
+  setHint("");
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      const ul = document.getElementById("list");
-      ul.innerHTML = "";
+      const list = (data && data.teachers) ? data.teachers : [];
+      document.getElementById("count").innerText = list.length;
 
-      if (!data.teachers || data.teachers.length === 0) {
-        ul.innerHTML = "<li>No teachers found</li>";
+      if (!list.length) {
+        box.innerHTML = `<div class="meta">No teachers found</div>`;
         return;
       }
 
       const myRole = localStorage.getItem("role");
       const myUid = localStorage.getItem("uid");
 
-      data.teachers.forEach(t => {
-        const li = document.createElement("li");
+      if (!(myRole === "institute" && myUid)) {
+        setHint(`🔒 Invite/Chat ke liye <a class="smallLink" href="login.html">Login as institute</a>`);
+      }
 
-        li.innerHTML = `
-          <b>${t.name}</b> (${t.subject})<br>
-          City: ${t.city}<br>
-          Experience: ${t.experience ?? 0} yrs<br>
-          Role: ${t.role || "Both"}<br>
-          <a href="teacher.html?uid=${t.uid}">
-            View Profile
-          </a>
-          <br>
+      box.innerHTML = "";
+      list.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        const name = escapeHtml(t.name || "Teacher");
+        const subj = escapeHtml(t.subject || "—");
+        const cityTxt = escapeHtml(t.city || "—");
+        const exp = Number(t.experience || 0);
+        const roleTxt = escapeHtml(t.role || "both");
+
+        let actions = `
+          <a class="smallLink" href="teacher.html?uid=${encodeURIComponent(t.uid)}">View Profile</a>
         `;
 
         if (myRole === "institute" && myUid) {
-          li.innerHTML += `
-            <button onclick="sendInvite('${t.uid}')">
-              Invite Teacher
-            </button>
-          `;
+          actions += ` &nbsp;·&nbsp; <a class="smallLink" href="#" onclick="sendInvite('${encodeURIComponent(t.uid)}');return false;">Invite</a>`;
         } else {
-          li.innerHTML += `
-            <small>
-              <a href="login.html">
-                Login as institute to invite
-              </a>
-            </small>
-          `;
+          actions += ` &nbsp;·&nbsp; <a class="smallLink" href="login.html">Login to invite</a>`;
         }
 
-        li.innerHTML += "<hr>";
-        ul.appendChild(li);
+        div.innerHTML = `
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:16px;">${name}</div>
+            <div class="meta">
+              ${subj} · ${cityTxt} · ${exp} yrs · ${roleTxt}
+            </div>
+            <div style="margin-top:8px;">
+              ${actions}
+            </div>
+          </div>
+          <div class="badge">Teacher</div>
+        `;
+
+        box.appendChild(div);
       });
     })
-    .catch(() => alert("Server error"));
+    .catch(() => {
+      document.getElementById("count").innerText = "0";
+      box.innerHTML = `<div class="meta">Server error</div>`;
+    });
 }
 
 /* ================= SEND INVITE ================= */
-function sendInvite(teacherUid) {
+function sendInvite(teacherUidEncoded) {
+  const teacherUid = decodeURIComponent(teacherUidEncoded);
   const instituteUid = localStorage.getItem("uid");
+  const myRole = localStorage.getItem("role");
 
-  if (!instituteUid) {
+  if (!instituteUid || myRole !== "institute") {
     alert("Please login as institute");
     window.location.href = "login.html";
     return;
@@ -106,9 +191,7 @@ function sendInvite(teacherUid) {
     })
   })
   .then(res => res.json())
-  .then(data => {
-    alert(data.message || "Invite sent");
-  })
+  .then(data => alert(data.message || "Invite sent"))
   .catch(() => alert("Error sending invite"));
 }
 
