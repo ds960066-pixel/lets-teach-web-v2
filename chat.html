@@ -2,132 +2,236 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lets Teach Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat | Lets Teach</title>
+
+  <!-- ✅ same professional theme -->
+  <link rel="stylesheet" href="styles.css" />
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
   <style>
-    body {
-      font-family: Arial;
-      background: #f4f4f4;
-      padding: 15px;
+    /* ✅ light background tweak */
+    body{
+      background: radial-gradient(1000px 600px at 10% -10%, rgba(59,130,246,.18), transparent 60%),
+                  radial-gradient(900px 520px at 90% 0%, rgba(34,197,94,.14), transparent 60%),
+                  #101a2b;
     }
 
-    #chatBox {
-      background: #fff;
-      height: 350px;
+    .chatWrap{display:grid;grid-template-columns:1fr;gap:12px}
+    .chatHeader{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .chatTitle{font-weight:800;font-size:18px}
+    .chatMeta{color:var(--muted);font-size:13px}
+
+    .chatBox{
+      height: 420px;
       overflow-y: auto;
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 10px;
-      display: flex;
-      flex-direction: column;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
     }
 
-    .me {
-      align-self: flex-end;
-      background: #dcf8c6;
-      padding: 6px 10px;
-      margin: 4px 0;
-      border-radius: 6px;
-      max-width: 70%;
+    .bubble{
+      max-width: 78%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(11,18,32,.28);
+      line-height:1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
-    .other {
-      align-self: flex-start;
-      background: #eee;
-      padding: 6px 10px;
-      margin: 4px 0;
-      border-radius: 6px;
-      max-width: 70%;
+    .me{
+      align-self:flex-end;
+      background: rgba(34,197,94,.14);
+      border-color: rgba(34,197,94,.25);
     }
 
-    input {
-      width: 75%;
-      padding: 8px;
+    .other{
+      align-self:flex-start;
+      background: rgba(148,163,184,.10);
+      border-color: rgba(148,163,184,.20);
     }
 
-    button {
-      padding: 8px 14px;
+    .chatInputRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
     }
+
+    .chatInputRow .input{flex:1}
+    .btnSmall{padding:11px 14px;border-radius:14px}
+    .btnGhost{
+      padding:11px 14px;border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(15,26,51,.55);
+      color:var(--text);
+      cursor:pointer;
+    }
+    .btnGhost:hover{border-color:rgba(148,163,184,.35)}
   </style>
 </head>
 
 <body>
 
-<script>
-/* ================= AUTH + CONTEXT GUARD ================= */
-if (
-  !localStorage.uid ||
-  !localStorage.role ||
-  !localStorage.chatWith
-) {
-  window.location.href = "login.html";
-}
-</script>
+  <!-- NAV -->
+  <div class="nav">
+    <div class="container navInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Lets Teach</div>
+      </div>
 
-<h3>Chat</h3>
+      <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
+        <a class="pill" href="jobs.html">Jobs</a>
+        <a class="pill" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
 
-<div id="chatBox"></div>
+  <div class="container chatWrap">
 
-<input id="message" placeholder="Type message..." />
-<button onclick="sendMessage()">Send</button>
+    <div class="card cardPad">
+      <div class="chatHeader">
+        <div>
+          <div class="chatTitle">Chat</div>
+          <div id="chatInfo" class="chatMeta">Connecting...</div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btnGhost" onclick="goBack()">Back</button>
+          <button class="btnGhost" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <hr class="sep" />
+
+      <div id="chatBox" class="chatBox"></div>
+
+      <hr class="sep" />
+
+      <div class="chatInputRow">
+        <input id="message" class="input" placeholder="Type a message..." autocomplete="off" />
+        <button class="btn btnSmall" onclick="sendMessage()">Send</button>
+      </div>
+
+      <div id="hint" class="meta" style="margin-top:10px;"></div>
+    </div>
+
+  </div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 
-/* ---------- SOURCE OF TRUTH ---------- */
+/* ================= AUTH GUARD ================= */
 const senderUid = localStorage.getItem("uid");
-const receiverUid = localStorage.getItem("chatWith");
+const role = localStorage.getItem("role");
 
-/* ---------- ROOM ID (DETERMINISTIC) ---------- */
-const roomId =
-  senderUid < receiverUid
-    ? `${senderUid}_${receiverUid}`
-    : `${receiverUid}_${senderUid}`;
+if (!senderUid || !role) {
+  window.location.href = "login.html";
+}
 
-/* ---------- SOCKET ---------- */
+/* ================= RECEIVER UID (BEST: QUERY PARAM) ================= */
+const qs = new URLSearchParams(location.search);
+const receiverUid = qs.get("receiverUid") || localStorage.getItem("chatWith");
+
+if (!receiverUid) {
+  alert("Receiver UID missing");
+  window.location.href = "index.html";
+}
+
+/* keep for next time */
+localStorage.setItem("chatWith", receiverUid);
+
+/* ================= ROOM ID (DETERMINISTIC) ================= */
+const roomId = (senderUid < receiverUid)
+  ? `${senderUid}_${receiverUid}`
+  : `${receiverUid}_${senderUid}`;
+
+document.getElementById("chatInfo").innerText =
+  `You: ${senderUid}  |  Chat with: ${receiverUid}`;
+
+/* ================= SOCKET ================= */
 const socket = io(BASE_URL);
 
 socket.on("connect", () => {
+  document.getElementById("hint").innerHTML =
+    `✅ Connected. Room: <b>${roomId}</b>`;
   socket.emit("joinRoom", roomId);
 });
 
-/* ---------- UI HELPER ---------- */
-function appendMessage(from, text) {
+socket.on("connect_error", () => {
+  document.getElementById("hint").innerText =
+    "❌ Connection error. Backend/socket issue.";
+});
+
+/* ================= UI HELPERS ================= */
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function appendMessage(fromUid, text) {
   const box = document.getElementById("chatBox");
   const div = document.createElement("div");
-  div.className = from === senderUid ? "me" : "other";
-  div.innerText = text;
+  div.className = "bubble " + (fromUid === senderUid ? "me" : "other");
+  div.innerHTML = escapeHtml(text);
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
 
-/* ---------- SEND ---------- */
+/* ================= SEND ================= */
 function sendMessage() {
   const input = document.getElementById("message");
   const text = input.value.trim();
   if (!text) return;
 
-  // show instantly
   appendMessage(senderUid, text);
 
+  // ✅ include roomId (server expects it)
   socket.emit("sendMessage", {
     senderUid,
     receiverUid,
-    text
+    text,
+    roomId
   });
 
   input.value = "";
+  input.focus();
 }
 
-/* ---------- RECEIVE ---------- */
+/* enter to send */
+document.getElementById("message").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
+
+/* ================= RECEIVE ================= */
 socket.on("receiveMessage", (msg) => {
   // avoid duplicate self-message
-  if (msg.senderUid !== senderUid) {
+  if (msg && msg.senderUid && msg.senderUid !== senderUid) {
     appendMessage(msg.senderUid, msg.text);
   }
 });
+
+/* ================= NAV HELPERS ================= */
+function goBack() {
+  // simple back: based on role
+  if (role === "teacher") location.href = "teacher-dashboard.html";
+  else if (role === "institute") location.href = "institute-dashboard.html";
+  else location.href = "index.html";
+}
+
+function logout() {
+  localStorage.clear();
+  location.href = "login.html";
+}
 </script>
 
 </body>
