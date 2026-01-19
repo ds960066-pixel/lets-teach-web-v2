@@ -150,7 +150,7 @@ async function browseTeachers() {
           <div style="font-weight:800;">${escapeHtml(t.name)}</div>
           <div class="meta">${escapeHtml(t.subject)} · ${escapeHtml(t.city || "—")} · ${Number(t.experience || 0)} yrs</div>
           <div class="meta">
-            <a class="smallLink" href="teacher-resume-view.htm?uid=${encodeURIComponent(t.uid)}" target="_blank">
+            <a class="smallLink" href="teacher-resume-view.html?uid=${encodeURIComponent(t.uid)}" target="_blank">
               View Resume Page
             </a>
           </div>
