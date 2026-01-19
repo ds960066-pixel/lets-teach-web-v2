@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Resume | Lets Teach</title>
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -27,7 +26,6 @@
   </div>
 
   <div class="container">
-
     <div class="card cardPad">
       <h2 id="name" style="margin:0 0 6px;">Loading...</h2>
       <div class="meta" id="metaLine">Fetching resume...</div>
@@ -35,7 +33,6 @@
       <hr class="sep">
 
       <div class="grid2">
-
         <!-- LEFT -->
         <div class="card cardPad">
           <div class="sectionTitle">Professional Summary</div>
@@ -64,14 +61,12 @@
             Tip: Browser print dialog me “Save as PDF” choose kar lo.
           </div>
         </div>
-
       </div>
     </div>
 
     <div class="footer">
       <span class="meta">Lets Teach · Teacher Resume</span>
     </div>
-
   </div>
 
 <script>
@@ -103,10 +98,20 @@ function buildFileUrl(resumeUrl) {
   return `${BASE_URL}/${resumeUrl}`;
 }
 
+// Quick check if PDF exists (avoids broken link)
+async function urlExists(url) {
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /* ================= LOAD RESUME ================= */
 fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
   .then(res => res.json())
-  .then(data => {
+  .then(async data => {
     if (!data.success || !data.teacher) {
       alert("Teacher not found");
       window.location.href = "index.html";
@@ -152,17 +157,26 @@ fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
     const pdfBox = document.getElementById("pdfBox");
     const pdfUrl = buildFileUrl(t.resumeUrl);
 
-    if (pdfUrl) {
-      pdfBox.innerHTML = `
-        ✅ <b>Uploaded</b><br><br>
-        <a class="smallLink" href="${pdfUrl}" target="_blank">View PDF</a>
-        &nbsp; · &nbsp;
-        <a class="smallLink" href="${pdfUrl}" download>Download PDF</a>
-      `;
-    } else {
+    if (!pdfUrl) {
       pdfBox.innerHTML = `❌ <b>Not uploaded</b><br><br>
         <span class="meta">Teacher ne abhi PDF upload nahi kiya.</span>`;
+      return;
     }
+
+    // verify link exists
+    const ok = await urlExists(pdfUrl);
+    if (!ok) {
+      pdfBox.innerHTML = `⚠️ <b>PDF link found but file missing</b><br><br>
+        <span class="meta">Server pe file available nahi hai. Teacher ko re-upload bol do.</span>`;
+      return;
+    }
+
+    pdfBox.innerHTML = `
+      ✅ <b>Uploaded</b><br><br>
+      <a class="smallLink" href="${pdfUrl}" target="_blank">View PDF</a>
+      &nbsp; · &nbsp;
+      <a class="smallLink" href="${pdfUrl}" download>Download PDF</a>
+    `;
   })
   .catch(() => {
     alert("Server error");
