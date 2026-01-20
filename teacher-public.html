@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Profile | Lets Teach</title>
-
-  <!-- ✅ Use your global professional UI -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -20,6 +18,7 @@
       </a>
 
       <div class="navLinks">
+        <a class="pill" href="index.html">Home</a>
         <a class="pill" href="jobs.html">Jobs</a>
         <a class="pill" href="interview/index.html">Interview Preps</a>
         <a class="pill" href="login.html">Login</a>
@@ -29,58 +28,82 @@
 
   <div class="container">
 
+    <!-- HERO -->
     <div class="hero">
-      <h1 class="hTitle">Teacher Profile</h1>
-      <p class="hSub">
-        Public profile view. Invite / chat ke liye institute login required.
-      </p>
+      <div class="card cardPad">
+        <h1 class="hTitle" style="font-size:34px;margin:0 0 8px;">Teacher Profile</h1>
+        <p class="hSub" style="margin:0;">
+          Public profile view. Invite / chat ke liye <b>Institute login</b> required.
+        </p>
+
+        <div class="kpis">
+          <div class="kpi">
+            <b id="statusKpi">Loading…</b>
+            <span>Status</span>
+          </div>
+          <div class="kpi">
+            <b id="roleKpi">Teacher</b>
+            <span>Profile Type</span>
+          </div>
+          <div class="kpi">
+            <b id="uidKpi">—</b>
+            <span>Teacher UID</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <div class="cardPad">
-
-        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
-          <div>
-            <div id="name" style="font-size:22px;font-weight:800">Loading...</div>
-            <div class="meta" id="metaLine">Fetching details…</div>
-          </div>
-          <span id="statusBadge" class="badge" style="display:none">Verified</span>
+    <!-- PROFILE CARD -->
+    <div class="card cardPad">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+        <div>
+          <div id="name" style="font-size:22px;font-weight:800;">Loading…</div>
+          <div id="metaLine" class="meta" style="margin-top:6px;">Fetching details…</div>
         </div>
-
-        <hr class="sep" />
-
-        <div class="grid2">
-          <div class="kpi">
-            <b id="subject">—</b>
-            <span>Subject</span>
-          </div>
-          <div class="kpi">
-            <b id="city">—</b>
-            <span>City</span>
-          </div>
-          <div class="kpi">
-            <b><span id="experience">0</span> yrs</b>
-            <span>Experience</span>
-          </div>
-        </div>
-
-        <hr class="sep" />
-
-        <div class="card" style="background:rgba(11,18,32,.28);border:1px solid var(--stroke);border-radius:14px">
-          <div class="cardPad">
-            <div style="font-weight:800;margin-bottom:6px">Interested in this teacher?</div>
-            <div class="meta" style="margin:0">
-              Invite / chat start karne ke liye <b>Institute</b> login required.
-            </div>
-
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-              <a class="btn" href="login.html">Login / Register</a>
-              <a class="pill" href="index.html">Back to Search</a>
-            </div>
-          </div>
-        </div>
-
+        <span id="statusBadge" class="badge" style="display:none;">—</span>
       </div>
+
+      <hr class="sep">
+
+      <div class="grid2">
+        <div class="kpi">
+          <b id="subject">—</b>
+          <span>Subject</span>
+        </div>
+        <div class="kpi">
+          <b id="city">—</b>
+          <span>City</span>
+        </div>
+        <div class="kpi">
+          <b><span id="experience">0</span> yrs</b>
+          <span>Experience</span>
+        </div>
+      </div>
+
+      <hr class="sep">
+
+      <div class="kpi" style="border-radius:14px;">
+        <b>Resume</b>
+        <span>
+          Resume dekhne ke liye:
+          <a class="smallLink" id="resumeLink" href="#" target="_blank">Open Resume Page</a>
+        </span>
+      </div>
+
+      <hr class="sep">
+
+      <!-- CTA -->
+      <div class="kpi" style="border-radius:14px;">
+        <b>Interested?</b>
+        <span>Invite / chat start karne ke liye institute login required.</span>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+          <a class="btn" href="login.html">Login / Register</a>
+          <a class="pill" href="index.html">Back to Search</a>
+        </div>
+      </div>
+
+      <div id="errorBox" class="meta" style="margin-top:14px;display:none;"></div>
     </div>
 
     <div class="footer">
@@ -94,12 +117,13 @@ const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 const params = new URLSearchParams(window.location.search);
 const teacherUid = params.get("uid");
 
+document.getElementById("uidKpi").innerText = teacherUid || "—";
+
 if (!teacherUid) {
-  alert("Invalid profile");
+  alert("Invalid profile (uid missing)");
   window.location.href = "index.html";
 }
 
-/* ========= SAFE TEXT ========= */
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&","&amp;")
@@ -109,13 +133,46 @@ function escapeHtml(str) {
     .replaceAll("'","&#039;");
 }
 
-/* ================= LOAD TEACHER PROFILE ================= */
-fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(teacherUid)}`)
-  .then(res => res.json())
-  .then(data => {
+function setError(msg){
+  const box = document.getElementById("errorBox");
+  box.style.display = "block";
+  box.innerText = msg;
+}
+
+function setBadge(status){
+  const badge = document.getElementById("statusBadge");
+  const kpi = document.getElementById("statusKpi");
+
+  badge.style.display = "inline-block";
+
+  if (status === "verified") {
+    badge.textContent = "Verified";
+    kpi.innerText = "Verified";
+  } else if (status === "rejected") {
+    badge.textContent = "Rejected";
+    kpi.innerText = "Rejected";
+    badge.style.borderColor = "rgba(148,163,184,.35)";
+    badge.style.background = "rgba(148,163,184,.10)";
+    badge.style.color = "#e5e7eb";
+  } else {
+    badge.textContent = "Unverified";
+    kpi.innerText = "Unverified";
+    badge.style.borderColor = "rgba(148,163,184,.35)";
+    badge.style.background = "rgba(148,163,184,.10)";
+    badge.style.color = "#e5e7eb";
+  }
+}
+
+async function loadProfile(){
+  try{
+    const res = await fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(teacherUid)}`);
+    const data = await res.json();
+
     if (!data || !data.teacher) {
-      alert("Teacher not found");
-      window.location.href = "index.html";
+      setError("Teacher not found.");
+      document.getElementById("name").innerText = "Not Found";
+      document.getElementById("metaLine").innerText = "Invalid teacher UID";
+      document.getElementById("statusKpi").innerText = "Not Found";
       return;
     }
 
@@ -131,29 +188,23 @@ fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(teacherUid)}`)
       t.city ? escapeHtml(t.city) : "—",
       `${Number(t.experience || 0)} yrs`
     ].join(" · ");
-
     document.getElementById("metaLine").innerHTML = meta;
 
-    // optional badge if your backend returns verificationStatus
-    if (t.verificationStatus) {
-      const badge = document.getElementById("statusBadge");
-      badge.style.display = "inline-block";
-      badge.textContent =
-        t.verificationStatus === "verified" ? "Verified" :
-        t.verificationStatus === "rejected" ? "Rejected" : "Unverified";
+    // Resume page link (IMPORTANT)
+    document.getElementById("resumeLink").href =
+      `teacher-resume-view.html?uid=${encodeURIComponent(teacherUid)}`;
 
-      // quick color tweak using inline (keeps your theme)
-      if (t.verificationStatus !== "verified") {
-        badge.style.borderColor = "rgba(148,163,184,.35)";
-        badge.style.background = "rgba(148,163,184,.10)";
-        badge.style.color = "#e5e7eb";
-      }
-    }
-  })
-  .catch(() => {
-    alert("Failed to load profile");
-    window.location.href = "index.html";
-  });
+    // Status badge (optional)
+    setBadge(t.verificationStatus || "unverified");
+
+  } catch(e){
+    console.error(e);
+    setError("Server error: profile load failed.");
+    document.getElementById("statusKpi").innerText = "Error";
+  }
+}
+
+loadProfile();
 </script>
 
 </body>
