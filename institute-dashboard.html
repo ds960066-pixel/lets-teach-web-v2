@@ -41,7 +41,7 @@
       <div class="card cardPad">
         <h1 class="hTitle" style="font-size:34px;margin-bottom:8px;">Institute Dashboard</h1>
         <p class="hSub" style="margin-top:0;">
-          Teachers browse karo, invite bhejo, job applications me resume + PDF view/download karo.
+          Teachers browse karo, invite bhejo, jobs post karo, aur applications me resume + PDF view/download karo.
         </p>
 
         <div class="kpis">
@@ -50,19 +50,90 @@
             <span>Teachers Loaded</span>
           </div>
           <div class="kpi">
+            <b id="jobBadge">—</b>
+            <span>My Jobs</span>
+          </div>
+          <div class="kpi">
             <b id="appBadge">—</b>
             <span>Applications</span>
           </div>
-          <div class="kpi">
-            <b id="lastAction">Ready</b>
-            <span>Status</span>
-          </div>
+        </div>
+
+        <hr class="sep">
+
+        <div class="kpi">
+          <b id="lastAction">Ready</b>
+          <span>Status</span>
         </div>
       </div>
     </div>
 
-    <!-- BROWSE TEACHERS -->
+    <!-- ✅ POST A JOB (PRO) -->
     <div class="card cardPad">
+      <div class="sectionTitle">📌 Post a Job</div>
+      <div class="meta" style="margin-top:-4px;">
+        Note: “Subjects Needed” profile alag hai. Job page me jobs tabhi dikhenge jab yahan se job post hoga.
+      </div>
+
+      <hr class="sep">
+
+      <div class="grid2">
+        <div>
+          <label class="meta">Job Title <b style="color:#e5e7eb">*</b></label>
+          <input class="input" id="jobTitle" placeholder="e.g. English Teacher (Class 6-10)" />
+        </div>
+
+        <div>
+          <label class="meta">Subject <b style="color:#e5e7eb">*</b></label>
+          <input class="input" id="jobSubject" placeholder="e.g. English" />
+        </div>
+
+        <div>
+          <label class="meta">City <b style="color:#e5e7eb">*</b></label>
+          <input class="input" id="jobCity" placeholder="e.g. Patna" />
+        </div>
+
+        <div>
+          <label class="meta">Role</label>
+          <select class="input" id="jobRole">
+            <option value="both">Both</option>
+            <option value="part-time">Part-time</option>
+            <option value="full-time">Full-time</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label class="meta">Salary (optional)</label>
+        <input class="input" id="jobSalary" placeholder="e.g. 20,000 - 30,000 / month" />
+      </div>
+
+      <div style="margin-top:10px;">
+        <label class="meta">Description (optional)</label>
+        <textarea class="input" id="jobDesc" rows="4" placeholder="Job details, class, timings, requirements..."></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+        <button class="btn" onclick="createJob()">Create Job</button>
+        <button class="pill" onclick="clearJobForm()">Clear</button>
+        <button class="pill" onclick="loadMyJobs()">Refresh My Jobs</button>
+      </div>
+
+      <div id="jobMsg" class="meta" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- ✅ MY JOBS LIST -->
+    <div class="card cardPad" style="margin-top:14px;">
+      <div class="sectionTitle">🗂️ My Posted Jobs</div>
+      <div class="meta">Open/Close manage karo. Posted date automatic hai.</div>
+
+      <hr class="sep">
+
+      <div id="myJobs" class="list"></div>
+    </div>
+
+    <!-- BROWSE TEACHERS -->
+    <div class="card cardPad" style="margin-top:14px;">
       <div class="sectionTitle">👩‍🏫 Browse Teachers</div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -113,12 +184,181 @@ function escapeHtml(str) {
     .replaceAll("'","&#039;");
 }
 
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString(); // simple + best for now
+}
+
 /* ================= HELPER: BUILD RESUME LINK ================= */
 function buildResumeLink(resumeUrl) {
   if (!resumeUrl) return null;
   if (resumeUrl.startsWith("http")) return resumeUrl;
   if (resumeUrl.startsWith("/")) return `${BASE_URL}${resumeUrl}`;
   return `${BASE_URL}/${resumeUrl}`;
+}
+
+/* ================= JOB: CLEAR FORM ================= */
+function clearJobForm(){
+  document.getElementById("jobTitle").value = "";
+  document.getElementById("jobSubject").value = "";
+  document.getElementById("jobCity").value = "";
+  document.getElementById("jobRole").value = "both";
+  document.getElementById("jobSalary").value = "";
+  document.getElementById("jobDesc").value = "";
+  document.getElementById("jobMsg").innerText = "";
+  setLastAction("Form cleared");
+}
+
+/* ================= JOB: CREATE ================= */
+async function createJob() {
+  const title = document.getElementById("jobTitle").value.trim();
+  const subject = document.getElementById("jobSubject").value.trim();
+  const city = document.getElementById("jobCity").value.trim();
+  const role = document.getElementById("jobRole").value;
+  const salary = document.getElementById("jobSalary").value.trim();
+  const description = document.getElementById("jobDesc").value.trim();
+
+  if (!title || !subject || !city) {
+    document.getElementById("jobMsg").innerText = "❌ Title, Subject, City required";
+    setLastAction("Job create failed");
+    return;
+  }
+
+  document.getElementById("jobMsg").innerText = "Posting job...";
+  setLastAction("Posting job…");
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/job/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        instituteUid: uid,
+        title,
+        subject,
+        city,
+        role,
+        salary,
+        description
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      document.getElementById("jobMsg").innerText = `❌ ${data.message || "Failed"}`;
+      setLastAction("Job post failed");
+      return;
+    }
+
+    document.getElementById("jobMsg").innerText = "✅ Job posted successfully";
+    setLastAction("Job posted");
+    clearJobForm();
+    loadMyJobs();
+  } catch (e) {
+    console.error(e);
+    document.getElementById("jobMsg").innerText = "❌ Server error";
+    setLastAction("Error");
+  }
+}
+
+/* ================= JOB: LOAD MY JOBS ================= */
+async function loadMyJobs() {
+  const box = document.getElementById("myJobs");
+  box.innerHTML = `<div class="meta">Loading jobs...</div>`;
+  setLastAction("Loading my jobs…");
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/job/institute/${encodeURIComponent(uid)}`);
+    const data = await res.json();
+
+    const jobs = (data && data.jobs) ? data.jobs : [];
+    document.getElementById("jobBadge").innerText = jobs.length;
+
+    if (!jobs.length) {
+      box.innerHTML = `<div class="meta">No jobs posted yet</div>`;
+      setLastAction("No jobs");
+      return;
+    }
+
+    box.innerHTML = "";
+    jobs.forEach(j => {
+      const postedOn = fmtDate(j.postedAt || j.createdAt);
+      const status = j.status || "open";
+
+      const badgeStyle = status === "open"
+        ? `border-color:rgba(34,197,94,.32);background:rgba(34,197,94,.10);color:#bbf7d0;`
+        : `border-color:rgba(148,163,184,.35);background:rgba(148,163,184,.10);color:#e5e7eb;`;
+
+      const div = document.createElement("div");
+      div.className = "item";
+
+      div.innerHTML = `
+        <div style="max-width:70%;">
+          <div style="font-weight:800;">${escapeHtml(j.title || "Job")}</div>
+          <div class="meta">
+            ${escapeHtml(j.subject || "—")} · ${escapeHtml(j.city || "—")} · ${escapeHtml(j.role || "both")}
+          </div>
+          <div class="meta">
+            Salary: ${escapeHtml(j.salary || "Negotiable")}
+          </div>
+          <div class="meta">
+            Posted: <b>${escapeHtml(postedOn)}</b>
+          </div>
+          ${
+            j.description
+              ? `<div class="meta" style="margin-top:6px;">${escapeHtml(j.description)}</div>`
+              : ""
+          }
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+          <span class="badge" style="${badgeStyle}">${escapeHtml(status.toUpperCase())}</span>
+          ${
+            status === "open"
+              ? `<button class="btn" onclick="closeJob('${j._id}')">Close Job</button>`
+              : `<span class="meta">Closed</span>`
+          }
+        </div>
+      `;
+
+      box.appendChild(div);
+    });
+
+    setLastAction("Jobs loaded");
+  } catch (e) {
+    console.error(e);
+    document.getElementById("jobBadge").innerText = "0";
+    box.innerHTML = `<div class="meta">Failed to load jobs</div>`;
+    setLastAction("Error");
+  }
+}
+
+/* ================= JOB: CLOSE ================= */
+async function closeJob(jobId) {
+  if (!confirm("Close this job?")) return;
+
+  setLastAction("Closing job…");
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/job/close/${jobId}`, { method: "POST" });
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(data.message || "Failed to close");
+      setLastAction("Close failed");
+      return;
+    }
+
+    alert("Job closed");
+    setLastAction("Job closed");
+    loadMyJobs();
+  } catch (e) {
+    console.error(e);
+    alert("Server error");
+    setLastAction("Error");
+  }
 }
 
 /* ================= BROWSE TEACHERS ================= */
@@ -288,6 +528,9 @@ async function shortlist(id) {
   setLastAction("Shortlisted");
   loadApplications();
 }
+
+/* ================= INIT ================= */
+loadMyJobs();
 </script>
 
 </body>
