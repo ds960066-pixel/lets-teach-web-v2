@@ -6,78 +6,79 @@
   <title>Edit Resume | Lets Teach</title>
 
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- 🔒 SINGLE SOURCE OF TRUTH -->
+  <script src="./config.js"></script>
 </head>
 
 <body>
 
-  <!-- AUTH GUARD -->
-  <script>
-    if (!localStorage.uid || localStorage.role !== "teacher") {
-      window.location.href = "login.html";
-    }
-  </script>
+<!-- AUTH GUARD -->
+<script>
+  if (!localStorage.uid || localStorage.role !== "teacher") {
+    window.location.href = "login.html";
+  }
+</script>
 
-  <!-- NAV -->
-  <div class="nav">
-    <div class="container navInner">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>Lets Teach</div>
-      </div>
+<!-- NAV -->
+<div class="nav">
+  <div class="container navInner">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>Lets Teach</div>
+    </div>
 
-      <div class="navLinks">
-        <a class="pill" href="teacher-dashboard.html">Dashboard</a>
-        <a class="pill" href="teacher-resume-view.html">View Resume</a>
-        <a class="pill" href="jobs.html">Jobs</a>
-      </div>
+    <div class="navLinks">
+      <a class="pill" href="teacher-dashboard.html">Dashboard</a>
+      <a class="pill" href="teacher-resume-view.html">View Resume</a>
+      <a class="pill" href="jobs.html">Jobs</a>
     </div>
   </div>
+</div>
 
-  <div class="container">
+<div class="container">
 
-    <div class="hero">
-      <h1 class="hTitle">Build your resume</h1>
-      <p class="hSub">
-        Resume complete hona mandatory hai job apply ke liye.
-        Fill details + Save.
-      </p>
+  <div class="hero">
+    <h1 class="hTitle">Build your resume</h1>
+    <p class="hSub">
+      Resume complete hona mandatory hai job apply ke liye.
+    </p>
+  </div>
+
+  <div class="card cardPad">
+
+    <div class="sectionTitle">About you</div>
+    <textarea class="input" id="about" rows="5"
+      placeholder="Short professional summary..."></textarea>
+
+    <hr class="sep">
+
+    <div class="sectionTitle">Education</div>
+    <input class="input" id="education"
+      placeholder="B.Ed, M.Sc Mathematics, etc" />
+
+    <hr class="sep">
+
+    <div class="sectionTitle">Skills</div>
+    <input class="input" id="skills"
+      placeholder="Maths, Physics, Online Teaching (comma separated)" />
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+      <button class="btn" onclick="saveResume()">Save Resume</button>
+      <a class="pill" href="teacher-dashboard.html">Back</a>
     </div>
 
-    <div class="card cardPad">
-
-      <div class="sectionTitle">About you</div>
-      <textarea class="input" id="about" rows="5"
-        placeholder="Short professional summary..."></textarea>
-
-      <hr class="sep">
-
-      <div class="sectionTitle">Education</div>
-      <input class="input" id="education"
-        placeholder="B.Ed, M.Sc Mathematics, etc" />
-
-      <hr class="sep">
-
-      <div class="sectionTitle">Skills</div>
-      <input class="input" id="skills"
-        placeholder="Maths, Physics, Online Teaching (comma separated)" />
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
-        <button class="btn" onclick="saveResume()">Save Resume</button>
-        <a class="pill" href="teacher-dashboard.html">Back</a>
-      </div>
-
-      <div id="msg" class="meta" style="margin-top:12px;"> </div>
-
-    </div>
-
-    <div class="footer">
-      <span class="meta">Lets Teach · Teacher Resume</span>
-    </div>
+    <div id="msg" class="meta" style="margin-top:12px;"></div>
 
   </div>
+
+  <div class="footer">
+    <span class="meta">Lets Teach · Teacher Resume</span>
+  </div>
+
+</div>
 
 <script>
-const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 const uid = localStorage.getItem("uid");
 
 function escapeHtml(str) {
@@ -94,29 +95,32 @@ function escapeHtml(str) {
   try {
     const res = await fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`);
     const data = await res.json();
-    if (!data.success || !data.teacher) return;
+
+    if (!data.teacher) return;
 
     const t = data.teacher;
     document.getElementById("about").value = t.about || "";
     document.getElementById("education").value = t.education || "";
-    document.getElementById("skills").value = Array.isArray(t.skills) ? t.skills.join(", ") : "";
-  } catch (e) {
-    document.getElementById("msg").innerText = "Could not load existing resume.";
+    document.getElementById("skills").value =
+      Array.isArray(t.skills) ? t.skills.join(", ") : "";
+  } catch {
+    document.getElementById("msg").innerText =
+      "Could not load existing resume.";
   }
 })();
 
-/* ===== SAVE RESUME (BEST ROUTE) ===== */
+/* ===== SAVE RESUME ===== */
 async function saveResume() {
   const about = document.getElementById("about").value.trim();
   const education = document.getElementById("education").value.trim();
-  const skillsStr = document.getElementById("skills").value.trim();
+  const skillsRaw = document.getElementById("skills").value.trim();
 
-  if (!about || !education || !skillsStr) {
+  if (!about || !education || !skillsRaw) {
     alert("All fields are required");
     return;
   }
 
-  const skills = skillsStr
+  const skills = skillsRaw
     .split(",")
     .map(s => s.trim())
     .filter(Boolean);
@@ -125,26 +129,31 @@ async function saveResume() {
     `<span class="meta">Saving...</span>`;
 
   try {
-    const res = await fetch(`${BASE_URL}/api/teacher/resume/${encodeURIComponent(uid)}`, {
+    const res = await fetch(`${BASE_URL}/api/teacher/resume`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ about, education, skills })
+      body: JSON.stringify({
+        uid,
+        about,
+        education,
+        skills
+      })
     });
 
     const data = await res.json();
 
     if (data.success) {
-      document.getElementById("msg").innerHTML =
-        `<span class="badge">✅ Resume saved</span>
-         <div class="meta" style="margin-top:8px;">
-           Now upload PDF from dashboard (if not uploaded).
-         </div>`;
+      document.getElementById("msg").innerHTML = `
+        <span class="badge">✅ Resume saved</span>
+        <div class="meta" style="margin-top:8px;">
+          Now upload PDF from dashboard (if not uploaded).
+        </div>`;
       return;
     }
 
     document.getElementById("msg").innerHTML =
-      `<span class="meta">❌ ${escapeHtml(data.message || "Failed to save")}</span>`;
-  } catch (e) {
+      `<span class="meta">❌ ${escapeHtml(data.message || "Failed")}</span>`;
+  } catch {
     document.getElementById("msg").innerHTML =
       `<span class="meta">Server error</span>`;
   }
