@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Browse Teachers | Lets Teach</title>
 
-  <!-- ✅ SAME PROFESSIONAL THEME -->
+  <!-- PROFESSIONAL THEME -->
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- 🔒 SINGLE SOURCE OF TRUTH -->
+  <script src="./config.js"></script>
 </head>
 
 <body>
@@ -29,11 +32,11 @@
 
   <div class="container">
 
-    <!-- HEADER CARD -->
+    <!-- HEADER -->
     <div class="card cardPad">
       <h1 class="hTitle" style="font-size:30px;margin:0 0 8px;">Browse Teachers</h1>
       <p class="hSub" style="margin:0;">
-        City/Subject search karke teachers dekho. Invite/Chat ke liye institute login required.
+        City / Subject search karke teachers dekho. Invite & Chat ke liye institute login required.
       </p>
 
       <hr class="sep" />
@@ -47,15 +50,15 @@
       </div>
 
       <p class="meta" style="margin-top:10px;">
-        Tip: City/Subject blank chhodoge to all teachers show honge.
+        Tip: City / Subject blank chhodoge to all teachers show honge.
       </p>
     </div>
 
     <div style="height:14px;"></div>
 
-    <!-- RESULTS CARD -->
+    <!-- RESULTS -->
     <div class="card cardPad">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
         <div class="sectionTitle" style="margin:0;">Results</div>
         <span id="count" class="badge">0</span>
       </div>
@@ -63,7 +66,6 @@
       <hr class="sep" style="margin:12px 0;" />
 
       <div id="list" class="list"></div>
-
       <div id="hint" class="meta" style="margin-top:12px;"></div>
     </div>
 
@@ -72,11 +74,11 @@
       <a href="jobs.html">Jobs</a> ·
       <a href="login.html">Login</a>
     </div>
+
   </div>
 
 <script>
-const BASE_URL = "https://express-hello-world-uh96.onrender.com";
-
+/* ================= UTIL ================= */
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&","&amp;")
@@ -110,7 +112,7 @@ function loadTeachers() {
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      const list = (data && data.teachers) ? data.teachers : [];
+      const list = data?.teachers || [];
       document.getElementById("count").innerText = list.length;
 
       if (!list.length) {
@@ -122,7 +124,7 @@ function loadTeachers() {
       const myUid = localStorage.getItem("uid");
 
       if (!(myRole === "institute" && myUid)) {
-        setHint(`🔒 Invite/Chat ke liye <a class="smallLink" href="login.html">Login as institute</a>`);
+        setHint(`🔒 Invite / Chat ke liye <a class="smallLink" href="login.html">Login as institute</a>`);
       }
 
       box.innerHTML = "";
@@ -130,30 +132,21 @@ function loadTeachers() {
         const div = document.createElement("div");
         div.className = "item";
 
-        const name = escapeHtml(t.name || "Teacher");
-        const subj = escapeHtml(t.subject || "—");
-        const cityTxt = escapeHtml(t.city || "—");
-        const exp = Number(t.experience || 0);
-        const roleTxt = escapeHtml(t.role || "both");
-
-        let actions = `
-          <a class="smallLink" href="teacher.html?uid=${encodeURIComponent(t.uid)}">View Profile</a>
-        `;
-
-        if (myRole === "institute" && myUid) {
-          actions += ` &nbsp;·&nbsp; <a class="smallLink" href="#" onclick="sendInvite('${encodeURIComponent(t.uid)}');return false;">Invite</a>`;
-        } else {
-          actions += ` &nbsp;·&nbsp; <a class="smallLink" href="login.html">Login to invite</a>`;
-        }
-
         div.innerHTML = `
           <div style="flex:1;">
-            <div style="font-weight:800;font-size:16px;">${name}</div>
+            <div style="font-weight:800;font-size:16px;">
+              ${escapeHtml(t.name || "Teacher")}
+            </div>
             <div class="meta">
-              ${subj} · ${cityTxt} · ${exp} yrs · ${roleTxt}
+              ${escapeHtml(t.subject)} · ${escapeHtml(t.city)} · ${t.experience || 0} yrs
             </div>
             <div style="margin-top:8px;">
-              ${actions}
+              <a class="smallLink" href="teacher.html?uid=${encodeURIComponent(t.uid)}">View Profile</a>
+              ${
+                myRole === "institute" && myUid
+                  ? ` · <a class="smallLink" href="#" onclick="sendInvite('${encodeURIComponent(t.uid)}');return false;">Invite</a>`
+                  : ` · <a class="smallLink" href="login.html">Login to invite</a>`
+              }
             </div>
           </div>
           <div class="badge">Teacher</div>
@@ -169,16 +162,9 @@ function loadTeachers() {
 }
 
 /* ================= SEND INVITE ================= */
-function sendInvite(teacherUidEncoded) {
-  const teacherUid = decodeURIComponent(teacherUidEncoded);
+function sendInvite(uidEnc) {
+  const teacherUid = decodeURIComponent(uidEnc);
   const instituteUid = localStorage.getItem("uid");
-  const myRole = localStorage.getItem("role");
-
-  if (!instituteUid || myRole !== "institute") {
-    alert("Please login as institute");
-    window.location.href = "login.html";
-    return;
-  }
 
   fetch(`${BASE_URL}/api/invite/create`, {
     method: "POST",
@@ -191,11 +177,11 @@ function sendInvite(teacherUidEncoded) {
     })
   })
   .then(res => res.json())
-  .then(data => alert(data.message || "Invite sent"))
-  .catch(() => alert("Error sending invite"));
+  .then(d => alert(d.message || "Invite sent"))
+  .catch(() => alert("Server error"));
 }
 
-/* ================= INITIAL LOAD ================= */
+/* ================= INIT ================= */
 loadTeachers();
 </script>
 
