@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Send Invite | Lets Teach</title>
 
+  <!-- PROFESSIONAL THEME -->
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- 🔒 SINGLE SOURCE OF TRUTH -->
+  <script src="./config.js"></script>
 </head>
 
 <body>
@@ -36,9 +40,9 @@
   <div class="container">
 
     <div class="hero">
-      <h1 class="hTitle">Invite an institute</h1>
+      <h1 class="hTitle">Invite an Institute</h1>
       <p class="hSub">
-        Institute UID डालकर invite भेजो. Invite accept होने के बाद chat unlock होगा.
+        Institute UID डालकर invite भेजो. Invite accept hone ke baad chat unlock hota hai.
       </p>
     </div>
 
@@ -50,7 +54,12 @@
       <hr class="sep">
 
       <div class="sectionTitle">Institute UID</div>
-      <input class="input" id="instituteUid" placeholder="Enter institute UID" autocomplete="off" />
+      <input
+        class="input"
+        id="instituteUid"
+        placeholder="Enter institute UID"
+        autocomplete="off"
+      />
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
         <button class="btn" onclick="sendInvite()">Send Invite</button>
@@ -68,8 +77,7 @@
   </div>
 
 <script>
-const BASE_URL = "https://express-hello-world-uh96.onrender.com";
-
+/* ================= UTIL ================= */
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&","&amp;")
@@ -79,9 +87,11 @@ function escapeHtml(str) {
     .replaceAll("'","&#039;");
 }
 
+/* ================= INIT ================= */
 const teacherUid = localStorage.getItem("uid");
 document.getElementById("teacherUid").value = teacherUid || "";
 
+/* ================= SEND INVITE ================= */
 async function sendInvite() {
   const instituteUid = document.getElementById("instituteUid").value.trim();
   const result = document.getElementById("result");
@@ -108,13 +118,19 @@ async function sendInvite() {
     const data = await res.json();
 
     if (data.success) {
-      result.innerHTML = `<span class="badge">✅ Invite sent</span>
-        <div class="meta" style="margin-top:8px;">Now wait for institute to accept.</div>`;
+      result.innerHTML = `
+        <span class="badge">✅ Invite sent</span>
+        <div class="meta" style="margin-top:8px;">
+          Ab institute ke accept karne ka wait karo.
+        </div>
+      `;
     } else {
-      result.innerHTML = `<span class="meta">❌ ${escapeHtml(data.message || "Invite failed")}</span>`;
+      result.innerHTML = `
+        <span class="meta">❌ ${escapeHtml(data.message || "Invite failed")}</span>
+      `;
     }
   } catch (e) {
-    result.innerHTML = `<span class="meta">❌ Error sending invite</span>`;
+    result.innerHTML = `<span class="meta">❌ Server error</span>`;
   }
 }
 </script>
