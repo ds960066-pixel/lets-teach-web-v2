@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Resume | Lets Teach</title>
+
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- 🔒 SINGLE SOURCE OF TRUTH -->
+  <script src="./config.js"></script>
 </head>
 
 <body>
@@ -33,6 +37,7 @@
       <hr class="sep">
 
       <div class="grid2">
+
         <!-- LEFT -->
         <div class="card cardPad">
           <div class="sectionTitle">Professional Summary</div>
@@ -52,15 +57,21 @@
         <!-- RIGHT -->
         <div class="card cardPad">
           <div class="sectionTitle">Skills</div>
-          <div id="skills" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+          <div id="skills"
+               style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+          </div>
 
           <hr class="sep">
 
-          <button class="btn" onclick="window.print()">Download (Print to PDF)</button>
+          <button class="btn" onclick="window.print()">
+            Download (Print to PDF)
+          </button>
+
           <div class="meta" style="margin-top:10px;">
-            Tip: Browser print dialog me “Save as PDF” choose kar lo.
+            Tip: Print dialog me “Save as PDF” choose karo.
           </div>
         </div>
+
       </div>
     </div>
 
@@ -70,8 +81,6 @@
   </div>
 
 <script>
-const BASE_URL = "https://express-hello-world-uh96.onrender.com";
-
 /* ================= GET UID ================= */
 const params = new URLSearchParams(window.location.search);
 const uid = params.get("uid") || localStorage.getItem("uid");
@@ -91,28 +100,18 @@ function escapeHtml(str) {
     .replaceAll("'","&#039;");
 }
 
-function buildFileUrl(resumeUrl) {
-  if (!resumeUrl) return null;
-  if (resumeUrl.startsWith("http")) return resumeUrl;
-  if (resumeUrl.startsWith("/")) return `${BASE_URL}${resumeUrl}`;
-  return `${BASE_URL}/${resumeUrl}`;
-}
-
-// Quick check if PDF exists (avoids broken link)
-async function urlExists(url) {
-  try {
-    const res = await fetch(url, { method: "HEAD" });
-    return res.ok;
-  } catch {
-    return false;
-  }
+function buildFileUrl(path) {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  if (path.startsWith("/")) return `${BASE_URL}${path}`;
+  return `${BASE_URL}/${path}`;
 }
 
 /* ================= LOAD RESUME ================= */
 fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
   .then(res => res.json())
-  .then(async data => {
-    if (!data.success || !data.teacher) {
+  .then(data => {
+    if (!data.teacher) {
       alert("Teacher not found");
       window.location.href = "index.html";
       return;
@@ -120,32 +119,35 @@ fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
 
     const t = data.teacher;
 
-    document.getElementById("name").innerText = t.name ? t.name : "Teacher Resume";
+    document.getElementById("name").innerText =
+      escapeHtml(t.name || "Teacher Resume");
 
     const meta = [];
     if (t.subject) meta.push(escapeHtml(t.subject));
     if (t.city) meta.push(escapeHtml(t.city));
     meta.push(`${Number(t.experience || 0)} yrs`);
-    document.getElementById("metaLine").innerHTML =
-      `<span class="badge">${meta.join(" · ")}</span>
-       <div class="meta" style="margin-top:10px;"><b>Phone:</b> ${escapeHtml(t.phone || "—")}</div>`;
+
+    document.getElementById("metaLine").innerHTML = `
+      <span class="badge">${meta.join(" · ")}</span>
+      <div class="meta" style="margin-top:10px;">
+        <b>Phone:</b> ${escapeHtml(t.phone || "—")}
+      </div>
+    `;
 
     document.getElementById("about").innerText =
-      t.about ? t.about : "No summary added yet";
+      t.about || "No summary added yet";
 
     document.getElementById("education").innerText =
-      t.education ? t.education : "—";
+      t.education || "—";
 
-    // Skills
+    /* ===== SKILLS ===== */
     const skillsBox = document.getElementById("skills");
     skillsBox.innerHTML = "";
+
     if (Array.isArray(t.skills) && t.skills.length) {
       t.skills.forEach(s => {
         const tag = document.createElement("span");
         tag.className = "badge";
-        tag.style.borderColor = "rgba(59,130,246,.32)";
-        tag.style.background = "rgba(59,130,246,.10)";
-        tag.style.color = "#bfdbfe";
         tag.innerText = s;
         skillsBox.appendChild(tag);
       });
@@ -153,21 +155,15 @@ fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
       skillsBox.innerHTML = `<div class="meta">—</div>`;
     }
 
-    // PDF Links
+    /* ===== PDF ===== */
     const pdfBox = document.getElementById("pdfBox");
     const pdfUrl = buildFileUrl(t.resumeUrl);
 
     if (!pdfUrl) {
-      pdfBox.innerHTML = `❌ <b>Not uploaded</b><br><br>
-        <span class="meta">Teacher ne abhi PDF upload nahi kiya.</span>`;
-      return;
-    }
-
-    // verify link exists
-    const ok = await urlExists(pdfUrl);
-    if (!ok) {
-      pdfBox.innerHTML = `⚠️ <b>PDF link found but file missing</b><br><br>
-        <span class="meta">Server pe file available nahi hai. Teacher ko re-upload bol do.</span>`;
+      pdfBox.innerHTML = `
+        ❌ <b>Not uploaded</b><br><br>
+        <span class="meta">Teacher ne abhi PDF upload nahi kiya.</span>
+      `;
       return;
     }
 
