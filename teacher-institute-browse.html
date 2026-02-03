@@ -1,132 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Browse Institutes | Lets Teach</title>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Browse Institutes | Lets Teach</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 20px;
-    }
+  <link rel="stylesheet" href="styles.css" />
 
-    .card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 12px;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    button {
-      padding: 7px 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background: #1976d2;
-      color: #fff;
-    }
-
-    .blocked {
-      background: #eee;
-      color: #777;
-      padding: 8px;
-      border-radius: 4px;
-      font-size: 13px;
-    }
-
-    .note {
-      font-size: 13px;
-      color: #666;
-    }
-  </style>
+  <!-- 🔒 SINGLE SOURCE OF TRUTH -->
+  <script src="./config.js"></script>
 </head>
 
 <body>
 
-<h2>Browse Institutes</h2>
-<p class="note">Institutes in your city</p>
+<!-- AUTH GUARD -->
+<script>
+  if (!localStorage.uid || localStorage.role !== "teacher") {
+    window.location.href = "login.html";
+  }
+</script>
 
-<input id="city" placeholder="Enter city">
-<button onclick="loadInstitutes()">Search</button>
+<!-- NAV -->
+<div class="nav">
+  <div class="container navInner">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>Lets Teach</div>
+    </div>
 
-<hr>
+    <div class="navLinks">
+      <a class="pill" href="teacher-dashboard.html">Dashboard</a>
+      <a class="pill" href="jobs.html">Jobs</a>
+      <a class="pill" href="login.html">Logout</a>
+    </div>
+  </div>
+</div>
 
-<div id="list"></div>
+<div class="container">
+
+  <div class="hero">
+    <h1 class="hTitle">Browse Institutes</h1>
+    <p class="hSub">
+      City ke basis par institutes dekho aur invite bhejo.
+    </p>
+  </div>
+
+  <div class="card cardPad">
+    <div class="sectionTitle">Search</div>
+
+    <div class="searchGrid">
+      <input class="input" id="city" placeholder="City (optional)" />
+      <button class="btn" onclick="loadInstitutes()">Search</button>
+    </div>
+
+    <p class="meta" style="margin-top:10px;">
+      Tip: City blank chhodoge to sab institutes dikh jayenge.
+    </p>
+  </div>
+
+  <div style="height:14px;"></div>
+
+  <div class="card cardPad">
+    <div class="sectionTitle">Institutes</div>
+    <hr class="sep" />
+
+    <div id="list" class="list"></div>
+    <div id="hint" class="meta" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="footer">
+    <span class="meta">Lets Teach · Browse Institutes</span>
+  </div>
+
+</div>
 
 <script>
-const BASE_URL = "https://express-hello-world-uh96.onrender.com";
-
-/* AUTH CHECK */
 const teacherUid = localStorage.getItem("uid");
-const userType = localStorage.getItem("userType");
 
-if (!teacherUid || userType !== "teacher") {
-  alert("Please login as Teacher");
-  window.location.href = "login.html";
+function setHint(msg) {
+  document.getElementById("hint").innerHTML = msg || "";
 }
 
-/* LOAD INSTITUTES */
+/* ================= LOAD INSTITUTES ================= */
 function loadInstitutes() {
   const city = document.getElementById("city").value.trim();
   const box = document.getElementById("list");
 
-  if (!city) {
-    alert("Enter city");
-    return;
-  }
+  let url = `${BASE_URL}/api/institute/browse`;
+  if (city) url += `?city=${encodeURIComponent(city)}`;
 
-  box.innerHTML = "Loading institutes...";
+  box.innerHTML = `<div class="meta">Loading institutes...</div>`;
+  setHint("");
 
-  fetch(`${BASE_URL}/api/institute/browse?city=${encodeURIComponent(city)}`)
+  fetch(url)
     .then(res => res.json())
     .then(data => {
       box.innerHTML = "";
 
-      if (!data.institutes || data.institutes.length === 0) {
-        box.innerHTML = "<p>No institutes found</p>";
+      const list = data.institutes || [];
+
+      if (!list.length) {
+        box.innerHTML = `<div class="meta">No institutes found</div>`;
         return;
       }
 
-      data.institutes.forEach(i => {
+      list.forEach(i => {
         const div = document.createElement("div");
-        div.className = "card";
+        div.className = "item";
 
-        let actionHTML = "";
+        let action = "";
 
-        if (i.registered) {
-          actionHTML = `
-            <button onclick="sendInvite('${i.uid}')">
+        if (i.isRegistered || i.registered) {
+          action = `
+            <button class="btn" onclick="sendInvite('${i.uid}')">
               Send Invite
             </button>
           `;
         } else {
-          actionHTML = `
-            <div class="blocked">
-              This institute is not registered yet.<br>
-              Contact: ${i.phone || "Not available"}
+          action = `
+            <div class="badge" style="opacity:.8;">
+              Not registered · Phone: ${i.phone || "N/A"}
             </div>
           `;
         }
 
         div.innerHTML = `
-          <h3>${i.name}</h3>
-          <p><b>City:</b> ${i.city}</p>
-          <p><b>Subjects Needed:</b> ${(i.subjectsNeeded || []).join(", ") || "—"}</p>
-          ${actionHTML}
+          <div style="flex:1;">
+            <div style="font-weight:800;">${i.name}</div>
+            <div class="meta">
+              ${i.city || "—"} · ${(i.subjectsNeeded || []).join(", ") || "—"}
+            </div>
+            <div style="margin-top:10px;">
+              ${action}
+            </div>
+          </div>
+          <div class="badge">Institute</div>
         `;
 
         box.appendChild(div);
       });
     })
     .catch(() => {
-      box.innerHTML = "<p>Error loading institutes</p>";
+      box.innerHTML = `<div class="meta">Server error loading institutes</div>`;
     });
 }
 
-/* SEND INVITE */
+/* ================= SEND INVITE ================= */
 function sendInvite(instituteUid) {
   fetch(`${BASE_URL}/api/invite/create`, {
     method: "POST",
@@ -139,13 +158,12 @@ function sendInvite(instituteUid) {
     })
   })
   .then(res => res.json())
-  .then(data => {
-    alert(data.message || "Invite sent");
-  })
-  .catch(() => {
-    alert("Server error");
-  });
+  .then(data => alert(data.message || "Invite sent"))
+  .catch(() => alert("Server error"));
 }
+
+/* INIT */
+loadInstitutes();
 </script>
 
 </body>
