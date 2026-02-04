@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,7 +18,9 @@
       margin: 10px 0;
       border-radius: 8px;
       background:#fafafa;
-      display:flex;flex-direction:column;gap:8px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
     }
     .me {
       align-self:flex-end;
@@ -37,18 +39,13 @@
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     input{padding:10px;border:1px solid #ddd;border-radius:8px;min-width:240px}
     button{padding:10px 14px;border:0;border-radius:8px;background:#2e86de;color:#fff;cursor:pointer}
-    button:hover{filter:brightness(0.95)}
-    small{color:#666}
   </style>
 </head>
 
 <body>
   <div class="card">
     <h2>Realtime Chat Test</h2>
-
-    <div class="row">
-      <small id="info">Loading...</small>
-    </div>
+    <small id="info">Loading...</small>
 
     <div id="chat"></div>
 
@@ -56,30 +53,23 @@
       <input id="msg" placeholder="Type message" />
       <button onclick="send()">Send</button>
     </div>
-
-    <hr>
-    <small>
-      Usage (local): <b>?me=user1&other=user2&roomId=user1_user2&server=local</b><br>
-      Usage (render): <b>?me=user1&other=user2&roomId=user1_user2&server=prod</b>
-    </small>
   </div>
 
 <script>
   const params = new URLSearchParams(window.location.search);
 
-  // ✅ required-ish values
   const roomId = params.get("roomId") || "room1";
   const me = params.get("me") || "user1";
   const other = params.get("other") || "user2";
 
-  // ✅ server switch
-  const serverMode = (params.get("server") || "local").toLowerCase();
-  const PROD_URL = "https://express-hello-world-uh96.onrender.com";
-  const LOCAL_URL = "http://localhost:5000";
-  const SOCKET_URL = serverMode === "prod" ? PROD_URL : LOCAL_URL;
+  const serverMode = (params.get("server") || "prod").toLowerCase();
+  const SOCKET_URL =
+    serverMode === "local"
+      ? "http://localhost:5000"
+      : "https://express-hello-world-uh96.onrender.com";
 
   document.getElementById("info").innerText =
-    `Server: ${SOCKET_URL} | Room: ${roomId} | Me: ${me} | Other: ${other}`;
+    `Server: ${SOCKET_URL} | Room: ${roomId} | Me: ${me}`;
 
   const socket = io(SOCKET_URL);
 
@@ -87,26 +77,23 @@
     socket.emit("joinRoom", roomId);
   });
 
+  /* ✅ RECEIVE MESSAGE (ONLY ONE SOURCE OF TRUTH) */
   socket.on("receiveMessage", (data) => {
     const div = document.createElement("div");
     div.className = (data.senderUid === me) ? "me" : "other";
     div.innerText = `${data.senderUid}: ${data.text}`;
-    document.getElementById("chat").appendChild(div);
-    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+
+    const chat = document.getElementById("chat");
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
   });
 
+  /* ✅ SEND MESSAGE (NO SELF APPEND) */
   function send() {
     const input = document.getElementById("msg");
     const text = input.value.trim();
     if (!text) return;
 
-    // ✅ show instantly
-    const div = document.createElement("div");
-    div.className = "me";
-    div.innerText = `${me}: ${text}`;
-    document.getElementById("chat").appendChild(div);
-
-    // ✅ IMPORTANT: include receiverUid + roomId (server expects)
     socket.emit("sendMessage", {
       senderUid: me,
       receiverUid: other,
@@ -116,7 +103,6 @@
 
     input.value = "";
     input.focus();
-    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
   }
 
   document.getElementById("msg").addEventListener("keydown", (e) => {
