@@ -2,13 +2,19 @@
 <html>
 <head>
   <title>Find Teachers | Lets Teach</title>
+
   <style>
-    body { font-family: Arial; background:#f4f4f4; padding:20px; }
+    body {
+      font-family: Arial;
+      background:#f4f4f4;
+      padding:20px;
+    }
     .card {
       background:#fff;
       padding:15px;
       margin-bottom:10px;
       border-radius:5px;
+      border:1px solid #ddd;
     }
     button {
       padding:6px 10px;
@@ -16,9 +22,12 @@
       color:#fff;
       border:none;
       cursor:pointer;
+      border-radius:4px;
     }
+    .muted { color:#666; }
   </style>
 </head>
+
 <body>
 
 <h2>Find Teachers (Public)</h2>
@@ -29,26 +38,43 @@
 
 <hr>
 
-<div id="results"></div>
+<div id="results" class="muted">Search teachers by city or subject.</div>
 
 <script>
 const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 
-function search() {
-  const city = document.getElementById("city").value;
-  const subject = document.getElementById("subject").value;
+/* ===== SAFE TEXT ===== */
+function esc(str) {
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
-  let url = `${BASE_URL}/api/teacher/browse?`;
-  if (city) url += `city=${city}&`;
-  if (subject) url += `subject=${subject}`;
+/* ===== SEARCH ===== */
+function search() {
+  const city = document.getElementById("city").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+
+  let url = `${BASE_URL}/api/teacher/browse`;
+  const params = [];
+
+  if (city) params.push(`city=${encodeURIComponent(city)}`);
+  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+
+  if (params.length) url += `?${params.join("&")}`;
+
+  const box = document.getElementById("results");
+  box.innerHTML = "Loading teachers...";
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      const box = document.getElementById("results");
       box.innerHTML = "";
 
-      if (!data.teachers || data.teachers.length === 0) {
+      if (!data || !Array.isArray(data.teachers) || data.teachers.length === 0) {
         box.innerHTML = "<p>No teachers found</p>";
         return;
       }
@@ -56,18 +82,23 @@ function search() {
       data.teachers.forEach(t => {
         const div = document.createElement("div");
         div.className = "card";
-        div.innerHTML = `
-          <h3>${t.name}</h3>
-          <p><b>Subject:</b> ${t.subject}</p>
-          <p><b>City:</b> ${t.city}</p>
-          <p><b>Experience:</b> ${t.experience || "N/A"} yrs</p>
 
-          <button onclick="alert('Login required to invite')">
+        div.innerHTML = `
+          <h3>${esc(t.name || "Teacher")}</h3>
+          <p><b>Subject:</b> ${esc(t.subject || "—")}</p>
+          <p><b>City:</b> ${esc(t.city || "—")}</p>
+          <p><b>Experience:</b> ${Number(t.experience || 0)} yrs</p>
+
+          <button onclick="alert('Login as institute to invite')">
             Invite Teacher
           </button>
         `;
+
         box.appendChild(div);
       });
+    })
+    .catch(() => {
+      box.innerHTML = "<p>Server error. Please try again.</p>";
     });
 }
 </script>
