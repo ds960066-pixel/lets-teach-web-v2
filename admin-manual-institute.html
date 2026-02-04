@@ -23,9 +23,10 @@
 
 <p id="msg"></p>
 
-<script>
-const BASE_URL = "https://express-hello-world-uh96.onrender.com";
+<!-- 🔒 SINGLE SOURCE OF TRUTH -->
+<script src="/lets-teach-web-v2/config.js"></script>
 
+<script>
 function save() {
   const payload = {
     name: document.getElementById("name").value.trim(),
