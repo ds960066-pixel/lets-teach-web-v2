@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>Institute Registration | Lets Teach</title>
 
+  <script src="/lets-teach-web-v2/config.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -54,7 +56,6 @@ if (!localStorage.uid || localStorage.role !== "institute") {
 <p id="result"></p>
 
 <script>
-const BASE_URL = "https://express-hello-world-uh96.onrender.com";
 
 /* ================= SOURCE OF TRUTH ================= */
 const uid = localStorage.getItem("uid");
