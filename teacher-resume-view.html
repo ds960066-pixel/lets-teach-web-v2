@@ -8,80 +8,76 @@
   <link rel="stylesheet" href="styles.css" />
 
   <!-- 🔒 SINGLE SOURCE OF TRUTH -->
-  <script src="/lets-teach-web-v2/config.js"></script>"/lets-teach-web-v2/config.js"></script>
+  <script src="/lets-teach-web-v2/config.js"></script>
 </head>
 
 <body>
 
-  <!-- NAV -->
-  <div class="nav">
-    <div class="container navInner">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>Lets Teach</div>
+<!-- NAV -->
+<div class="nav">
+  <div class="container navInner">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>Lets Teach</div>
+    </div>
+
+    <div class="navLinks">
+      <a class="pill" href="index.html">Home</a>
+      <a class="pill" href="jobs.html">Jobs</a>
+      <a class="pill" href="login.html">Login</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card cardPad">
+    <h2 id="name">Loading…</h2>
+    <div class="meta" id="metaLine">Fetching resume…</div>
+
+    <hr class="sep">
+
+    <div class="grid2">
+
+      <!-- LEFT -->
+      <div class="card cardPad">
+        <div class="sectionTitle">Professional Summary</div>
+        <div id="about" class="meta">—</div>
+
+        <hr class="sep">
+
+        <div class="sectionTitle">Education</div>
+        <div id="education" class="meta">—</div>
+
+        <hr class="sep">
+
+        <div class="sectionTitle">Resume PDF</div>
+        <div id="pdfBox" class="meta">—</div>
       </div>
 
-      <div class="navLinks">
-        <a class="pill" href="index.html">Home</a>
-        <a class="pill" href="jobs.html">Jobs</a>
-        <a class="pill" href="login.html">Login</a>
+      <!-- RIGHT -->
+      <div class="card cardPad">
+        <div class="sectionTitle">Skills</div>
+        <div id="skills" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+
+        <hr class="sep">
+
+        <button class="btn" onclick="window.print()">Download (Print to PDF)</button>
+
+        <div class="meta" style="margin-top:10px;">
+          Tip: Print dialog me “Save as PDF” choose karo.
+        </div>
       </div>
+
     </div>
   </div>
 
-  <div class="container">
-    <div class="card cardPad">
-      <h2 id="name" style="margin:0 0 6px;">Loading...</h2>
-      <div class="meta" id="metaLine">Fetching resume...</div>
-
-      <hr class="sep">
-
-      <div class="grid2">
-
-        <!-- LEFT -->
-        <div class="card cardPad">
-          <div class="sectionTitle">Professional Summary</div>
-          <div id="about" class="meta">—</div>
-
-          <hr class="sep">
-
-          <div class="sectionTitle">Education</div>
-          <div id="education" class="meta">—</div>
-
-          <hr class="sep">
-
-          <div class="sectionTitle">Resume PDF</div>
-          <div id="pdfBox" class="meta">—</div>
-        </div>
-
-        <!-- RIGHT -->
-        <div class="card cardPad">
-          <div class="sectionTitle">Skills</div>
-          <div id="skills"
-               style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
-          </div>
-
-          <hr class="sep">
-
-          <button class="btn" onclick="window.print()">
-            Download (Print to PDF)
-          </button>
-
-          <div class="meta" style="margin-top:10px;">
-            Tip: Print dialog me “Save as PDF” choose karo.
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="footer">
-      <span class="meta">Lets Teach · Teacher Resume</span>
-    </div>
+  <div class="footer">
+    <span class="meta">Lets Teach · Teacher Resume</span>
   </div>
+</div>
 
 <script>
-/* ================= GET UID ================= */
+/* ================= UID ================= */
 const params = new URLSearchParams(window.location.search);
 const uid = params.get("uid") || localStorage.getItem("uid");
 
@@ -109,36 +105,28 @@ function buildFileUrl(path) {
 
 /* ================= LOAD RESUME ================= */
 fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
-  .then(res => res.json())
+  .then(r => r.json())
   .then(data => {
     if (!data.teacher) {
       alert("Teacher not found");
-      window.location.href = "index.html";
       return;
     }
 
     const t = data.teacher;
 
-    document.getElementById("name").innerText =
-      escapeHtml(t.name || "Teacher Resume");
-
-    const meta = [];
-    if (t.subject) meta.push(escapeHtml(t.subject));
-    if (t.city) meta.push(escapeHtml(t.city));
-    meta.push(`${Number(t.experience || 0)} yrs`);
+    document.getElementById("name").innerText = escapeHtml(t.name || "Teacher");
 
     document.getElementById("metaLine").innerHTML = `
-      <span class="badge">${meta.join(" · ")}</span>
-      <div class="meta" style="margin-top:10px;">
+      <span class="badge">
+        ${escapeHtml(t.subject || "—")} · ${escapeHtml(t.city || "—")} · ${Number(t.experience || 0)} yrs
+      </span>
+      <div class="meta" style="margin-top:8px;">
         <b>Phone:</b> ${escapeHtml(t.phone || "—")}
       </div>
     `;
 
-    document.getElementById("about").innerText =
-      t.about || "No summary added yet";
-
-    document.getElementById("education").innerText =
-      t.education || "—";
+    document.getElementById("about").innerText = t.about || "—";
+    document.getElementById("education").innerText = t.education || "—";
 
     /* ===== SKILLS ===== */
     const skillsBox = document.getElementById("skills");
@@ -157,13 +145,11 @@ fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
 
     /* ===== PDF ===== */
     const pdfBox = document.getElementById("pdfBox");
-    const pdfUrl = buildFileUrl(t.resumeUrl);
+    const pdfPath = t.resume?.pdfUrl || t.resumeUrl;
+    const pdfUrl = buildFileUrl(pdfPath);
 
     if (!pdfUrl) {
-      pdfBox.innerHTML = `
-        ❌ <b>Not uploaded</b><br><br>
-        <span class="meta">Teacher ne abhi PDF upload nahi kiya.</span>
-      `;
+      pdfBox.innerHTML = `❌ <b>Not uploaded</b>`;
       return;
     }
 
@@ -174,7 +160,8 @@ fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
       <a class="smallLink" href="${pdfUrl}" download>Download PDF</a>
     `;
   })
-  .catch(() => {
+  .catch(err => {
+    console.error(err);
     alert("Server error");
   });
 </script>
