@@ -6,92 +6,76 @@
   <title>Lets Teach | Find Teachers & Institutes</title>
 
   <link rel="stylesheet" href="styles.css" />
-
-  <meta name="description"
-        content="Find teachers and institutes by city and subject. Lets Teach is a free public platform for education hiring." />
-  <meta name="keywords"
-        content="teachers, institutes, teaching jobs, school hiring, lets teach" />
 </head>
 
 <body>
 
-  <!-- NAV -->
-  <div class="nav">
-    <div class="container navInner">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>Lets Teach</div>
-      </div>
+<!-- NAV -->
+<div class="nav">
+  <div class="container navInner">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>Lets Teach</div>
+    </div>
 
-      <div class="navLinks">
-        <a class="pill" href="jobs.html">Jobs</a>
-        <a class="pill" href="interview/index.html">Interview Preps</a>
-        <a class="pill" href="login.html">Login</a>
-      </div>
+    <div class="navLinks">
+      <a class="pill" href="jobs.html">Jobs</a>
+      <a class="pill" href="interview/index.html">Interview Preps</a>
+      <a class="pill" href="login.html">Login</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SEARCH -->
+  <div class="hero heroCard">
+    <h1>Find Teachers & Institutes</h1>
+
+    <div class="searchRow">
+      <input id="city" placeholder="City" />
+      <input id="subject" placeholder="Subject" />
+      <button class="btn" onclick="applyFilter()">Search</button>
+      <button class="btn ghost" onclick="clearFilter()">Clear</button>
     </div>
   </div>
 
-  <div class="container">
+  <!-- RESULTS -->
+  <div class="grid2">
 
-    <!-- HERO -->
-    <div class="hero heroCard">
-      <h1>Find Teachers & Institutes in your city</h1>
-      <p class="muted">
-        Public search (no login). For invite/chat/job apply — login required.
-      </p>
-
-      <!-- SEARCH -->
-      <div class="searchRow">
-        <input id="city" placeholder="City (e.g. Patna, Delhi)" autocomplete="off" />
-        <input id="subject" placeholder="Subject (e.g. Math, Physics)" autocomplete="off" />
-        <button class="btn" onclick="applyFilter()">Search</button>
-        <button class="btn ghost" onclick="clearFilter()">Clear</button>
+    <!-- TEACHERS -->
+    <div class="card">
+      <div class="cardHead">
+        <h2>Teachers</h2>
+        <span id="teacherCount" class="badge">0</span>
       </div>
-
-      <p class="muted small">
-        Tip: city/subject blank chhod doge to latest results aa jayenge.
-      </p>
+      <div id="teachers" class="list"></div>
     </div>
 
-    <!-- RESULTS GRID -->
-    <div class="grid2">
-
-      <!-- TEACHERS -->
-      <div class="card">
-        <div class="cardHead">
-          <h2>Teachers</h2>
-          <span id="teacherCount" class="badge">0</span>
-        </div>
-        <div id="teachers" class="list"></div>
+    <!-- INSTITUTES -->
+    <div class="card">
+      <div class="cardHead">
+        <h2>Institutes</h2>
+        <span id="instituteCount" class="badge">0</span>
       </div>
-
-      <!-- INSTITUTES -->
-      <div class="card">
-        <div class="cardHead">
-          <h2>Institutes</h2>
-          <span id="instituteCount" class="badge">0</span>
-        </div>
-        <div id="institutes" class="list"></div>
-      </div>
-
-    </div>
-
-    <div class="footer muted">
-      <a href="login.html">Login</a> ·
-      <a href="jobs.html">Browse Jobs</a> ·
-      <a href="interview/index.html">Interview Preps</a>
+      <div id="institutes" class="list"></div>
     </div>
 
   </div>
+
+</div>
+
+<!-- CONFIG -->
 <script src="./config.js"></script>
-<script>
 
-/* ================= APPLY FILTER ================= */
+<script>
+/* ================= FILTER ================= */
 function applyFilter() {
-  const city = document.getElementById("city").value.trim();
-  const subject = document.getElementById("subject").value.trim();
-  loadTeachers(city, subject);
-  loadInstitutes(city, subject);
+  loadTeachers(
+    document.getElementById("city").value.trim(),
+    document.getElementById("subject").value.trim()
+  );
+  loadInstitutes(document.getElementById("city").value.trim());
 }
 
 function clearFilter() {
@@ -101,116 +85,80 @@ function clearFilter() {
   loadInstitutes();
 }
 
-/* ================= LOAD TEACHERS (PUBLIC) ================= */
+/* ================= LOAD TEACHERS ================= */
 function loadTeachers(city = "", subject = "") {
-  let url = `${BASE_URL}/api/teacher/public`;
-  const params = [];
-  if (city) params.push(`city=${encodeURIComponent(city)}`);
-  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
-  if (params.length) url += `?${params.join("&")}`;
+  let url = `${BASE_URL}/api/teachers`;
+  const q = [];
+  if (city) q.push(`city=${encodeURIComponent(city)}`);
+  if (subject) q.push(`subject=${encodeURIComponent(subject)}`);
+  if (q.length) url += `?${q.join("&")}`;
 
   const box = document.getElementById("teachers");
-  box.innerHTML = `<div class="muted small">Loading...</div>`;
+  box.innerHTML = "Loading...";
 
   fetch(url)
     .then(r => r.json())
-    .then(data => {
-      const list = (data && data.teachers) ? data.teachers : [];
+    .then(d => {
+      const list = d.teachers || [];
       document.getElementById("teacherCount").innerText = list.length;
 
       if (!list.length) {
-        box.innerHTML = `<div class="muted">No teachers found</div>`;
+        box.innerHTML = "No teachers found";
         return;
       }
 
       box.innerHTML = "";
       list.forEach(t => {
-        const div = document.createElement("div");
-        div.className = "item";
-
-        div.innerHTML = `
-          <div class="itemTitle">
-            ${escapeHtml(t.name || "Teacher")}
-          </div>
-          <div class="itemMeta">
-            ${escapeHtml(t.subject || "—")} · ${escapeHtml(t.city || "—")} · ${Number(t.experience || 0)} yrs
-          </div>
-          <div class="itemActions">
-            <a class="link" href="teacher-public.html?uid=${encodeURIComponent(t.uid)}">View Profile</a>
-            <a class="link" href="login.html">Invite / Chat</a>
+        box.innerHTML += `
+          <div class="item">
+            <b>${t.name}</b><br>
+            ${t.subject} · ${t.city}<br>
+            <a href="teacher-public.html?uid=${t.uid}">View Profile</a>
           </div>
         `;
-        box.appendChild(div);
       });
     })
     .catch(() => {
-      document.getElementById("teacherCount").innerText = "0";
-      box.innerHTML = `<div class="muted">Error loading teachers</div>`;
+      box.innerHTML = "Error loading teachers";
     });
 }
 
-/* ================= LOAD INSTITUTES (PUBLIC) ================= */
-/* NOTE: subject filter (optional) — backend agar ignore kare to bhi safe */
-function loadInstitutes(city = "", subject = "") {
-  let url = `${BASE_URL}/api/institute/public`;
-  const params = [];
-  if (city) params.push(`city=${encodeURIComponent(city)}`);
-  if (subject) params.push(`subject=${encodeURIComponent(subject)}`); // optional
-  if (params.length) url += `?${params.join("&")}`;
+/* ================= LOAD INSTITUTES ================= */
+function loadInstitutes(city = "") {
+  let url = `${BASE_URL}/api/institutes`;
+  if (city) url += `?city=${encodeURIComponent(city)}`;
 
   const box = document.getElementById("institutes");
-  box.innerHTML = `<div class="muted small">Loading...</div>`;
+  box.innerHTML = "Loading...";
 
   fetch(url)
     .then(r => r.json())
-    .then(data => {
-      const list = (data && data.institutes) ? data.institutes : [];
+    .then(d => {
+      const list = d.institutes || [];
       document.getElementById("instituteCount").innerText = list.length;
 
       if (!list.length) {
-        box.innerHTML = `<div class="muted">No institutes found</div>`;
+        box.innerHTML = "No institutes found";
         return;
       }
 
       box.innerHTML = "";
       list.forEach(i => {
-        const subjects = Array.isArray(i.subjectsNeeded) ? i.subjectsNeeded.join(", ") : "—";
-
-        const div = document.createElement("div");
-        div.className = "item";
-
-        div.innerHTML = `
-          <div class="itemTitle">
-            ${escapeHtml(i.name || "Institute")}
-          </div>
-          <div class="itemMeta">
-            ${escapeHtml(i.city || "—")} · Needs: ${escapeHtml(subjects || "—")}
-          </div>
-          <div class="itemActions">
-            <a class="link" href="institute-public.html?uid=${encodeURIComponent(i.uid)}">View Profile</a>
-            <a class="link" href="login.html">Invite / Chat</a>
+        box.innerHTML += `
+          <div class="item">
+            <b>${i.name}</b><br>
+            ${i.city}<br>
+            <a href="institute-public.html?uid=${i.uid}">View Profile</a>
           </div>
         `;
-        box.appendChild(div);
       });
     })
     .catch(() => {
-      document.getElementById("instituteCount").innerText = "0";
-      box.innerHTML = `<div class="muted">Error loading institutes</div>`;
+      box.innerHTML = "Error loading institutes";
     });
 }
 
-/* ================= HELPERS ================= */
-function escapeHtml(str) {
-  return String(str || "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-/* ================= INITIAL LOAD ================= */
+/* ================= INIT ================= */
 loadTeachers();
 loadInstitutes();
 </script>
