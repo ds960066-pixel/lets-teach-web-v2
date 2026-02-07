@@ -14,10 +14,9 @@
 </head>
 <body>
 
-  
 <h2>Lets Teach — Admin Panel</h2>
 
-<p><b>⚠️ Note:</b> Ye page public repo me hai. Isko secret rakhna (link share mat karna).</p>
+<p><b>⚠️ Note:</b> Ye page public repo me hai. Isko secret rakhna.</p>
 
 <hr>
 
@@ -41,13 +40,11 @@
 </div>
 
 <div id="institutes"></div>
-  
-  <script src="./config.js"></script><script>
-<<<<<<< HEAD
-=======
-const BASE_URL = "https://";
->>>>>>> 3f6d6b2 (Fix frontend API URLs and resume flow)
 
+<!-- ✅ SINGLE SOURCE OF TRUTH -->
+<script src="./config.js"></script>
+
+<script>
 function qs(obj){
   const p = [];
   Object.keys(obj).forEach(k=>{
@@ -92,7 +89,6 @@ async function loadTeachers(){
 
 async function verifyTeacher(uid){
   await fetch(`${BASE_URL}/api/admin/verify/teacher/${uid}`, {method:"POST"});
-  alert("Verified");
   loadTeachers();
 }
 async function rejectTeacher(uid){
@@ -101,23 +97,19 @@ async function rejectTeacher(uid){
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({reason:"Rejected by admin"})
   });
-  alert("Rejected");
   loadTeachers();
 }
 async function blockTeacher(uid){
   await fetch(`${BASE_URL}/api/admin/block/teacher/${uid}`, {method:"POST"});
-  alert("Blocked");
   loadTeachers();
 }
 async function unblockTeacher(uid){
   await fetch(`${BASE_URL}/api/admin/unblock/teacher/${uid}`, {method:"POST"});
-  alert("Unblocked");
   loadTeachers();
 }
 async function deleteTeacher(uid){
   if(!confirm("Delete teacher permanently?")) return;
   await fetch(`${BASE_URL}/api/admin/delete/teacher/${uid}`, {method:"DELETE"});
-  alert("Deleted");
   loadTeachers();
 }
 
@@ -143,7 +135,7 @@ async function loadInstitutes(){
     div.innerHTML = `
       <b>${i.name}</b> (${i.uid})<br>
       ${i.city}<br>
-      <small>Status: ${i.verificationStatus} | Registered: ${i.registered} | Blocked: ${i.isBlocked}</small><br>
+      <small>Status: ${i.verificationStatus} | Blocked: ${i.isBlocked}</small><br>
       <button onclick="verifyInstitute('${i.uid}')">Verify</button>
       <button onclick="rejectInstitute('${i.uid}')">Reject</button>
       <button onclick="blockInstitute('${i.uid}')">Block</button>
@@ -156,7 +148,6 @@ async function loadInstitutes(){
 
 async function verifyInstitute(uid){
   await fetch(`${BASE_URL}/api/admin/verify/institute/${uid}`, {method:"POST"});
-  alert("Verified");
   loadInstitutes();
 }
 async function rejectInstitute(uid){
@@ -165,23 +156,19 @@ async function rejectInstitute(uid){
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({reason:"Rejected by admin"})
   });
-  alert("Rejected");
   loadInstitutes();
 }
 async function blockInstitute(uid){
   await fetch(`${BASE_URL}/api/admin/block/institute/${uid}`, {method:"POST"});
-  alert("Blocked");
   loadInstitutes();
 }
 async function unblockInstitute(uid){
   await fetch(`${BASE_URL}/api/admin/unblock/institute/${uid}`, {method:"POST"});
-  alert("Unblocked");
   loadInstitutes();
 }
 async function deleteInstitute(uid){
   if(!confirm("Delete institute permanently?")) return;
   await fetch(`${BASE_URL}/api/admin/delete/institute/${uid}`, {method:"DELETE"});
-  alert("Deleted");
   loadInstitutes();
 }
 </script>

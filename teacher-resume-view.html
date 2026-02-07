@@ -8,7 +8,8 @@
   <link rel="stylesheet" href="styles.css" />
 
   <!-- 🔒 SINGLE SOURCE OF TRUTH -->
-  <script src="./config.js"></script></head>
+  <script src="./config.js"></script>
+</head>
 
 <body>
 
@@ -113,19 +114,25 @@ fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
 
     const t = data.teacher;
 
-    document.getElementById("name").innerText = escapeHtml(t.name || "Teacher");
+    document.getElementById("name").innerText =
+      escapeHtml(t.name || "Teacher");
 
     document.getElementById("metaLine").innerHTML = `
       <span class="badge">
-        ${escapeHtml(t.subject || "—")} · ${escapeHtml(t.city || "—")} · ${Number(t.experience || 0)} yrs
+        ${escapeHtml(t.subject || "—")} ·
+        ${escapeHtml(t.city || "—")} ·
+        ${Number(t.experience || 0)} yrs
       </span>
       <div class="meta" style="margin-top:8px;">
         <b>Phone:</b> ${escapeHtml(t.phone || "—")}
       </div>
     `;
 
-    document.getElementById("about").innerText = t.about || "—";
-    document.getElementById("education").innerText = t.education || "—";
+    document.getElementById("about").innerText =
+      t.about || "—";
+
+    document.getElementById("education").innerText =
+      t.education || "—";
 
     /* ===== SKILLS ===== */
     const skillsBox = document.getElementById("skills");
@@ -144,8 +151,7 @@ fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`)
 
     /* ===== PDF ===== */
     const pdfBox = document.getElementById("pdfBox");
-    const pdfPath = t.resume?.pdfUrl || t.resumeUrl;
-    const pdfUrl = buildFileUrl(pdfPath);
+    const pdfUrl = buildFileUrl(t.resumeUrl);
 
     if (!pdfUrl) {
       pdfBox.innerHTML = `❌ <b>Not uploaded</b>`;
