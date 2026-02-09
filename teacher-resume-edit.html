@@ -81,8 +81,8 @@
 <script>
 const uid = localStorage.getItem("uid");
 
-/* ===== LOAD EXISTING DATA ===== */
-(async function loadExisting() {
+/* ================= LOAD EXISTING RESUME ================= */
+async function loadExisting() {
   try {
     const res = await fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`);
     const data = await res.json();
@@ -94,19 +94,18 @@ const uid = localStorage.getItem("uid");
     document.getElementById("education").value = t.education || "";
     document.getElementById("skills").value =
       Array.isArray(t.skills) ? t.skills.join(", ") : "";
-  } catch {
+  } catch (err) {
+    console.error(err);
     document.getElementById("msg").innerText =
       "Could not load existing resume.";
   }
-})();
+}
 
-/* ===== SAVE RESUME ===== */
-<script>
+/* ================= SAVE RESUME (FINAL) ================= */
 async function saveResume() {
   const about = document.getElementById("about").value.trim();
   const education = document.getElementById("education").value.trim();
   const skillsRaw = document.getElementById("skills").value.trim();
-  const uid = localStorage.getItem("uid");
 
   if (!about || !education || !skillsRaw) {
     alert("All fields are required");
@@ -142,11 +141,14 @@ async function saveResume() {
         data.message || "Failed to save resume";
     }
   } catch (err) {
+    console.error(err);
     document.getElementById("msg").innerText = "Server error";
   }
 }
-</script>
 
+/* ================= INIT ================= */
+loadExisting();
+</script>
 
 </body>
 </html>
