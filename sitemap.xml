@@ -2,15 +2,19 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://ds960066-pixel.github.io/lets-teach-frontend/</loc>
+    <loc>https://ds960066-pixel.github.io/lets-teach-web-v2/</loc>
   </url>
 
   <url>
-    <loc>https://ds960066-pixel.github.io/lets-teach-frontend/jobs.html</loc>
+    <loc>https://ds960066-pixel.github.io/lets-teach-web-v2/jobs.html</loc>
   </url>
 
   <url>
-    <loc>https://ds960066-pixel.github.io/lets-teach-frontend/interview/index.html</loc>
+    <loc>https://ds960066-pixel.github.io/lets-teach-web-v2/login.html</loc>
+  </url>
+
+  <url>
+    <loc>https://ds960066-pixel.github.io/lets-teach-web-v2/interview/index.html</loc>
   </url>
 
 </urlset>
