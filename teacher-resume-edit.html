@@ -81,10 +81,10 @@
 <script>
 const uid = localStorage.getItem("uid");
 
-/* ================= LOAD EXISTING RESUME ================= */
-async function loadExisting() {
+/* ================= LOAD EXISTING DATA ================= */
+(async function loadExisting() {
   try {
-    const res = await fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(uid)}`);
+    const res = await fetch(`${BASE_URL}/api/teacher/${uid}`);
     const data = await res.json();
 
     if (!data.teacher) return;
@@ -94,12 +94,11 @@ async function loadExisting() {
     document.getElementById("education").value = t.education || "";
     document.getElementById("skills").value =
       Array.isArray(t.skills) ? t.skills.join(", ") : "";
-  } catch (err) {
-    console.error(err);
+  } catch {
     document.getElementById("msg").innerText =
       "Could not load existing resume.";
   }
-}
+})();
 
 /* ================= SAVE RESUME (FINAL) ================= */
 async function saveResume() {
@@ -120,16 +119,14 @@ async function saveResume() {
   document.getElementById("msg").innerText = "Saving...";
 
   try {
-    const res = await fetch(`${BASE_URL}/api/teacher/resume`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        uid,
-        about,
-        education,
-        skills
-      })
-    });
+    const res = await fetch(
+      `${BASE_URL}/api/teacher/resume/${uid}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ about, education, skills })
+      }
+    );
 
     const data = await res.json();
 
@@ -141,13 +138,9 @@ async function saveResume() {
         data.message || "Failed to save resume";
     }
   } catch (err) {
-    console.error(err);
     document.getElementById("msg").innerText = "Server error";
   }
 }
-
-/* ================= INIT ================= */
-loadExisting();
 </script>
 
 </body>
