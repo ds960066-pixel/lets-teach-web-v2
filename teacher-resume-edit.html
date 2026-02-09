@@ -101,43 +101,52 @@ const uid = localStorage.getItem("uid");
 })();
 
 /* ===== SAVE RESUME ===== */
+<script>
 async function saveResume() {
   const about = document.getElementById("about").value.trim();
   const education = document.getElementById("education").value.trim();
   const skillsRaw = document.getElementById("skills").value.trim();
+  const uid = localStorage.getItem("uid");
 
   if (!about || !education || !skillsRaw) {
     alert("All fields are required");
     return;
   }
 
-  const skills = skillsRaw.split(",").map(s => s.trim()).filter(Boolean);
+  const skills = skillsRaw
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
 
-  document.getElementById("msg").innerHTML = "Saving...";
+  document.getElementById("msg").innerText = "Saving...";
 
   try {
-    const res = await fetch(`${BASE_URL}/api/teacher/resume/${uid}`, {
+    const res = await fetch(`${BASE_URL}/api/teacher/resume`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ about, education, skills })
+      body: JSON.stringify({
+        uid,
+        about,
+        education,
+        skills
+      })
     });
 
     const data = await res.json();
 
     if (data.success) {
-      document.getElementById("msg").innerHTML =
-        "✅ Resume saved. Now upload PDF from dashboard.";
-      return;
+      document.getElementById("msg").innerText =
+        "✅ Resume saved successfully. Now you can apply for jobs.";
+    } else {
+      document.getElementById("msg").innerText =
+        data.message || "Failed to save resume";
     }
-
-    document.getElementById("msg").innerText =
-      data.message || "Failed";
-  } catch {
-    document.getElementById("msg").innerText =
-      "Server error";
+  } catch (err) {
+    document.getElementById("msg").innerText = "Server error";
   }
 }
 </script>
+
 
 </body>
 </html>
