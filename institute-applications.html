@@ -3,29 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <title>Received Applications | Lets Teach</title>
-  <link rel="stylesheet" href="styles.css">
   <script src="./config.js"></script>
 </head>
 
-<body>
-
-<div class="container">
-  <h2>Received Applications</h2>
-  <button onclick="location.href='institute-dashboard.html'">⬅ Back</button>
-  <hr>
-  <div id="box">Loading...</div>
-</div>
+<body style="font-family: Arial; padding: 20px; background:#f4f4f4;">
 
 <script>
-const uid = localStorage.getItem("uid");
-const role = localStorage.getItem("role");
-
-if (!uid || role !== "institute") {
-  alert("Login as Institute");
+if (!localStorage.uid || localStorage.role !== "institute") {
   window.location.href = "login.html";
 }
+</script>
 
-async function loadApps() {
+<h2>📄 Received Applications</h2>
+<button onclick="location.href='institute-dashboard.html'">← Back</button>
+<hr>
+
+<div id="box">Loading applications...</div>
+
+<script>
+
+const uid = localStorage.getItem("uid");
+
+async function loadApplications() {
   try {
     const res = await fetch(`${BASE_URL}/api/job-application/institute/${uid}`);
     const data = await res.json();
@@ -39,49 +38,33 @@ async function loadApps() {
     }
 
     data.applications.forEach(app => {
-
-      const t = app.teacher;
-      const job = app.jobId;
+      const teacher = app.teacher || {};
 
       const div = document.createElement("div");
       div.style.background = "#fff";
-      div.style.padding = "15px";
-      div.style.marginBottom = "15px";
-      div.style.border = "1px solid #ddd";
-      div.style.borderRadius = "8px";
-
-      const resumeLink = t && t.resumeUrl
-        ? `${BASE_URL}${t.resumeUrl.startsWith("/") ? "" : "/"}${t.resumeUrl}`
-        : null;
+      div.style.padding = "12px";
+      div.style.marginBottom = "12px";
+      div.style.borderRadius = "6px";
+      div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
 
       div.innerHTML = `
-        <h3>${job ? job.title : "Job"}</h3>
-        <p><b>Subject:</b> ${job ? job.subject : "-"}</p>
-        <p><b>City:</b> ${job ? job.city : "-"}</p>
+        <b>Teacher Name:</b> ${teacher.name || app.teacherUid} <br>
+        <b>City:</b> ${teacher.city || "-"} <br>
+        <b>Subject:</b> ${teacher.subject || "-"} <br>
+        <b>Status:</b> ${app.status} <br>
+        <b>Job:</b> ${app.jobId?.title || "N/A"} <br>
         <hr>
-        <p><b>Teacher Name:</b> ${t ? t.name : app.teacherUid}</p>
-        <p><b>City:</b> ${t ? t.city : "-"}</p>
-        <p><b>Subject:</b> ${t ? t.subject : "-"}</p>
-        <p><b>Status:</b> ${app.status || "applied"}</p>
-        <br>
-        ${
-          resumeLink
-          ? `<a href="${resumeLink}" target="_blank">👁 View Resume PDF</a>
-             &nbsp; | &nbsp;
-             <a href="${resumeLink}" download>⬇ Download</a>`
-          : `<span style="color:red;">❌ Resume PDF not uploaded</span>`
-        }
       `;
 
       box.appendChild(div);
     });
 
   } catch (err) {
-    document.getElementById("box").innerHTML = "<p>Server error</p>";
+    alert("Failed to load applications");
   }
 }
 
-loadApps();
+loadApplications();
 </script>
 
 </body>
