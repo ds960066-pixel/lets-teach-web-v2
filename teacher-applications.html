@@ -34,7 +34,7 @@ const uid = localStorage.getItem("uid");
 
 async function loadApplications() {
   try {
-    const res = await fetch(`${BASE_URL}/api/job-application/teacher/${uid}`);
+    const res = await apifetch(`${BASE_URL}/api/job-application/teacher/${uid}`);
     const data = await res.json();
 
     const box = document.getElementById("box");
