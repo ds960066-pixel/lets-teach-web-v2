@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>My Applied Jobs | Lets Teach</title>
+  <script src="./config.js"></script>
+  <style>
+    body { font-family: Arial; background:#f4f4f4; padding:20px; margin:0; }
+    .card { background:#fff; padding:15px; margin-bottom:12px; border-radius:6px; }
+    .badge { padding:4px 8px; border-radius:4px; font-size:12px; }
+    .applied { background:#e3f2fd; color:#1565c0; }
+    .shortlisted { background:#e8f5e9; color:#2e7d32; }
+    .rejected { background:#ffebee; color:#c62828; }
+    button { padding:6px 12px; background:#2e86de; color:#fff; border:none; border-radius:4px; cursor:pointer; }
+  </style>
+</head>
+
+<body>
+
+<script>
+if (!localStorage.uid || localStorage.role !== "teacher") {
+  window.location.href = "login.html";
+}
+</script>
+
+<h2>My Applied Jobs</h2>
+<button onclick="location.href='teacher-dashboard.html'">Back</button>
+<hr>
+
+<div id="box">Loading...</div>
+
+<script>
+const uid = localStorage.getItem("uid");
+
+async function loadApplications() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/job-application/teacher/${uid}`);
+    const data = await res.json();
+
+    const box = document.getElementById("box");
+    box.innerHTML = "";
+
+    if (!data.success || !data.applications.length) {
+      box.innerHTML = "<p>No applications yet.</p>";
+      return;
+    }
+
+    data.applications.forEach(app => {
+
+      const job = app.jobId;
+      const institute = app.institute;
+
+      const div = document.createElement("div");
+      div.className = "card";
+
+      const statusClass = app.status;
+
+      div.innerHTML = `
+        <b>Job:</b> ${job ? job.title : "-"} <br>
+        <b>Subject:</b> ${job ? job.subject : "-"} <br>
+        <b>City:</b> ${job ? job.city : "-"} <br>
+        <b>Role:</b> ${job ? job.role : "-"} <br>
+        <b>Institute:</b> ${institute ? institute.name : "-"} <br>
+        <b>Applied On:</b> ${new Date(app.createdAt).toLocaleDateString()} <br><br>
+        <span class="badge ${statusClass}">${app.status.toUpperCase()}</span>
+      `;
+
+      box.appendChild(div);
+    });
+
+  } catch (err) {
+    document.getElementById("box").innerHTML = "Server error";
+  }
+}
+
+loadApplications();
+</script>
+
+</body>
+</html>

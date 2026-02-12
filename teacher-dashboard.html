@@ -6,7 +6,7 @@
   <title>Teacher Dashboard | Lets Teach</title>
 
   <link rel="stylesheet" href="styles.css" />
-  <script src="/lets-teach-web-v2/config.js"></script>"/lets-teach-web-v2/config.js"></script>
+  <script src="./config.js"></script>
 </head>
 
 <body>
@@ -28,6 +28,7 @@
 
     <div class="navLinks">
       <a class="pill" href="jobs.html">Jobs</a>
+      <a class="pill" href="teacher-applications.html">My Applications</a>
       <a class="pill" href="interview/index.html">Interview Preps</a>
       <a class="pill" href="#" onclick="logout();return false;">Logout</a>
     </div>
@@ -60,6 +61,14 @@
           <span>Resume PDF</span>
         </div>
       </div>
+
+      <!-- 🔥 NEW BUTTON -->
+      <div style="margin-top:15px;">
+        <button class="btn" onclick="location.href='teacher-applications.html'">
+          📄 View My Applied Jobs
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -178,6 +187,7 @@ async function loadInvites() {
     const invites = data.invites || [];
 
     document.getElementById("inviteBadge").innerText = invites.length;
+
     if (!invites.length) {
       box.innerHTML = `<div class="meta">No invites</div>`;
       return;
@@ -204,13 +214,16 @@ async function loadInvites() {
         </div>
         <div>${action}</div>
       `;
+
       box.appendChild(div);
     });
+
   } catch {
     box.innerHTML = `<div class="meta">Failed to load invites</div>`;
   }
 }
 
+/* INVITE ACTION */
 async function acceptInvite(id) {
   await fetch(`${BASE_URL}/api/invite/accept/${id}`, { method: "POST" });
   loadInvites();
