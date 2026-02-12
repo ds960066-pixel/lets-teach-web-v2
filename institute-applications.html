@@ -26,7 +26,7 @@ const uid = localStorage.getItem("uid");
 
 async function loadApplications() {
   try {
-    const res = await fetch(`${BASE_URL}/api/job-application/institute/${uid}`);
+    const res = await apiFetch(`${BASE_URL}/api/job-application/institute/${uid}`);
     const data = await res.json();
 
     const box = document.getElementById("box");
@@ -39,6 +39,7 @@ async function loadApplications() {
 
     data.applications.forEach(app => {
       const teacher = app.teacher || {};
+      const status = app.status;
 
       const div = document.createElement("div");
       div.style.background = "#fff";
@@ -47,13 +48,36 @@ async function loadApplications() {
       div.style.borderRadius = "6px";
       div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
 
+      let actionButtons = "";
+
+      if (status === "applied") {
+        actionButtons = `
+          <button onclick="updateStatus('${app._id}','shortlisted')" 
+                  style="background:#2e86de;color:#fff;padding:6px 12px;border:none;border-radius:4px;margin-right:6px;">
+            Shortlist
+          </button>
+          <button onclick="updateStatus('${app._id}','rejected')" 
+                  style="background:#e74c3c;color:#fff;padding:6px 12px;border:none;border-radius:4px;">
+            Reject
+          </button>
+        `;
+      }
+
+      let statusColor = "#1565c0";
+      if (status === "shortlisted") statusColor = "#2e7d32";
+      if (status === "rejected") statusColor = "#c62828";
+
       div.innerHTML = `
         <b>Teacher Name:</b> ${teacher.name || app.teacherUid} <br>
         <b>City:</b> ${teacher.city || "-"} <br>
         <b>Subject:</b> ${teacher.subject || "-"} <br>
-        <b>Status:</b> ${app.status} <br>
         <b>Job:</b> ${app.jobId?.title || "N/A"} <br>
-        <hr>
+        <b>Status:</b> 
+          <span style="color:${statusColor}; font-weight:bold;">
+            ${status.toUpperCase()}
+          </span>
+        <br><br>
+        ${actionButtons}
       `;
 
       box.appendChild(div);
@@ -64,7 +88,27 @@ async function loadApplications() {
   }
 }
 
+async function updateStatus(applicationId, status) {
+  try {
+    const res = await apiFetch(`${BASE_URL}/api/job-application/update-status`, {
+      method: "POST",
+      body: JSON.stringify({
+        applicationId,
+        status
+      })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+    loadApplications();
+
+  } catch (err) {
+    alert("Failed to update status");
+  }
+}
+
 loadApplications();
+
 </script>
 
 </body>

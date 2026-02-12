@@ -10,11 +10,17 @@ async function apiFetch(url, options = {}) {
   const role = localStorage.getItem("role");
   const uid = localStorage.getItem("uid");
 
+  const isFormData = options.body instanceof FormData;
+
   const defaultHeaders = {
-    "Content-Type": "application/json",
     "x-role": role || "",
     "x-uid": uid || ""
   };
+
+  // ❗ Only add Content-Type if NOT FormData
+  if (!isFormData) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
 
   const response = await fetch(url, {
     ...options,
@@ -24,12 +30,12 @@ async function apiFetch(url, options = {}) {
     }
   });
 
-  // 🔥 Auto logout if unauthorized
+  // 🔥 Handle unauthorized safely
   if (response.status === 401 || response.status === 403) {
     alert("Session expired or unauthorized");
     localStorage.clear();
     window.location.href = "login.html";
-    return;
+    throw new Error("Unauthorized");
   }
 
   return response;
