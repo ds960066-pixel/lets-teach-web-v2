@@ -91,68 +91,72 @@ function clearFilters() {
   loadJobs();
 }
 
-/* LOAD JOBS */
-function loadJobs() {
-  let url = `${BASE_URL}/api/job/browse`;
+/* LOAD JOBS (Public Route – normal fetch allowed) */
+async function loadJobs() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/job/browse`);
+    const data = await res.json();
 
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const list = data.jobs || [];
-      document.getElementById("jobCount").innerText = list.length;
+    const list = data.jobs || [];
+    document.getElementById("jobCount").innerText = list.length;
 
-      const box = document.getElementById("jobs");
-      box.innerHTML = "";
+    const box = document.getElementById("jobs");
+    box.innerHTML = "";
 
-      if (!list.length) {
-        box.innerHTML = "<div class='meta'>No jobs found</div>";
-        return;
-      }
+    if (!list.length) {
+      box.innerHTML = "<div class='meta'>No jobs found</div>";
+      return;
+    }
 
-      list.forEach(j => {
-        const div = document.createElement("div");
-        div.className = "item";
+    list.forEach(j => {
+      const div = document.createElement("div");
+      div.className = "item";
 
-        div.innerHTML = `
-          <div>
-            <div style="font-weight:800">${j.title}</div>
-            <div class="meta">${j.subject} · ${j.city} · ${j.role}</div>
-            <div style="margin-top:8px">
-              <button class="btn" onclick="applyJob('${j._id}')">Apply</button>
-            </div>
+      div.innerHTML = `
+        <div>
+          <div style="font-weight:800">${j.title}</div>
+          <div class="meta">${j.subject} · ${j.city} · ${j.role}</div>
+          <div style="margin-top:8px">
+            <button class="btn" onclick="applyJob('${j._id}')">Apply</button>
           </div>
-          <span class="badge">Open</span>
-        `;
+        </div>
+        <span class="badge">Open</span>
+      `;
 
-        box.appendChild(div);
-      });
-    })
-    .catch(() => {
-      document.getElementById("jobs").innerHTML = "Server error";
+      box.appendChild(div);
     });
+
+  } catch (err) {
+    document.getElementById("jobs").innerHTML = "Server error";
+  }
 }
 
-/* APPLY JOB */
-function applyJob(jobId) {
+/* APPLY JOB (Protected Route – MUST use apiFetch) */
+async function applyJob(jobId) {
   if (!uid || role !== "teacher") {
     alert("Login as Teacher to apply");
     return;
   }
 
-  fetch(`${BASE_URL}/api/job-application/apply`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jobId, uid })
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert(data.message);
-    })
-    .catch(() => alert("Server error"));
+  try {
+    const res = await apiFetch(`${BASE_URL}/api/job-application/apply`, {
+      method: "POST",
+      body: JSON.stringify({ jobId })
+    });
+
+    if (!res) return;
+
+    const data = await res.json();
+    alert(data.message || "Applied successfully");
+
+  } catch (err) {
+    alert("Server error");
+  }
 }
 
 loadJobs();
 </script>
+
 
 </body>
 </html>
