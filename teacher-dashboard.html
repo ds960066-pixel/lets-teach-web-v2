@@ -62,7 +62,6 @@
         </div>
       </div>
 
-      <!-- 🔥 NEW BUTTON -->
       <div style="margin-top:15px;">
         <button class="btn" onclick="location.href='teacher-applications.html'">
           📄 View My Applied Jobs
@@ -141,8 +140,13 @@ async function uploadResume() {
   try {
     const res = await fetch(`${BASE_URL}/api/teacher/upload-resume/${uid}`, {
       method: "POST",
+      headers: {
+        "x-role": localStorage.getItem("role"),
+        "x-uid": uid
+      },
       body: fd
     });
+
     const data = await res.json();
     status.innerText = data.message || "Uploaded";
     loadResumeStatus();
@@ -154,16 +158,21 @@ async function uploadResume() {
 /* RESUME STATUS */
 async function loadResumeStatus() {
   try {
-    const res = await fetch(`${BASE_URL}/api/teacher/${uid}`);
+    const res = await apiFetch(`${BASE_URL}/api/teacher/${uid}`);
+    if (!res) return;
+
     const data = await res.json();
-    const t = data.teacher;
+    const t = data.teacher || {};
 
     const detailsOk =
-      !!t.about && !!t.education && Array.isArray(t.skills) && t.skills.length;
+      !!t.about && !!t.education &&
+      Array.isArray(t.skills) && t.skills.length;
+
     const pdfOk = !!t.resumeUrl;
 
     document.getElementById("resumeBadge").innerText =
       detailsOk && pdfOk ? "✅ Completed" : "❌ Incomplete";
+
     document.getElementById("pdfBadge").innerText =
       pdfOk ? "✅ Uploaded" : "❌ Missing";
 
@@ -171,6 +180,7 @@ async function loadResumeStatus() {
       detailsOk && pdfOk
         ? "✅ Resume completed. You can apply for jobs."
         : "❌ Fill resume details + upload PDF.";
+
   } catch {
     document.getElementById("resumeStatus").innerText = "Error loading resume";
   }
@@ -179,57 +189,73 @@ async function loadResumeStatus() {
 /* INVITES */
 async function loadInvites() {
   const box = document.getElementById("inviteList");
-  box.innerHTML = `<div class="meta">Loading invites…</div>`;
+  box.innerHTML = "Loading invites…";
 
   try {
-    const res = await fetch(`${BASE_URL}/api/invite/teacher/${uid}`);
+    const res = await apiFetch(`${BASE_URL}/api/invite/teacher/${uid}`);
+    if (!res) return;
+
     const data = await res.json();
     const invites = data.invites || [];
 
     document.getElementById("inviteBadge").innerText = invites.length;
 
     if (!invites.length) {
-      box.innerHTML = `<div class="meta">No invites</div>`;
+      box.innerHTML = "No invites yet.";
       return;
     }
 
     box.innerHTML = "";
-    invites.forEach(i => {
+
+    invites.forEach(invite => {
       const div = document.createElement("div");
       div.className = "item";
 
-      let action = "";
-      if (i.status === "pending") {
-        action = `<button class="btn" onclick="acceptInvite('${i._id}')">Accept</button>`;
-      } else if (i.status === "accepted") {
-        action = `<button class="btn" onclick="openChat('${i.fromUid}')">Chat</button>`;
-      } else {
-        action = `<span class="badge">${i.status}</span>`;
+      let actions = "";
+
+      if (invite.status === "pending") {
+        actions = `
+          <button class="btn" onclick="acceptInvite('${invite._id}')">Accept</button>
+          <button class="btn ghost" onclick="rejectInvite('${invite._id}')">Reject</button>
+        `;
+      } 
+      else if (invite.status === "accepted") {
+        actions = `
+          <button class="btn" onclick="openChat('${invite.fromUid}')">Chat</button>
+        `;
+      } 
+      else {
+        actions = `<span class="badge">${invite.status}</span>`;
       }
 
       div.innerHTML = `
         <div>
-          <b>From:</b> ${i.fromUid}<br>
-          <span class="meta">Status: ${i.status}</span>
+          <b>From:</b> ${invite.fromUid}<br>
+          <span class="meta">Status: ${invite.status}</span>
         </div>
-        <div>${action}</div>
+        <div>${actions}</div>
       `;
 
       box.appendChild(div);
     });
 
   } catch {
-    box.innerHTML = `<div class="meta">Failed to load invites</div>`;
+    box.innerHTML = "Failed to load invites";
   }
 }
 
-/* INVITE ACTION */
+/* INVITE ACTIONS */
 async function acceptInvite(id) {
-  await fetch(`${BASE_URL}/api/invite/accept/${id}`, { method: "POST" });
+  await apiFetch(`${BASE_URL}/api/invite/accept/${id}`, { method: "POST" });
   loadInvites();
-  loadResumeStatus();
 }
 
+async function rejectInvite(id) {
+  await apiFetch(`${BASE_URL}/api/invite/reject/${id}`, { method: "POST" });
+  loadInvites();
+}
+
+/* CHAT */
 function openChat(otherUid) {
   location.href = `chat.html?senderUid=${uid}&receiverUid=${otherUid}`;
 }

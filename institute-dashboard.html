@@ -5,6 +5,7 @@
   <title>Institute Dashboard | Lets Teach</title>
   
   <script src="./config.js"></script>
+
   <style>
     body { font-family: Arial; background: #f4f4f4; padding: 20px; margin: 0; }
     .card { background: #fff; padding: 15px; margin-bottom: 12px; border-radius: 6px; }
@@ -22,7 +23,6 @@
 <body>
 
 <script>
-/* ================= AUTH GUARD ================= */
 if (!localStorage.uid || localStorage.role !== "institute") {
   window.location.href = "login.html";
 }
@@ -38,14 +38,12 @@ if (!localStorage.uid || localStorage.role !== "institute") {
 
 <hr>
 
-<!-- ================= STATUS ================= -->
 <div class="card">
-  <div id="phoneStatusBox" class="ok">
-    ✅ Phone verification temporarily disabled. You can post jobs.
+  <div class="ok">
+    ✅ You can post jobs.
   </div>
 </div>
 
-<!-- ================= CREATE JOB ================= -->
 <div class="card">
   <h3>Create Job</h3>
 
@@ -90,14 +88,15 @@ if (!localStorage.uid || localStorage.role !== "institute") {
 
 const uid = localStorage.getItem("uid");
 
-/* ================= LOGOUT ================= */
+/* LOGOUT */
 function logout() {
   localStorage.clear();
   window.location.href = "login.html";
 }
 
-/* ================= POST JOB ================= */
+/* POST JOB – FINAL SECURE */
 async function postJob() {
+
   const title = document.getElementById("jobTitle").value.trim();
   const city = document.getElementById("jobCity").value.trim();
   const subject = document.getElementById("jobSubject").value.trim();
@@ -115,9 +114,9 @@ async function postJob() {
   btn.innerText = "Posting...";
 
   try {
-    const res = await fetch(`${BASE_URL}/api/job/create`, {
+
+    const res = await apiFetch(`${BASE_URL}/api/job/create`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         instituteUid: uid,
         title,
@@ -129,9 +128,11 @@ async function postJob() {
       })
     });
 
+    if (!res) return;
+
     const data = await res.json();
 
-    if (!res.ok || !data.success) {
+    if (!data.success) {
       document.getElementById("jobResult").innerHTML =
         `<div class="warn">${data.message || "Failed"}</div>`;
       return;
@@ -154,6 +155,7 @@ async function postJob() {
     btn.innerText = "Post Job";
   }
 }
+
 </script>
 
 </body>
