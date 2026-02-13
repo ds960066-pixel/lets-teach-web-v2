@@ -7,7 +7,7 @@
   <style>
     body { font-family: Arial; background:#f4f4f4; padding:20px; margin:0; }
     .card { background:#fff; padding:15px; margin-bottom:12px; border-radius:6px; }
-    .badge { padding:4px 8px; border-radius:4px; font-size:12px; }
+    .badge { padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold; }
     .applied { background:#e3f2fd; color:#1565c0; }
     .shortlisted { background:#e8f5e9; color:#2e7d32; }
     .rejected { background:#ffebee; color:#c62828; }
@@ -33,43 +33,47 @@ if (!localStorage.uid || localStorage.role !== "teacher") {
 const uid = localStorage.getItem("uid");
 
 async function loadApplications() {
-  try {
-    const res = await apifetch(`${BASE_URL}/api/job-application/teacher/${uid}`);
-    const data = await res.json();
+  const box = document.getElementById("box");
+  box.innerHTML = "Loading...";
 
-    const box = document.getElementById("box");
+  try {
+    // ✅ Correct function name
+    const res = await apiFetch(`${BASE_URL}/api/job-application/teacher/${uid}`);
+    if (!res) return; // auto logout case
+
+    const data = await res.json();
     box.innerHTML = "";
 
-    if (!data.success || !data.applications.length) {
+    if (!data.success || !data.applications || data.applications.length === 0) {
       box.innerHTML = "<p>No applications yet.</p>";
       return;
     }
 
     data.applications.forEach(app => {
 
-      const job = app.jobId;
-      const institute = app.institute;
+      const job = app.jobId || {};
+      const statusClass = app.status || "applied";
 
       const div = document.createElement("div");
       div.className = "card";
 
-      const statusClass = app.status;
-
       div.innerHTML = `
-        <b>Job:</b> ${job ? job.title : "-"} <br>
-        <b>Subject:</b> ${job ? job.subject : "-"} <br>
-        <b>City:</b> ${job ? job.city : "-"} <br>
-        <b>Role:</b> ${job ? job.role : "-"} <br>
-        <b>Institute:</b> ${institute ? institute.name : "-"} <br>
+        <b>Job:</b> ${job.title || "-"} <br>
+        <b>Subject:</b> ${job.subject || "-"} <br>
+        <b>City:</b> ${job.city || "-"} <br>
+        <b>Role:</b> ${job.role || "-"} <br>
         <b>Applied On:</b> ${new Date(app.createdAt).toLocaleDateString()} <br><br>
-        <span class="badge ${statusClass}">${app.status.toUpperCase()}</span>
+        <span class="badge ${statusClass}">
+          ${app.status.toUpperCase()}
+        </span>
       `;
 
       box.appendChild(div);
     });
 
   } catch (err) {
-    document.getElementById("box").innerHTML = "Server error";
+    console.error(err);
+    box.innerHTML = "Server error";
   }
 }
 
