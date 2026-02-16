@@ -7,17 +7,111 @@
   <script src="./config.js"></script>
 
   <style>
-    body { font-family: Arial; background: #f4f4f4; padding: 20px; margin: 0; }
-    .card { background: #fff; padding: 15px; margin-bottom: 12px; border-radius: 6px; }
-    button { padding: 6px 12px; background: #2e86de; color: #fff; border: none; cursor: pointer; border-radius: 4px; margin-right: 8px; }
-    button:hover { opacity: 0.9; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    input, select, textarea { width: 100%; max-width: 520px; padding: 8px; margin: 6px 0; border: 1px solid #ddd; border-radius: 4px; }
-    textarea { min-height: 80px; }
-    .warn { background: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; }
-    .ok { background: #eafaf1; color: #1e7e34; padding: 10px; border-radius: 6px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .row > div { flex: 1; min-width: 200px; }
+    body {
+      font-family: Arial;
+      background: #f4f6fb;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    .actionBar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: 0.2s ease;
+    }
+
+    .btnPrimary {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .btnPrimary:hover {
+      background: #1e4fd8;
+    }
+
+    .btnDark {
+      background: #111827;
+      color: #fff;
+    }
+
+    .btnDark:hover {
+      background: #000;
+    }
+
+    .btnDanger {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .btnDanger:hover {
+      background: #b91c1c;
+    }
+
+    .card {
+      background: #fff;
+      padding: 18px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .ok {
+      background: #e6f9f0;
+      color: #15803d;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .warn {
+      background: #fff3cd;
+      color: #856404;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .row > div {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    hr {
+      margin: 20px 0;
+    }
   </style>
 </head>
 
@@ -31,21 +125,25 @@ if (!localStorage.uid || localStorage.role !== "institute") {
 
 <h2>Institute Dashboard</h2>
 
-<!-- 🔥 ACTION BUTTONS -->
-<div style="margin-bottom:15px;">
-  <button onclick="location.href='institute-applications.html'">
-    📄 View Received Applications
+<!-- 🔥 PROFESSIONAL ACTION BUTTONS -->
+<div class="actionBar">
+  <button class="btn btnPrimary"
+    onclick="location.href='institute-applications.html'">
+    📄 View Applications
   </button>
 
-  <button onclick="location.href='chat-list.html'">
+  <button class="btn btnPrimary"
+    onclick="location.href='chat-list.html'">
     💬 My Chats
   </button>
 
-  <button onclick="location.href='institute-jobs.html'">
+  <button class="btn btnDark"
+    onclick="location.href='institute-jobs.html'">
     📌 My Jobs
   </button>
 
-  <button onclick="logout()" style="background:#dc2626;">
+  <button class="btn btnDanger"
+    onclick="logout()">
     Logout
   </button>
 </div>
@@ -92,9 +190,14 @@ if (!localStorage.uid || localStorage.role !== "institute") {
   <input id="jobSalary" placeholder="e.g. 15000-25000" />
 
   <label>Description</label>
-  <textarea id="jobDescription" placeholder="Timing, requirements..."></textarea>
+  <textarea id="jobDescription"
+    placeholder="Timing, requirements..."></textarea>
 
-  <button id="postJobBtn" onclick="postJob()">Post Job</button>
+  <button id="postJobBtn"
+    class="btn btnPrimary"
+    onclick="postJob()">
+    Post Job
+  </button>
 
   <div id="jobResult" style="margin-top:10px;"></div>
 </div>
@@ -156,7 +259,6 @@ async function postJob() {
     document.getElementById("jobResult").innerHTML =
       `<div class="ok">✅ Job posted successfully</div>`;
 
-    // Clear form
     document.getElementById("jobTitle").value = "";
     document.getElementById("jobCity").value = "";
     document.getElementById("jobSubject").value = "";
