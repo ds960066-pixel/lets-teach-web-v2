@@ -15,7 +15,10 @@ if (!localStorage.uid || localStorage.role !== "institute") {
 </script>
 
 <h2>📄 Received Applications</h2>
-<button onclick="location.href='institute-dashboard.html'">← Back</button>
+<button onclick="location.href='institute-dashboard.html'"
+        style="padding:6px 12px;margin-bottom:10px;">
+  ← Back
+</button>
 <hr>
 
 <div id="box">Loading applications...</div>
@@ -24,9 +27,12 @@ if (!localStorage.uid || localStorage.role !== "institute") {
 
 const uid = localStorage.getItem("uid");
 
+/* ================= LOAD APPLICATIONS ================= */
 async function loadApplications() {
   try {
     const res = await apiFetch(`${BASE_URL}/api/job-application/institute/${uid}`);
+    if (!res) return;
+
     const data = await res.json();
 
     const box = document.getElementById("box");
@@ -38,24 +44,24 @@ async function loadApplications() {
     }
 
     data.applications.forEach(app => {
-      const teacher = app.teacher || {};
-      const status = app.status;
 
-      const div = document.createElement("div");
-      div.style.background = "#fff";
-      div.style.padding = "12px";
-      div.style.marginBottom = "12px";
-      div.style.borderRadius = "6px";
-      div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
+      const teacher = app.teacher || {};
+      const status = app.status || "applied";
+
+      let statusColor = "#1565c0";
+      if (status === "shortlisted") statusColor = "#2e7d32";
+      if (status === "rejected") statusColor = "#c62828";
 
       let actionButtons = "";
 
+      /* 🔹 If APPLIED → show Shortlist + Reject */
       if (status === "applied") {
         actionButtons = `
           <button onclick="updateStatus('${app._id}','shortlisted')" 
                   style="background:#2e86de;color:#fff;padding:6px 12px;border:none;border-radius:4px;margin-right:6px;">
             Shortlist
           </button>
+
           <button onclick="updateStatus('${app._id}','rejected')" 
                   style="background:#e74c3c;color:#fff;padding:6px 12px;border:none;border-radius:4px;">
             Reject
@@ -63,9 +69,22 @@ async function loadApplications() {
         `;
       }
 
-      let statusColor = "#1565c0";
-      if (status === "shortlisted") statusColor = "#2e7d32";
-      if (status === "rejected") statusColor = "#c62828";
+      /* 🔹 If SHORTLISTED → show Chat button */
+      if (status === "shortlisted") {
+        actionButtons = `
+          <button onclick="openChat('${app.teacherUid}')"
+                  style="background:#27ae60;color:#fff;padding:6px 12px;border:none;border-radius:4px;">
+            💬 Chat
+          </button>
+        `;
+      }
+
+      const div = document.createElement("div");
+      div.style.background = "#fff";
+      div.style.padding = "14px";
+      div.style.marginBottom = "14px";
+      div.style.borderRadius = "8px";
+      div.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
 
       div.innerHTML = `
         <b>Teacher Name:</b> ${teacher.name || app.teacherUid} <br>
@@ -84,10 +103,13 @@ async function loadApplications() {
     });
 
   } catch (err) {
-    alert("Failed to load applications");
+    console.error(err);
+    document.getElementById("box").innerHTML = "Server error";
   }
 }
 
+
+/* ================= UPDATE STATUS ================= */
 async function updateStatus(applicationId, status) {
   try {
     const res = await apiFetch(`${BASE_URL}/api/job-application/update-status`, {
@@ -98,8 +120,11 @@ async function updateStatus(applicationId, status) {
       })
     });
 
+    if (!res) return;
+
     const data = await res.json();
-    alert(data.message);
+    alert(data.message || "Updated");
+
     loadApplications();
 
   } catch (err) {
@@ -107,6 +132,15 @@ async function updateStatus(applicationId, status) {
   }
 }
 
+
+/* ================= OPEN CHAT ================= */
+function openChat(teacherUid) {
+  if (!teacherUid) return;
+  location.href = `chat.html?receiverUid=${teacherUid}`;
+}
+
+
+/* INIT */
 loadApplications();
 
 </script>
