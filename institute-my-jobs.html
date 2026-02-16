@@ -24,15 +24,23 @@ if (!localStorage.uid || localStorage.role !== "institute") {
 
 const uid = localStorage.getItem("uid");
 
+/* ================= LOAD JOBS ================= */
 async function loadJobs() {
   try {
-    const res = await fetch(`${BASE_URL}/api/job/institute/${uid}`);
-    const data = await res.json();
 
+    // ✅ IMPORTANT — use apiFetch (not fetch)
+    const res = await apiFetch(`${BASE_URL}/api/job/institute/${uid}`);
+
+    if (!res) {
+      document.getElementById("box").innerHTML = "Unauthorized";
+      return;
+    }
+
+    const data = await res.json();
     const box = document.getElementById("box");
     box.innerHTML = "";
 
-    if (!data.success || !data.jobs.length) {
+    if (!data.success || !data.jobs || data.jobs.length === 0) {
       box.innerHTML = "<p>No jobs created yet.</p>";
       return;
     }
