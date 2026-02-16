@@ -7,124 +7,91 @@
 
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- ✅ Correct config -->
+  <!-- ✅ Config (contains BASE_URL) -->
   <script src="./config.js"></script>
 
-  <!-- ✅ Correct Socket CDN -->
+  <!-- ✅ Socket CDN (FIXED) -->
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
   <style>
-    body{
-      background: radial-gradient(1000px 600px at 10% -10%, rgba(59,130,246,.18), transparent 60%),
-                  radial-gradient(900px 520px at 90% 0%, rgba(34,197,94,.14), transparent 60%),
-                  #101a2b;
+    body {
+      background:#101a2b;
+      font-family: Arial;
     }
 
-    .chatBox{
+    .chatBox {
       height:420px;
       overflow-y:auto;
       padding:12px;
+      border:1px solid #333;
+      margin-bottom:10px;
       display:flex;
       flex-direction:column;
       gap:8px;
+      background:#0f1a33;
     }
 
-    .bubble{
-      max-width:78%;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid #1f2a44;
-      background:#0f1a33;
+    .bubble {
+      max-width:75%;
+      padding:8px 12px;
+      border-radius:12px;
       color:#fff;
-      white-space:pre-wrap;
       word-break:break-word;
     }
 
-    .me{
+    .me {
       align-self:flex-end;
-      background:#163d2f;
+      background:#2ecc71;
     }
 
-    .other{
+    .other {
       align-self:flex-start;
-      background:#1e293b;
+      background:#34495e;
     }
 
-    .chatInputRow{
-      display:flex;
-      gap:10px;
-      margin-top:10px;
+    input {
+      padding:8px;
+      width:80%;
     }
 
-    .chatInputRow input{
-      flex:1;
-      padding:10px;
-      border-radius:8px;
-      border:1px solid #2e86de;
-      background:#0f172a;
-      color:#fff;
-    }
-
-    button{
-      padding:10px 14px;
-      border-radius:8px;
-      border:none;
-      background:#2e86de;
-      color:#fff;
+    button {
+      padding:8px 12px;
       cursor:pointer;
     }
   </style>
 </head>
-
 <body>
 
-<div style="max-width:900px;margin:auto;padding:20px">
+<h2 style="color:white">Chat</h2>
 
-  <h2 style="color:white">Chat</h2>
-  <div id="chatInfo" style="color:#aaa;margin-bottom:10px">Connecting...</div>
+<div id="chatBox" class="chatBox"></div>
 
-  <div id="chatBox" class="chatBox"></div>
-
-  <div class="chatInputRow">
-    <input id="message" placeholder="Type message..." />
-    <button onclick="sendMessage()">Send</button>
-  </div>
-
-  <div style="margin-top:10px">
-    <button onclick="goBack()">Back</button>
-    <button onclick="logout()">Logout</button>
-  </div>
-
-</div>
+<input id="message" placeholder="Type message..." />
+<button onclick="sendMessage()">Send</button>
 
 <script>
-
-/* ❌ DO NOT DECLARE BASE_URL HERE */
-/* config.js already defines BASE_URL */
-
+/* ================= AUTH ================= */
 const senderUid = localStorage.getItem("uid");
 const role = localStorage.getItem("role");
 
 if (!senderUid || !role) {
-  location.href = "login.html";
+  window.location.href = "login.html";
 }
 
-/* receiver */
+/* ================= RECEIVER ================= */
 const qs = new URLSearchParams(location.search);
 const receiverUid = qs.get("receiverUid");
 
 if (!receiverUid) {
   alert("Receiver missing");
-  location.href = "index.html";
+  window.location.href = "index.html";
 }
 
-/* deterministic room */
-const roomId = senderUid < receiverUid
-  ? senderUid + "_" + receiverUid
-  : receiverUid + "_" + senderUid;
-
-document.getElementById("chatInfo").innerText =
-  "You: " + senderUid + " | Chat with: " + receiverUid;
+/* ================= ROOM ID ================= */
+const roomId =
+  senderUid < receiverUid
+    ? senderUid + "_" + receiverUid
+    : receiverUid + "_" + senderUid;
 
 /* ================= SOCKET ================= */
 const socket = io(BASE_URL);
@@ -133,27 +100,42 @@ socket.on("connect", () => {
   socket.emit("joinRoom", roomId);
 });
 
-socket.on("receiveMessage", (msg) => {
-  if (msg.senderUid !== senderUid) {
-    appendMessage(msg.senderUid, msg.text);
-  }
-});
+/* ================= LOAD OLD MESSAGES ================= */
+async function loadChatHistory() {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/api/chat/${senderUid}/${receiverUid}`
+    );
 
-/* ================= FUNCTIONS ================= */
-function appendMessage(from, text) {
+    const data = await res.json();
+
+    if (data.success && data.messages) {
+      data.messages.forEach(m => {
+        appendMessage(m.senderUid, m.text);
+      });
+    }
+  } catch (err) {
+    console.error("History load error", err);
+  }
+}
+
+/* ================= APPEND ================= */
+function appendMessage(fromUid, text) {
   const box = document.getElementById("chatBox");
   const div = document.createElement("div");
-  div.className = "bubble " + (from === senderUid ? "me" : "other");
+  div.className = "bubble " + (fromUid === senderUid ? "me" : "other");
   div.innerText = text;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
 
+/* ================= SEND ================= */
 function sendMessage() {
   const input = document.getElementById("message");
   const text = input.value.trim();
   if (!text) return;
 
+  // show instantly
   appendMessage(senderUid, text);
 
   socket.emit("sendMessage", {
@@ -166,20 +148,20 @@ function sendMessage() {
   input.value = "";
 }
 
-document.getElementById("message").addEventListener("keydown", e=>{
-  if(e.key==="Enter") sendMessage();
+/* ================= RECEIVE ================= */
+socket.on("receiveMessage", (msg) => {
+  if (msg.senderUid !== senderUid) {
+    appendMessage(msg.senderUid, msg.text);
+  }
 });
 
-function goBack(){
-  if(role==="teacher") location.href="teacher-dashboard.html";
-  else location.href="institute-dashboard.html";
-}
+/* ================= ENTER KEY ================= */
+document.getElementById("message").addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMessage();
+});
 
-function logout(){
-  localStorage.clear();
-  location.href="login.html";
-}
-
+/* ================= INIT ================= */
+loadChatHistory();
 </script>
 
 </body>
