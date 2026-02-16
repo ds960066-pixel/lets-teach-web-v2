@@ -11,14 +11,14 @@
 
 <body>
 
-<!-- AUTH GUARD -->
+<!-- ================= AUTH GUARD ================= -->
 <script>
-  if (!localStorage.uid || localStorage.role !== "teacher") {
-    window.location.href = "login.html";
-  }
+if (!localStorage.uid || localStorage.role !== "teacher") {
+  window.location.href = "login.html";
+}
 </script>
 
-<!-- NAV -->
+<!-- ================= NAV ================= -->
 <div class="nav">
   <div class="container navInner">
     <a class="brand" href="index.html">
@@ -29,7 +29,7 @@
     <div class="navLinks">
       <a class="pill" href="jobs.html">Jobs</a>
       <a class="pill" href="teacher-applications.html">My Applications</a>
-      <a class="pill" href="interview/index.html">Interview Preps</a>
+      <a class="pill" href="chat-list.html">My Chats</a>
       <a class="pill" href="#" onclick="logout();return false;">Logout</a>
     </div>
   </div>
@@ -37,12 +37,13 @@
 
 <div class="container">
 
-  <!-- HERO -->
+  <!-- ================= HERO ================= -->
   <div class="hero">
     <div class="card cardPad">
       <h1 class="hTitle" style="font-size:34px;margin-bottom:8px;">
         Teacher Dashboard
       </h1>
+
       <p class="hSub">
         Resume complete (details + PDF) hone par hi job apply allow hoga.
       </p>
@@ -62,16 +63,21 @@
         </div>
       </div>
 
-      <div style="margin-top:15px;">
+      <!-- 🔥 ACTION BUTTONS -->
+      <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn" onclick="location.href='teacher-applications.html'">
           📄 View My Applied Jobs
+        </button>
+
+        <button class="btn" onclick="location.href='chat-list.html'">
+          💬 My Chats
         </button>
       </div>
 
     </div>
   </div>
 
-  <!-- RESUME -->
+  <!-- ================= RESUME ================= -->
   <div class="card cardPad">
     <div class="sectionTitle">📄 My Resume</div>
     <div id="resumeStatus" class="meta">Checking resume status…</div>
@@ -83,7 +89,6 @@
 
     <hr class="sep" />
 
-    <!-- PDF -->
     <div class="sectionTitle">📎 Upload Resume (PDF)</div>
     <div class="searchGrid" style="grid-template-columns:1fr auto;">
       <input class="input" type="file" id="resumeFile" accept="application/pdf" />
@@ -92,15 +97,10 @@
     <div id="uploadStatus" class="meta" style="margin-top:10px;"></div>
   </div>
 
-  <!-- INVITES -->
+  <!-- ================= INVITES ================= -->
   <div class="card cardPad" style="margin-top:14px;">
     <div class="sectionTitle">📨 My Invites</div>
     <div id="inviteList" class="list"></div>
-  </div>
-
-  <div class="footer">
-    <a class="smallLink" href="index.html">Home</a> ·
-    <a class="smallLink" href="jobs.html">Jobs</a>
   </div>
 
 </div>
@@ -108,21 +108,22 @@
 <script>
 const uid = localStorage.getItem("uid");
 
-/* LOGOUT */
+/* ================= LOGOUT ================= */
 function logout() {
   localStorage.clear();
   window.location.href = "login.html";
 }
 
-/* RESUME NAV */
+/* ================= RESUME NAV ================= */
 function openResume() {
   location.href = "teacher-resume-edit.html";
 }
+
 function viewResume() {
   location.href = `teacher-resume-view.html?uid=${encodeURIComponent(uid)}`;
 }
 
-/* UPLOAD PDF */
+/* ================= UPLOAD PDF ================= */
 async function uploadResume() {
   const file = document.getElementById("resumeFile").files[0];
   const status = document.getElementById("uploadStatus");
@@ -155,7 +156,7 @@ async function uploadResume() {
   }
 }
 
-/* RESUME STATUS */
+/* ================= RESUME STATUS ================= */
 async function loadResumeStatus() {
   try {
     const res = await apiFetch(`${BASE_URL}/api/teacher/${uid}`);
@@ -186,13 +187,13 @@ async function loadResumeStatus() {
   }
 }
 
-/* INVITES */
+/* ================= INVITES ================= */
 async function loadInvites() {
   const box = document.getElementById("inviteList");
   box.innerHTML = "Loading invites…";
 
   try {
-    const res = await apiFetch(`${BASE_URL}/api/invite/teacher/${uid}`);
+    const res = await apiFetch(`${BASE_URL}/api/invite/user/${uid}`);
     if (!res) return;
 
     const data = await res.json();
@@ -208,12 +209,11 @@ async function loadInvites() {
     box.innerHTML = "";
 
     invites.forEach(invite => {
-      const div = document.createElement("div");
-      div.className = "item";
+      const otherUid = invite.fromUid === uid ? invite.toUid : invite.fromUid;
 
       let actions = "";
 
-      if (invite.status === "pending") {
+      if (invite.status === "pending" && invite.toUid === uid) {
         actions = `
           <button class="btn" onclick="acceptInvite('${invite._id}')">Accept</button>
           <button class="btn ghost" onclick="rejectInvite('${invite._id}')">Reject</button>
@@ -221,16 +221,19 @@ async function loadInvites() {
       } 
       else if (invite.status === "accepted") {
         actions = `
-          <button class="btn" onclick="openChat('${invite.fromUid}')">Chat</button>
+          <button class="btn" onclick="openChat('${otherUid}')">Chat</button>
         `;
       } 
       else {
         actions = `<span class="badge">${invite.status}</span>`;
       }
 
+      const div = document.createElement("div");
+      div.className = "item";
+
       div.innerHTML = `
         <div>
-          <b>From:</b> ${invite.fromUid}<br>
+          <b>User:</b> ${otherUid}<br>
           <span class="meta">Status: ${invite.status}</span>
         </div>
         <div>${actions}</div>
@@ -244,7 +247,7 @@ async function loadInvites() {
   }
 }
 
-/* INVITE ACTIONS */
+/* ================= INVITE ACTIONS ================= */
 async function acceptInvite(id) {
   await apiFetch(`${BASE_URL}/api/invite/accept/${id}`, { method: "POST" });
   loadInvites();
@@ -255,12 +258,12 @@ async function rejectInvite(id) {
   loadInvites();
 }
 
-/* CHAT */
+/* ================= CHAT ================= */
 function openChat(otherUid) {
-  location.href = `chat.html?senderUid=${uid}&receiverUid=${otherUid}`;
+  location.href = `chat.html?receiverUid=${otherUid}`;
 }
 
-/* INIT */
+/* ================= INIT ================= */
 loadResumeStatus();
 loadInvites();
 </script>

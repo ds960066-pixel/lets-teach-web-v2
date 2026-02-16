@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>My Chats | Lets Teach</title>
+  <script src="./config.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+    }
+
+    .card:hover {
+      background: #f9fbff;
+    }
+
+    .title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .meta {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .backBtn {
+      padding: 6px 12px;
+      background: #2e86de;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<script>
+if (!localStorage.uid) {
+  window.location.href = "login.html";
+}
+</script>
+
+<h2>💬 My Chats</h2>
+<button class="backBtn" onclick="goBack()">← Back</button>
+<hr>
+
+<div id="chatList">Loading chats...</div>
+
+<script>
+
+const uid = localStorage.getItem("uid");
+
+async function loadChats() {
+  try {
+    const res = await apiFetch(`${BASE_URL}/api/chat/list/${uid}`);
+    const data = await res.json();
+
+    const box = document.getElementById("chatList");
+    box.innerHTML = "";
+
+    if (!data.success || !data.chats.length) {
+      box.innerHTML = "<p>No chats yet.</p>";
+      return;
+    }
+
+    data.chats.forEach(chat => {
+
+      const div = document.createElement("div");
+      div.className = "card";
+      div.onclick = () => openChat(chat.with);
+
+      div.innerHTML = `
+        <div class="title">${chat.with}</div>
+        <div class="meta">${chat.lastText}</div>
+        <div class="meta">${new Date(chat.time).toLocaleString()}</div>
+      `;
+
+      box.appendChild(div);
+    });
+
+  } catch (err) {
+    document.getElementById("chatList").innerHTML = "Failed to load chats";
+  }
+}
+
+function openChat(otherUid) {
+  window.location.href = `chat.html?receiverUid=${otherUid}`;
+}
+
+function goBack() {
+  const role = localStorage.getItem("role");
+
+  if (role === "teacher") {
+    window.location.href = "teacher-dashboard.html";
+  } else {
+    window.location.href = "institute-dashboard.html";
+  }
+}
+
+loadChats();
+
+</script>
+
+</body>
+</html>
