@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Registration | Lets Teach</title>
 
-  <!-- 🎨 THEME -->
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- 🔒 SINGLE SOURCE OF TRUTH -->
-  <script src="/lets-teach-web-v2/config.js"></script>"/lets-teach-web-v2/config.js"></script>
+  <script src="./config.js"></script>
 </head>
 
 <body>
@@ -33,51 +30,41 @@
 <div class="container">
 
 <script>
-  /* ================= AUTH + ROLE GUARD ================= */
-  if (!localStorage.uid || localStorage.role !== "teacher") {
-    window.location.href = "login.html";
-  }
+/* ================= AUTH GUARD ================= */
+const uid = localStorage.getItem("uid");
+const role = localStorage.getItem("role");
+
+if (!uid || role !== "teacher") {
+  window.location.href = "login.html";
+}
 </script>
 
 <div class="card cardPad" style="max-width:760px;margin:0 auto;">
   <h1 style="margin:0 0 8px;">Teacher Registration</h1>
-  <p class="meta" style="margin-top:0;">
-    Complete your profile to start applying & connecting with institutes.
-  </p>
+  <p class="meta">Complete your profile to continue.</p>
 
-  <div class="kpi" style="margin-top:10px;">
+  <div class="kpi">
     <b>Your UID</b>
-    <span id="uidText">—</span>
+    <span id="uidText"></span>
   </div>
 
   <hr class="sep" />
 
-  <div class="sectionTitle">Basic Details</div>
-
   <div class="searchGrid">
-    <input class="input" id="name" placeholder="Full Name" autocomplete="name" />
-    <input class="input" id="phone" placeholder="Phone (10 digits)" autocomplete="tel" />
-    <button class="btn" onclick="registerTeacher()">Register</button>
+    <input class="input" id="name" placeholder="Full Name" />
+    <input class="input" id="phone" placeholder="Phone (10 digits)" />
   </div>
 
   <div style="height:10px;"></div>
 
   <div class="searchGrid">
-    <input class="input" id="subject" placeholder="Subject (e.g. Math, Physics)" />
-    <input class="input" id="city" placeholder="City (e.g. Patna, Delhi)" />
-    <input class="input" id="experience" placeholder="Experience (years) e.g. 0, 2, 5" inputmode="numeric" />
+    <input class="input" id="subject" placeholder="Subject" />
+    <input class="input" id="city" placeholder="City" />
+    <input class="input" id="experience" placeholder="Experience (years)" />
   </div>
 
-  <div class="kpi" style="margin-top:12px;">
-    <b>Note</b>
-    <span>Verification later admin karega. Registration ke baad dashboard open ho jayega.</span>
-  </div>
-
-  <hr class="sep" />
-
-  <div style="display:flex;gap:10px;flex-wrap:wrap;">
-    <a class="pill" href="login.html">Back</a>
-    <a class="pill" href="privacy.html">Privacy</a>
+  <div style="margin-top:15px;">
+    <button class="btn" onclick="registerTeacher()">Register</button>
   </div>
 
   <div id="msg" class="meta" style="margin-top:12px;"></div>
@@ -85,9 +72,7 @@
 </div>
 
 <script>
-/* ================= SOURCE OF TRUTH ================= */
-const uid = localStorage.getItem("uid");
-document.getElementById("uidText").innerText = uid || "—";
+document.getElementById("uidText").innerText = uid;
 
 /* ================= HELPERS ================= */
 function setMsg(text) {
@@ -101,35 +86,22 @@ function onlyDigits(s) {
 /* ================= REGISTER ================= */
 async function registerTeacher() {
   const name = document.getElementById("name").value.trim();
-  const phoneRaw = document.getElementById("phone").value.trim();
-  const phone = onlyDigits(phoneRaw);
+  const phone = onlyDigits(document.getElementById("phone").value.trim());
   const subject = document.getElementById("subject").value.trim();
   const city = document.getElementById("city").value.trim();
-  const expRaw = document.getElementById("experience").value.trim();
-  const experience = expRaw === "" ? 0 : Number(expRaw);
-
-  if (!uid) {
-    alert("UID missing. Please login again.");
-    window.location.href = "login.html";
-    return;
-  }
+  const experience = Number(document.getElementById("experience").value.trim() || 0);
 
   if (!name || !phone || !subject || !city) {
-    alert("Name, Phone, Subject, City are required");
+    alert("All fields are required");
     return;
   }
 
   if (phone.length < 10) {
-    alert("Please enter a valid phone number");
+    alert("Enter valid phone number");
     return;
   }
 
-  if (Number.isNaN(experience) || experience < 0) {
-    alert("Experience must be 0 or more");
-    return;
-  }
-
-  setMsg("Saving...");
+  setMsg("Registering...");
 
   try {
     const res = await fetch(`${BASE_URL}/api/teacher/create`, {
@@ -153,9 +125,28 @@ async function registerTeacher() {
       return;
     }
 
-    setMsg("✅ Registered! Redirecting...");
+    /* ================= AUTO LOGIN AFTER REGISTER ================= */
+    const loginRes = await fetch(`${BASE_URL}/api/teacher/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid })
+    });
+
+    const loginData = await loginRes.json();
+
+    if (!loginData.success) {
+      alert("Registration done. Please login manually.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    localStorage.setItem("token", loginData.token);
+
+    setMsg("Registered successfully! Redirecting...");
     window.location.href = "teacher-dashboard.html";
-  } catch {
+
+  } catch (err) {
+    console.error(err);
     setMsg("");
     alert("Server error");
   }

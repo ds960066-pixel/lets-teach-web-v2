@@ -4,151 +4,134 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login | Lets Teach</title>
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-  <!-- NAV -->
-  <div class="nav">
-    <div class="container navInner">
-      <a class="brand" href="index.html">
-        <div class="logo"></div>
-        <div>Lets Teach</div>
-      </a>
+<div class="nav">
+  <div class="container navInner">
+    <a class="brand" href="index.html">
+      <div class="logo"></div>
+      <div>Lets Teach</div>
+    </a>
+  </div>
+</div>
 
-      <div class="navLinks">
-        <a class="pill" href="jobs.html">Jobs</a>
-        <a class="pill" href="interview/index.html">Interview Preps</a>
-        <a class="pill" href="index.html">Home</a>
+<div class="container">
+  <div class="hero">
+    <div class="card cardPad">
+      <h1 class="hTitle">Login</h1>
+
+      <div class="sectionTitle">Your UID</div>
+      <input class="input" id="uid" placeholder="Enter UID" />
+
+      <div style="margin-top:15px; display:flex; gap:10px;">
+        <button class="btn" onclick="loginTeacher()">Login as Teacher</button>
+        <button class="btn" onclick="loginInstitute()">Login as Institute</button>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="container">
+<script src="./config.js"></script>
 
-    <div class="hero">
-      <div class="heroGrid">
-
-        <!-- LOGIN CARD -->
-        <div class="card cardPad">
-          <h1 class="hTitle" style="font-size:34px;">Login</h1>
-          <p class="hSub">
-            Enter your UID and choose your role.
-          </p>
-
-          <div class="sectionTitle">Your UID</div>
-          <input class="input" id="uid" placeholder="Enter UID" autocomplete="off" />
-
-          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
-            <button class="btn" onclick="loginTeacher()">Login as Teacher</button>
-            <button class="btn" onclick="loginInstitute()">Login as Institute</button>
-          </div>
-
-          <hr class="sep" />
-
-          <div class="meta">
-            After login, you will be redirected to your dashboard.
-          </div>
-        </div>
-
-        <!-- INFO CARD -->
-        <div class="card cardPad">
-          <div class="sectionTitle">How it works</div>
-          <div class="meta">
-            1) Enter UID<br>
-            2) System verifies account<br>
-            3) JWT token generated<br>
-            4) Dashboard access granted
-          </div>
-
-          <hr class="sep" />
-
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <a class="pill" href="index.html">Public Search</a>
-            <a class="pill" href="jobs.html">Browse Jobs</a>
-            <a class="pill" href="privacy.html">Privacy</a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="footer">
-      © Lets Teach · 
-      <a class="smallLink" href="index.html">Home</a> ·
-      <a class="smallLink" href="jobs.html">Jobs</a>
-    </div>
-
-  </div>
-
-  <!-- CONFIG -->
-  <script src="./config.js"></script>
-
-  <script>
-  /* ================= UTIL ================= */
-  function getUid() {
-    const uid = document.getElementById("uid").value.trim();
-    if (!uid) {
-      alert("Please enter UID");
-      return null;
-    }
-    return uid;
+<script>
+function getUid() {
+  const uid = document.getElementById("uid").value.trim();
+  if (!uid) {
+    alert("Please enter UID");
+    return null;
   }
+  return uid;
+}
 
-  /* ================= ROLE BUTTONS ================= */
-  function loginTeacher() {
-    handleLogin("teacher");
-  }
+/* ================= MAIN LOGIN FUNCTION ================= */
+async function handleLogin(role) {
+  const uid = getUid();
+  if (!uid) return;
 
-  function loginInstitute() {
-    handleLogin("institute");
-  }
+  const loginUrl =
+    role === "teacher"
+      ? `${BASE_URL}/api/teacher/login`
+      : `${BASE_URL}/api/institute/login`;
 
-  /* ================= CORE JWT LOGIN ================= */
-  async function handleLogin(role) {
-    const uid = getUid();
-    if (!uid) return;
+  try {
+    const res = await fetch(loginUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid })
+    });
 
-    const url =
-      role === "teacher"
-        ? `${BASE_URL}/api/teacher/login`
-        : `${BASE_URL}/api/institute/login`;
+    const data = await res.json();
 
-    try {
-      const res = await fetch(url, {
+    /* ================= IF USER NOT FOUND → AUTO REGISTER ================= */
+    if (!data.success && data.message === "Teacher not found" && role === "teacher") {
+
+      // Minimal auto register
+      await fetch(`${BASE_URL}/api/teacher/create`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ uid })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid,
+          name: "New Teacher",
+          phone: "0000000000",
+          subject: "General",
+          city: "Unknown",
+          experience: "0"
+        })
       });
 
-      const data = await res.json();
-
-      if (!data.success) {
-        alert(data.message || "Login failed");
-        return;
-      }
-
-      // ✅ STORE TOKEN
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("uid", uid);
-      localStorage.setItem("role", role);
-
-      // ✅ REDIRECT
-      window.location.href =
-        role === "teacher"
-          ? "teacher-dashboard.html"
-          : "institute-dashboard.html";
-
-    } catch (err) {
-      console.error("Login error:", err);
-      alert("Server error. Try again.");
+      // Try login again
+      return handleLogin(role);
     }
+
+    if (!data.success && data.message === "Institute not found" && role === "institute") {
+
+      await fetch(`${BASE_URL}/api/institute/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid,
+          name: "New Institute",
+          phone: "0000000000",
+          city: "Unknown"
+        })
+      });
+
+      return handleLogin(role);
+    }
+
+    if (!data.success) {
+      alert(data.message || "Login failed");
+      return;
+    }
+
+    /* ================= STORE TOKEN ================= */
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("uid", uid);
+    localStorage.setItem("role", role);
+
+    /* ================= REDIRECT ================= */
+    window.location.href =
+      role === "teacher"
+        ? "teacher-dashboard.html"
+        : "institute-dashboard.html";
+
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
   }
-  </script>
+}
+
+function loginTeacher() {
+  handleLogin("teacher");
+}
+
+function loginInstitute() {
+  handleLogin("institute");
+}
+</script>
 
 </body>
 </html>
