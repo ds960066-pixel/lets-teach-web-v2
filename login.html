@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login | Lets Teach</title>
 
-  <!-- ✅ Same Professional Theme -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -32,56 +31,36 @@
     <div class="hero">
       <div class="heroGrid">
 
-        <!-- LEFT: LOGIN CARD -->
+        <!-- LOGIN CARD -->
         <div class="card cardPad">
           <h1 class="hTitle" style="font-size:34px;">Login</h1>
           <p class="hSub">
-            Enter your UID and choose your role. If UID not registered, you’ll be redirected to registration.
+            Enter your UID and choose your role.
           </p>
 
           <div class="sectionTitle">Your UID</div>
-          <input class="input" id="uid" placeholder="Enter UID (e.g. teacher-demo123)" autocomplete="off" />
+          <input class="input" id="uid" placeholder="Enter UID" autocomplete="off" />
 
           <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
             <button class="btn" onclick="loginTeacher()">Login as Teacher</button>
             <button class="btn" onclick="loginInstitute()">Login as Institute</button>
           </div>
 
-          <p class="meta" style="margin-top:10px;">
-            Tip: UID case-sensitive mat rakho. Same UID se login/register consistent rahega.
-          </p>
-
           <hr class="sep" />
 
           <div class="meta">
-            New here? Try:
-            <span class="badge" style="margin-left:6px;">Teacher</span>
-            <span class="badge" style="margin-left:6px;">Institute</span>
+            After login, you will be redirected to your dashboard.
           </div>
         </div>
 
-        <!-- RIGHT: INFO CARD -->
+        <!-- INFO CARD -->
         <div class="card cardPad">
           <div class="sectionTitle">How it works</div>
           <div class="meta">
-            1) Login with UID<br>
-            2) If not registered → auto register page open<br>
-            3) After registration → dashboard open
-          </div>
-
-          <div class="kpis" style="margin-top:14px;">
-            <div class="kpi">
-              <b>Invite</b>
-              <span>Send / accept invites</span>
-            </div>
-            <div class="kpi">
-              <b>Chat</b>
-              <span>Unlock after acceptance</span>
-            </div>
-            <div class="kpi">
-              <b>Jobs</b>
-              <span>Apply after resume</span>
-            </div>
+            1) Enter UID<br>
+            2) System verifies account<br>
+            3) JWT token generated<br>
+            4) Dashboard access granted
           </div>
 
           <hr class="sep" />
@@ -97,80 +76,79 @@
     </div>
 
     <div class="footer">
-      © Lets Teach · <a class="smallLink" href="index.html">Home</a> ·
-      <a class="smallLink" href="jobs.html">Jobs</a> ·
-      <a class="smallLink" href="interview/index.html">Interview</a>
+      © Lets Teach · 
+      <a class="smallLink" href="index.html">Home</a> ·
+      <a class="smallLink" href="jobs.html">Jobs</a>
     </div>
 
   </div>
-<script src="./config.js"></script>
-<script>
 
+  <!-- CONFIG -->
+  <script src="./config.js"></script>
 
-/* ================= UTIL ================= */
-function getUid() {
-  const uid = document.getElementById("uid").value.trim();
-  if (!uid) {
-    alert("Please enter UID");
-    return null;
-  }
-  return uid;
-}
-
-/* ================= ROLE BUTTONS ================= */
-function loginTeacher() {
-  handleLogin("teacher");
-}
-function loginInstitute() {
-  handleLogin("institute");
-}
-
-/* ================= CORE LOGIN ================= */
-async function handleLogin(role) {
-  const uid = getUid();
-  if (!uid) return;
-
-  // ✅ SINGLE SOURCE OF TRUTH
-  localStorage.setItem("uid", uid);
-  localStorage.setItem("role", role);
-
-  const url =
-    role === "teacher"
-      ? `${BASE_URL}/api/teacher/login-check/${encodeURIComponent(uid)}`
-      : `${BASE_URL}/api/institute/login-check/${encodeURIComponent(uid)}`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if (data.status === "REGISTER_REQUIRED") {
-      window.location.href =
-        role === "teacher"
-          ? `teacher-register.html?uid=${encodeURIComponent(uid)}`
-          : `institute-register.html?uid=${encodeURIComponent(uid)}`;
-      return;
+  <script>
+  /* ================= UTIL ================= */
+  function getUid() {
+    const uid = document.getElementById("uid").value.trim();
+    if (!uid) {
+      alert("Please enter UID");
+      return null;
     }
+    return uid;
+  }
 
-    if (data.status === "OK") {
+  /* ================= ROLE BUTTONS ================= */
+  function loginTeacher() {
+    handleLogin("teacher");
+  }
+
+  function loginInstitute() {
+    handleLogin("institute");
+  }
+
+  /* ================= CORE JWT LOGIN ================= */
+  async function handleLogin(role) {
+    const uid = getUid();
+    if (!uid) return;
+
+    const url =
+      role === "teacher"
+        ? `${BASE_URL}/api/teacher/login`
+        : `${BASE_URL}/api/institute/login`;
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ uid })
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.message || "Login failed");
+        return;
+      }
+
+      // ✅ STORE TOKEN
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("uid", uid);
+      localStorage.setItem("role", role);
+
+      // ✅ REDIRECT
       window.location.href =
         role === "teacher"
           ? "teacher-dashboard.html"
           : "institute-dashboard.html";
-      return;
-    }
 
-    if (data.status === "BLOCKED") {
-      alert("Your account is blocked. Contact support.");
-      return;
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Server error. Try again.");
     }
-
-    alert("Login failed. Invalid response.");
-  } catch (err) {
-    console.error("Login error:", err);
-    alert("Server error. Try again.");
   }
-}
-</script>
+  </script>
 
 </body>
 </html>
