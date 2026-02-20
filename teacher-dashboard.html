@@ -11,9 +11,41 @@
 
 <body>
 
-<!-- ================= AUTH GUARD ================= -->
 <script>
-if (!localStorage.uid || localStorage.role !== "teacher") {
+/* ================= AUTH GUARD (JWT) ================= */
+const uid = localStorage.getItem("uid");
+const token = localStorage.getItem("token");
+
+if (!uid || !token || localStorage.getItem("role") !== "teacher") {
+  window.location.href = "login.html";
+}
+
+/* ================= COMMON API FETCH ================= */
+async function apiFetch(url, options = {}) {
+  options.headers = {
+    ...(options.headers || {}),
+    "Authorization": "Bearer " + token
+  };
+
+  try {
+    const res = await fetch(url, options);
+
+    if (res.status === 401) {
+      alert("Session expired. Please login again.");
+      logout();
+      return null;
+    }
+
+    return res;
+  } catch (err) {
+    console.error("API error:", err);
+    return null;
+  }
+}
+
+/* ================= LOGOUT ================= */
+function logout() {
+  localStorage.clear();
   window.location.href = "login.html";
 }
 </script>
@@ -37,7 +69,7 @@ if (!localStorage.uid || localStorage.role !== "teacher") {
 
 <div class="container">
 
-  <!-- ================= HERO ================= -->
+  <!-- HERO -->
   <div class="hero">
     <div class="card cardPad">
       <h1 class="hTitle" style="font-size:34px;margin-bottom:8px;">
@@ -63,7 +95,6 @@ if (!localStorage.uid || localStorage.role !== "teacher") {
         </div>
       </div>
 
-      <!-- 🔥 ACTION BUTTONS -->
       <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn" onclick="location.href='teacher-applications.html'">
           📄 View My Applied Jobs
@@ -73,11 +104,10 @@ if (!localStorage.uid || localStorage.role !== "teacher") {
           💬 My Chats
         </button>
       </div>
-
     </div>
   </div>
 
-  <!-- ================= RESUME ================= -->
+  <!-- RESUME -->
   <div class="card cardPad">
     <div class="sectionTitle">📄 My Resume</div>
     <div id="resumeStatus" class="meta">Checking resume status…</div>
@@ -97,7 +127,7 @@ if (!localStorage.uid || localStorage.role !== "teacher") {
     <div id="uploadStatus" class="meta" style="margin-top:10px;"></div>
   </div>
 
-  <!-- ================= INVITES ================= -->
+  <!-- INVITES -->
   <div class="card cardPad" style="margin-top:14px;">
     <div class="sectionTitle">📨 My Invites</div>
     <div id="inviteList" class="list"></div>
@@ -106,15 +136,8 @@ if (!localStorage.uid || localStorage.role !== "teacher") {
 </div>
 
 <script>
-const uid = localStorage.getItem("uid");
 
-/* ================= LOGOUT ================= */
-function logout() {
-  localStorage.clear();
-  window.location.href = "login.html";
-}
-
-/* ================= RESUME NAV ================= */
+/* ================= NAVIGATION ================= */
 function openResume() {
   location.href = "teacher-resume-edit.html";
 }
@@ -138,53 +161,42 @@ async function uploadResume() {
   const fd = new FormData();
   fd.append("resume", file);
 
-  try {
-    const res = await fetch(`${BASE_URL}/api/teacher/upload-resume/${uid}`, {
-      method: "POST",
-      headers: {
-        "x-role": localStorage.getItem("role"),
-        "x-uid": uid
-      },
-      body: fd
-    });
+  const res = await apiFetch(`${BASE_URL}/api/teacher/upload-resume/${uid}`, {
+    method: "POST",
+    body: fd
+  });
 
-    const data = await res.json();
-    status.innerText = data.message || "Uploaded";
-    loadResumeStatus();
-  } catch {
-    status.innerText = "Upload failed";
-  }
+  if (!res) return;
+
+  const data = await res.json();
+  status.innerText = data.message || "Uploaded";
+  loadResumeStatus();
 }
 
 /* ================= RESUME STATUS ================= */
 async function loadResumeStatus() {
-  try {
-    const res = await apiFetch(`${BASE_URL}/api/teacher/${uid}`);
-    if (!res) return;
+  const res = await apiFetch(`${BASE_URL}/api/teacher/${uid}`);
+  if (!res) return;
 
-    const data = await res.json();
-    const t = data.teacher || {};
+  const data = await res.json();
+  const t = data.teacher || {};
 
-    const detailsOk =
-      !!t.about && !!t.education &&
-      Array.isArray(t.skills) && t.skills.length;
+  const detailsOk =
+    !!t.about && !!t.education &&
+    Array.isArray(t.skills) && t.skills.length;
 
-    const pdfOk = !!t.resumeUrl;
+  const pdfOk = !!t.resumeUrl;
 
-    document.getElementById("resumeBadge").innerText =
-      detailsOk && pdfOk ? "✅ Completed" : "❌ Incomplete";
+  document.getElementById("resumeBadge").innerText =
+    detailsOk && pdfOk ? "✅ Completed" : "❌ Incomplete";
 
-    document.getElementById("pdfBadge").innerText =
-      pdfOk ? "✅ Uploaded" : "❌ Missing";
+  document.getElementById("pdfBadge").innerText =
+    pdfOk ? "✅ Uploaded" : "❌ Missing";
 
-    document.getElementById("resumeStatus").innerHTML =
-      detailsOk && pdfOk
-        ? "✅ Resume completed. You can apply for jobs."
-        : "❌ Fill resume details + upload PDF.";
-
-  } catch {
-    document.getElementById("resumeStatus").innerText = "Error loading resume";
-  }
+  document.getElementById("resumeStatus").innerHTML =
+    detailsOk && pdfOk
+      ? "✅ Resume completed. You can apply for jobs."
+      : "❌ Fill resume details + upload PDF.";
 }
 
 /* ================= INVITES ================= */
@@ -192,59 +204,52 @@ async function loadInvites() {
   const box = document.getElementById("inviteList");
   box.innerHTML = "Loading invites…";
 
-  try {
-    const res = await apiFetch(`${BASE_URL}/api/invite/user/${uid}`);
-    if (!res) return;
+  const res = await apiFetch(`${BASE_URL}/api/invite/user/${uid}`);
+  if (!res) return;
 
-    const data = await res.json();
-    const invites = data.invites || [];
+  const data = await res.json();
+  const invites = data.invites || [];
 
-    document.getElementById("inviteBadge").innerText = invites.length;
+  document.getElementById("inviteBadge").innerText = invites.length;
 
-    if (!invites.length) {
-      box.innerHTML = "No invites yet.";
-      return;
+  if (!invites.length) {
+    box.innerHTML = "No invites yet.";
+    return;
+  }
+
+  box.innerHTML = "";
+
+  invites.forEach(invite => {
+    const otherUid =
+      invite.fromUid === uid ? invite.toUid : invite.fromUid;
+
+    let actions = "";
+
+    if (invite.status === "pending" && invite.toUid === uid) {
+      actions = `
+        <button class="btn" onclick="acceptInvite('${invite._id}')">Accept</button>
+        <button class="btn ghost" onclick="rejectInvite('${invite._id}')">Reject</button>
+      `;
+    } else if (invite.status === "accepted") {
+      actions = `
+        <button class="btn" onclick="openChat('${otherUid}')">Chat</button>
+      `;
+    } else {
+      actions = `<span class="badge">${invite.status}</span>`;
     }
 
-    box.innerHTML = "";
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div>
+        <b>User:</b> ${otherUid}<br>
+        <span class="meta">Status: ${invite.status}</span>
+      </div>
+      <div>${actions}</div>
+    `;
 
-    invites.forEach(invite => {
-      const otherUid = invite.fromUid === uid ? invite.toUid : invite.fromUid;
-
-      let actions = "";
-
-      if (invite.status === "pending" && invite.toUid === uid) {
-        actions = `
-          <button class="btn" onclick="acceptInvite('${invite._id}')">Accept</button>
-          <button class="btn ghost" onclick="rejectInvite('${invite._id}')">Reject</button>
-        `;
-      } 
-      else if (invite.status === "accepted") {
-        actions = `
-          <button class="btn" onclick="openChat('${otherUid}')">Chat</button>
-        `;
-      } 
-      else {
-        actions = `<span class="badge">${invite.status}</span>`;
-      }
-
-      const div = document.createElement("div");
-      div.className = "item";
-
-      div.innerHTML = `
-        <div>
-          <b>User:</b> ${otherUid}<br>
-          <span class="meta">Status: ${invite.status}</span>
-        </div>
-        <div>${actions}</div>
-      `;
-
-      box.appendChild(div);
-    });
-
-  } catch {
-    box.innerHTML = "Failed to load invites";
-  }
+    box.appendChild(div);
+  });
 }
 
 /* ================= INVITE ACTIONS ================= */
@@ -266,6 +271,7 @@ function openChat(otherUid) {
 /* ================= INIT ================= */
 loadResumeStatus();
 loadInvites();
+
 </script>
 
 </body>
