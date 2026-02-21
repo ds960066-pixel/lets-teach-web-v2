@@ -14,10 +14,10 @@
 <!-- NAV -->
 <div class="nav">
   <div class="container navInner">
-    <div class="brand">
+    <a class="brand" href="index.html">
       <div class="logo"></div>
       <div>Lets Teach</div>
-    </div>
+    </a>
 
     <div class="navLinks">
       <a class="pill" href="index.html">Home</a>
@@ -29,29 +29,21 @@
 
 <div class="container">
 
-<script>
-/* ================= AUTH GUARD ================= */
-const uid = localStorage.getItem("uid");
-const role = localStorage.getItem("role");
-
-if (!uid || role !== "teacher") {
-  window.location.href = "login.html";
-}
-</script>
-
 <div class="card cardPad" style="max-width:760px;margin:0 auto;">
   <h1 style="margin:0 0 8px;">Teacher Registration</h1>
-  <p class="meta">Complete your profile to continue.</p>
-
-  <div class="kpi">
-    <b>Your UID</b>
-    <span id="uidText"></span>
-  </div>
+  <p class="meta">Create your teacher account.</p>
 
   <hr class="sep" />
 
   <div class="searchGrid">
     <input class="input" id="name" placeholder="Full Name" />
+    <input class="input" id="email" type="email" placeholder="Email" />
+  </div>
+
+  <div style="height:10px;"></div>
+
+  <div class="searchGrid">
+    <input class="input" id="password" type="password" placeholder="Password (min 6 chars)" />
     <input class="input" id="phone" placeholder="Phone (10 digits)" />
   </div>
 
@@ -64,17 +56,15 @@ if (!uid || role !== "teacher") {
   </div>
 
   <div style="margin-top:15px;">
-    <button class="btn" onclick="registerTeacher()">Register</button>
+    <button class="btn" onclick="registerTeacher()">Create Account</button>
   </div>
 
   <div id="msg" class="meta" style="margin-top:12px;"></div>
 </div>
+
 </div>
 
 <script>
-document.getElementById("uidText").innerText = uid;
-
-/* ================= HELPERS ================= */
 function setMsg(text) {
   document.getElementById("msg").innerText = text || "";
 }
@@ -83,16 +73,22 @@ function onlyDigits(s) {
   return String(s || "").replace(/\D/g, "");
 }
 
-/* ================= REGISTER ================= */
 async function registerTeacher() {
   const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
   const phone = onlyDigits(document.getElementById("phone").value.trim());
   const subject = document.getElementById("subject").value.trim();
   const city = document.getElementById("city").value.trim();
   const experience = Number(document.getElementById("experience").value.trim() || 0);
 
-  if (!name || !phone || !subject || !city) {
+  if (!name || !email || !password || !phone || !subject || !city) {
     alert("All fields are required");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("Password must be at least 6 characters");
     return;
   }
 
@@ -101,19 +97,17 @@ async function registerTeacher() {
     return;
   }
 
-  setMsg("Registering...");
+  setMsg("Creating account...");
 
   try {
-    const res = await fetch(`${BASE_URL}/api/teacher/create`, {
+    const res = await fetch(`${BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        uid,
+        role: "teacher",
         name,
-        phone,
-        subject,
-        city,
-        experience
+        email,
+        password
       })
     });
 
@@ -125,25 +119,10 @@ async function registerTeacher() {
       return;
     }
 
-    /* ================= AUTO LOGIN AFTER REGISTER ================= */
-    const loginRes = await fetch(`${BASE_URL}/api/teacher/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid })
-    });
-
-    const loginData = await loginRes.json();
-
-    if (!loginData.success) {
-      alert("Registration done. Please login manually.");
+    setMsg("Account created successfully! Redirecting...");
+    setTimeout(() => {
       window.location.href = "login.html";
-      return;
-    }
-
-    localStorage.setItem("token", loginData.token);
-
-    setMsg("Registered successfully! Redirecting...");
-    window.location.href = "teacher-dashboard.html";
+    }, 1000);
 
   } catch (err) {
     console.error(err);

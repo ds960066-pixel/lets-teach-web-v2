@@ -12,45 +12,39 @@
 <body>
 
 <script>
-/* ================= AUTH GUARD (JWT) ================= */
-const uid = localStorage.getItem("uid");
 const token = localStorage.getItem("token");
+const role = localStorage.getItem("role");
 
-if (!uid || !token || localStorage.getItem("role") !== "teacher") {
+if (!token || role !== "teacher") {
   window.location.href = "login.html";
 }
 
-/* ================= COMMON API FETCH ================= */
+/* ===== COMMON AUTH FETCH ===== */
 async function apiFetch(url, options = {}) {
   options.headers = {
     ...(options.headers || {}),
     "Authorization": "Bearer " + token
   };
 
-  try {
-    const res = await fetch(url, options);
+  const res = await fetch(url, options);
 
-    if (res.status === 401) {
-      alert("Session expired. Please login again.");
-      logout();
-      return null;
-    }
-
-    return res;
-  } catch (err) {
-    console.error("API error:", err);
+  if (res.status === 401) {
+    alert("Session expired. Please login again.");
+    localStorage.clear();
+    window.location.href = "login.html";
     return null;
   }
+
+  return res;
 }
 
-/* ================= LOGOUT ================= */
 function logout() {
   localStorage.clear();
   window.location.href = "login.html";
 }
 </script>
 
-<!-- ================= NAV ================= -->
+<!-- NAV -->
 <div class="nav">
   <div class="container navInner">
     <a class="brand" href="index.html">
@@ -69,113 +63,55 @@ function logout() {
 
 <div class="container">
 
-  <!-- HERO -->
-  <div class="hero">
-    <div class="card cardPad">
-      <h1 class="hTitle" style="font-size:34px;margin-bottom:8px;">
-        Teacher Dashboard
-      </h1>
-
-      <p class="hSub">
-        Resume complete (details + PDF) hone par hi job apply allow hoga.
-      </p>
-
-      <div class="kpis">
-        <div class="kpi">
-          <b id="resumeBadge">—</b>
-          <span>Resume Status</span>
-        </div>
-        <div class="kpi">
-          <b id="inviteBadge">0</b>
-          <span>Invites</span>
-        </div>
-        <div class="kpi">
-          <b id="pdfBadge">—</b>
-          <span>Resume PDF</span>
-        </div>
-      </div>
-
-      <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn" onclick="location.href='teacher-applications.html'">
-          📄 View My Applied Jobs
-        </button>
-
-        <button class="btn" onclick="location.href='chat-list.html'">
-          💬 My Chats
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- RESUME -->
+<div class="hero">
   <div class="card cardPad">
-    <div class="sectionTitle">📄 My Resume</div>
-    <div id="resumeStatus" class="meta">Checking resume status…</div>
+    <h1 class="hTitle">Teacher Dashboard</h1>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
-      <button class="btn" onclick="openResume()">Create / Update Resume</button>
-      <button class="btn" onclick="viewResume()">View Resume</button>
+    <div class="kpis">
+      <div class="kpi">
+        <b id="resumeBadge">—</b>
+        <span>Resume Status</span>
+      </div>
+      <div class="kpi">
+        <b id="inviteBadge">0</b>
+        <span>Invites</span>
+      </div>
+      <div class="kpi">
+        <b id="pdfBadge">—</b>
+        <span>Resume PDF</span>
+      </div>
     </div>
-
-    <hr class="sep" />
-
-    <div class="sectionTitle">📎 Upload Resume (PDF)</div>
-    <div class="searchGrid" style="grid-template-columns:1fr auto;">
-      <input class="input" type="file" id="resumeFile" accept="application/pdf" />
-      <button class="btn" onclick="uploadResume()">Upload PDF</button>
-    </div>
-    <div id="uploadStatus" class="meta" style="margin-top:10px;"></div>
   </div>
+</div>
 
-  <!-- INVITES -->
-  <div class="card cardPad" style="margin-top:14px;">
-    <div class="sectionTitle">📨 My Invites</div>
-    <div id="inviteList" class="list"></div>
-  </div>
+<div class="card cardPad">
+  <div class="sectionTitle">📄 My Resume</div>
+  <div id="resumeStatus" class="meta">Checking resume status…</div>
+
+  <button class="btn" onclick="location.href='teacher-resume-edit.html'">
+    Edit Resume
+  </button>
+
+  <hr class="sep">
+
+  <div class="sectionTitle">📎 Upload Resume (PDF)</div>
+  <input type="file" id="resumeFile" accept="application/pdf" />
+  <button class="btn" onclick="uploadResume()">Upload</button>
+  <div id="uploadStatus" class="meta"></div>
+</div>
+
+<div class="card cardPad">
+  <div class="sectionTitle">📨 My Invites</div>
+  <div id="inviteList"></div>
+</div>
 
 </div>
 
 <script>
 
-/* ================= NAVIGATION ================= */
-function openResume() {
-  location.href = "teacher-resume-edit.html";
-}
-
-function viewResume() {
-  location.href = `teacher-resume-view.html?uid=${encodeURIComponent(uid)}`;
-}
-
-/* ================= UPLOAD PDF ================= */
-async function uploadResume() {
-  const file = document.getElementById("resumeFile").files[0];
-  const status = document.getElementById("uploadStatus");
-
-  if (!file || file.type !== "application/pdf") {
-    alert("Please select a PDF file");
-    return;
-  }
-
-  status.innerText = "Uploading…";
-
-  const fd = new FormData();
-  fd.append("resume", file);
-
-  const res = await apiFetch(`${BASE_URL}/api/teacher/upload-resume/${uid}`, {
-    method: "POST",
-    body: fd
-  });
-
-  if (!res) return;
-
-  const data = await res.json();
-  status.innerText = data.message || "Uploaded";
-  loadResumeStatus();
-}
-
-/* ================= RESUME STATUS ================= */
-async function loadResumeStatus() {
-  const res = await apiFetch(`${BASE_URL}/api/teacher/${uid}`);
+/* ===== LOAD PROFILE ===== */
+async function loadProfile() {
+  const res = await apiFetch(`${BASE_URL}/api/teacher/me`);
   if (!res) return;
 
   const data = await res.json();
@@ -193,18 +129,47 @@ async function loadResumeStatus() {
   document.getElementById("pdfBadge").innerText =
     pdfOk ? "✅ Uploaded" : "❌ Missing";
 
-  document.getElementById("resumeStatus").innerHTML =
+  document.getElementById("resumeStatus").innerText =
     detailsOk && pdfOk
-      ? "✅ Resume completed. You can apply for jobs."
-      : "❌ Fill resume details + upload PDF.";
+      ? "Resume complete"
+      : "Complete resume to apply for jobs.";
 }
 
-/* ================= INVITES ================= */
+/* ===== UPLOAD RESUME ===== */
+async function uploadResume() {
+  const file = document.getElementById("resumeFile").files[0];
+  if (!file) return alert("Select PDF file");
+
+  const fd = new FormData();
+  fd.append("resume", file);
+
+  const res = await fetch(`${BASE_URL}/api/teacher/upload-resume`, {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + token
+    },
+    body: fd
+  });
+
+  if (res.status === 401) {
+    alert("Session expired");
+    logout();
+    return;
+  }
+
+  const data = await res.json();
+  document.getElementById("uploadStatus").innerText =
+    data.message || "Uploaded";
+
+  loadProfile();
+}
+
+/* ===== LOAD INVITES ===== */
 async function loadInvites() {
   const box = document.getElementById("inviteList");
-  box.innerHTML = "Loading invites…";
+  box.innerHTML = "Loading...";
 
-  const res = await apiFetch(`${BASE_URL}/api/invite/user/${uid}`);
+  const res = await apiFetch(`${BASE_URL}/api/invite/my`);
   if (!res) return;
 
   const data = await res.json();
@@ -213,63 +178,29 @@ async function loadInvites() {
   document.getElementById("inviteBadge").innerText = invites.length;
 
   if (!invites.length) {
-    box.innerHTML = "No invites yet.";
+    box.innerHTML = "No invites.";
     return;
   }
 
   box.innerHTML = "";
 
   invites.forEach(invite => {
-    const otherUid =
-      invite.fromUid === uid ? invite.toUid : invite.fromUid;
-
-    let actions = "";
-
-    if (invite.status === "pending" && invite.toUid === uid) {
-      actions = `
-        <button class="btn" onclick="acceptInvite('${invite._id}')">Accept</button>
-        <button class="btn ghost" onclick="rejectInvite('${invite._id}')">Reject</button>
-      `;
-    } else if (invite.status === "accepted") {
-      actions = `
-        <button class="btn" onclick="openChat('${otherUid}')">Chat</button>
-      `;
-    } else {
-      actions = `<span class="badge">${invite.status}</span>`;
-    }
-
     const div = document.createElement("div");
-    div.className = "item";
     div.innerHTML = `
-      <div>
-        <b>User:</b> ${otherUid}<br>
-        <span class="meta">Status: ${invite.status}</span>
-      </div>
-      <div>${actions}</div>
+      <p><b>${invite.otherUserName}</b> - ${invite.status}</p>
+      ${invite.status === "accepted"
+        ? `<button onclick="openChat('${invite.otherUserId}')">Chat</button>`
+        : ""}
     `;
-
     box.appendChild(div);
   });
 }
 
-/* ================= INVITE ACTIONS ================= */
-async function acceptInvite(id) {
-  await apiFetch(`${BASE_URL}/api/invite/accept/${id}`, { method: "POST" });
-  loadInvites();
+function openChat(userId) {
+  location.href = `chat.html?userId=${userId}`;
 }
 
-async function rejectInvite(id) {
-  await apiFetch(`${BASE_URL}/api/invite/reject/${id}`, { method: "POST" });
-  loadInvites();
-}
-
-/* ================= CHAT ================= */
-function openChat(otherUid) {
-  location.href = `chat.html?receiverUid=${otherUid}`;
-}
-
-/* ================= INIT ================= */
-loadResumeStatus();
+loadProfile();
 loadInvites();
 
 </script>

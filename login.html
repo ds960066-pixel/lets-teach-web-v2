@@ -36,19 +36,23 @@
         <div class="card cardPad">
           <h1 class="hTitle" style="font-size:34px;">Login</h1>
           <p class="hSub">
-            Enter your UID and choose your role.
+            Enter your Email and Password to continue.
           </p>
 
-          <div class="sectionTitle">Your UID</div>
-          <input class="input" id="uid" placeholder="Enter UID" autocomplete="off" />
+          <div class="sectionTitle">Email</div>
+          <input class="input" id="email" type="email" placeholder="Enter Email" autocomplete="off" />
+
+          <div class="sectionTitle" style="margin-top:10px;">Password</div>
+          <input class="input" id="password" type="password" placeholder="Enter Password" />
 
           <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
-            <button class="btn" onclick="loginTeacher()">Login as Teacher</button>
-            <button class="btn" onclick="loginInstitute()">Login as Institute</button>
+            <button class="btn" onclick="login('teacher')">Login as Teacher</button>
+            <button class="btn" onclick="login('institute')">Login as Institute</button>
           </div>
 
           <p class="meta" style="margin-top:10px;">
-            New users will be auto-registered.
+            Don’t have an account?
+            <a href="register.html">Create account</a>
           </p>
 
           <hr class="sep" />
@@ -62,7 +66,7 @@
         <div class="card cardPad">
           <div class="sectionTitle">How it works</div>
           <div class="meta">
-            1) Enter UID<br>
+            1) Enter Email & Password<br>
             2) System verifies account<br>
             3) JWT token generated<br>
             4) Dashboard access granted
@@ -104,80 +108,43 @@
   </div>
 
 <script>
-function getUid() {
-  const uid = document.getElementById("uid").value.trim();
-  if (!uid) {
-    alert("Please enter UID");
+function getFormData() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!email || !password) {
+    alert("Email and Password required");
     return null;
   }
-  return uid;
+
+  return { email, password };
 }
 
-async function handleLogin(role) {
-  const uid = getUid();
-  if (!uid) return;
-
-  const loginUrl =
-    role === "teacher"
-      ? `${BASE_URL}/api/teacher/login`
-      : `${BASE_URL}/api/institute/login`;
+async function login(role) {
+  const form = getFormData();
+  if (!form) return;
 
   try {
-    const res = await fetch(loginUrl, {
+    const res = await fetch(`${BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid })
+      body: JSON.stringify({
+        role,
+        email: form.email,
+        password: form.password
+      })
     });
 
     const data = await res.json();
-
-    /* AUTO REGISTER TEACHER */
-    if (!data.success && data.message === "Teacher not found" && role === "teacher") {
-
-      await fetch(`${BASE_URL}/api/teacher/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid,
-          name: "New Teacher",
-          phone: "0000000000",
-          subject: "General",
-          city: "Unknown",
-          experience: 0
-        })
-      });
-
-      return handleLogin(role);
-    }
-
-    /* AUTO REGISTER INSTITUTE */
-    if (!data.success && data.message === "Institute not found" && role === "institute") {
-
-      await fetch(`${BASE_URL}/api/institute/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid,
-          name: "New Institute",
-          phone: "0000000000",
-          city: "Unknown"
-        })
-      });
-
-      return handleLogin(role);
-    }
 
     if (!data.success) {
       alert(data.message || "Login failed");
       return;
     }
 
-    /* STORE TOKEN */
     localStorage.setItem("token", data.token);
-    localStorage.setItem("uid", uid);
-    localStorage.setItem("role", role);
+    localStorage.setItem("role", data.role);
 
-    /* REDIRECT */
     window.location.href =
       role === "teacher"
         ? "teacher-dashboard.html"
@@ -187,14 +154,6 @@ async function handleLogin(role) {
     console.error("Login error:", err);
     alert("Server error");
   }
-}
-
-function loginTeacher() {
-  handleLogin("teacher");
-}
-
-function loginInstitute() {
-  handleLogin("institute");
 }
 </script>
 
