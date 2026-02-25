@@ -6,8 +6,6 @@
   <title>Edit Resume | Lets Teach</title>
 
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- 🔒 SINGLE SOURCE OF TRUTH -->
   <script src="./config.js"></script>
 </head>
 
@@ -15,7 +13,11 @@
 
 <!-- AUTH GUARD -->
 <script>
-  if (!localStorage.uid || localStorage.role !== "teacher") {
+  const token = localStorage.getItem("token");
+  const uid = localStorage.getItem("uid");
+  const role = localStorage.getItem("role");
+
+  if (!token || !uid || role !== "teacher") {
     window.location.href = "login.html";
   }
 </script>
@@ -79,12 +81,36 @@
 </div>
 
 <script>
-const uid = localStorage.getItem("uid");
+
+/* ================= COMMON API FETCH (JWT SAFE) ================= */
+async function apiFetch(url, options = {}) {
+  options.headers = {
+    ...(options.headers || {}),
+    "Authorization": "Bearer " + token
+  };
+
+  try {
+    const res = await fetch(url, options);
+
+    if (res.status === 401) {
+      alert("Session expired. Please login again.");
+      localStorage.clear();
+      window.location.href = "login.html";
+      return null;
+    }
+
+    return res;
+  } catch (err) {
+    return null;
+  }
+}
 
 /* ================= LOAD EXISTING DATA ================= */
 (async function loadExisting() {
   try {
-    const res = await fetch(`${BASE_URL}/api/teacher/${uid}`);
+    const res = await apiFetch(`${BASE_URL}/api/teacher/${uid}`);
+    if (!res) return;
+
     const data = await res.json();
 
     if (!data.teacher) return;
@@ -100,7 +126,7 @@ const uid = localStorage.getItem("uid");
   }
 })();
 
-/* ================= SAVE RESUME (FINAL) ================= */
+/* ================= SAVE RESUME ================= */
 async function saveResume() {
   const about = document.getElementById("about").value.trim();
   const education = document.getElementById("education").value.trim();
@@ -119,7 +145,7 @@ async function saveResume() {
   document.getElementById("msg").innerText = "Saving...";
 
   try {
-    const res = await fetch(
+    const res = await apiFetch(
       `${BASE_URL}/api/teacher/resume/${uid}`,
       {
         method: "POST",
@@ -127,6 +153,8 @@ async function saveResume() {
         body: JSON.stringify({ about, education, skills })
       }
     );
+
+    if (!res) return;
 
     const data = await res.json();
 
@@ -141,6 +169,7 @@ async function saveResume() {
     document.getElementById("msg").innerText = "Server error";
   }
 }
+
 </script>
 
 </body>
