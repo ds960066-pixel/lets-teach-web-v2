@@ -2,89 +2,77 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Institute Registration | Lets Teach</title>
 
-  <link rel="stylesheet" href="styles.css" />
   <script src="./config.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    input {
+      padding: 8px;
+      width: 260px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 16px;
+      background: #2e86de;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1b4f72;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- NAV -->
-<div class="nav">
-  <div class="container navInner">
-    <a class="brand" href="index.html">
-      <div class="logo"></div>
-      <div>Lets Teach</div>
-    </a>
+<script>
+/* ================= AUTH + ROLE GUARD ================= */
+if (!localStorage.uid || localStorage.role !== "institute") {
+  window.location.href = "login.html";
+}
+</script>
 
-    <div class="navLinks">
-      <a class="pill" href="index.html">Home</a>
-      <a class="pill" href="jobs.html">Jobs</a>
-      <a class="pill" href="login.html">Login</a>
-    </div>
-  </div>
-</div>
+<h2>Institute Registration</h2>
+<p>Please complete your institute details</p>
 
-<div class="container">
+<p><b>UID:</b> <span id="uidText"></span></p>
 
-<div class="card cardPad" style="max-width:760px;margin:0 auto;">
-  <h1 style="margin:0 0 8px;">Institute Registration</h1>
-  <p class="meta">Create your institute account.</p>
+<input id="name" placeholder="Institute Name" />
+<input id="phone" placeholder="Phone" />
+<input id="city" placeholder="City" />
+<input id="address" placeholder="Address" />
+<input id="subjectsNeeded" placeholder="Subjects Needed (comma separated)" />
 
-  <hr class="sep" />
+<br>
+<button onclick="registerInstitute()">Register & Continue</button>
 
-  <div class="searchGrid">
-    <input class="input" id="name" placeholder="Institute Name" />
-    <input class="input" id="email" type="email" placeholder="Email" />
-  </div>
-
-  <div style="height:10px;"></div>
-
-  <div class="searchGrid">
-    <input class="input" id="password" type="password" placeholder="Password (min 6 chars)" />
-    <input class="input" id="phone" placeholder="Phone" />
-  </div>
-
-  <div style="height:10px;"></div>
-
-  <div class="searchGrid">
-    <input class="input" id="city" placeholder="City" />
-    <input class="input" id="address" placeholder="Address" />
-    <input class="input" id="subjectsNeeded" placeholder="Subjects Needed (comma separated)" />
-  </div>
-
-  <div style="margin-top:15px;">
-    <button class="btn" onclick="registerInstitute()">Create Account</button>
-  </div>
-
-  <div id="msg" class="meta" style="margin-top:12px;"></div>
-</div>
-
-</div>
+<p id="result"></p>
 
 <script>
-function setMsg(text) {
-  document.getElementById("msg").innerText = text || "";
-}
 
+
+/* ================= SOURCE OF TRUTH ================= */
+const uid = localStorage.getItem("uid");
+document.getElementById("uidText").innerText = uid;
+
+/* ================= REGISTER ================= */
 async function registerInstitute() {
   const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
   const phone = document.getElementById("phone").value.trim();
   const city = document.getElementById("city").value.trim();
   const address = document.getElementById("address").value.trim();
-  const subjectsRaw = document.getElementById("subjectsNeeded").value.trim();
+  const subjectsRaw = document
+    .getElementById("subjectsNeeded")
+    .value.trim();
 
-  if (!name || !email || !password || !phone || !city) {
-    alert("All required fields must be filled");
-    return;
-  }
-
-  if (password.length < 6) {
-    alert("Password must be at least 6 characters");
+  if (!name || !phone || !city) {
+    alert("Please fill required fields");
     return;
   }
 
@@ -92,37 +80,33 @@ async function registerInstitute() {
     ? subjectsRaw.split(",").map(s => s.trim())
     : [];
 
-  setMsg("Creating account...");
-
   try {
-    const res = await fetch(`${BASE_URL}/api/auth/register`, {
+    const res = await fetch(`${BASE_URL}/api/institute/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        role: "institute",
+        uid,
         name,
-        email,
-        password
+        phone,
+        city,
+        address,
+        subjectsNeeded
       })
     });
 
     const data = await res.json();
 
     if (!data.success) {
-      setMsg("");
-      alert(data.message || "Registration failed");
+      document.getElementById("result").innerText =
+        data.message || "Registration failed";
       return;
     }
 
-    setMsg("Account created successfully! Redirecting...");
-    setTimeout(() => {
-      window.location.href = "login.html";
-    }, 1000);
-
+    // ✅ AUTO REDIRECT TO DASHBOARD
+    window.location.href = "institute-dashboard.html";
   } catch (err) {
-    console.error(err);
-    setMsg("");
-    alert("Server error");
+    document.getElementById("result").innerText =
+      "Server error. Try again.";
   }
 }
 </script>

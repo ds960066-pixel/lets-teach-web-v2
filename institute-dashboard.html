@@ -13,7 +13,10 @@
       padding: 20px;
       margin: 0;
     }
-    h2 { margin-bottom: 10px; }
+
+    h2 {
+      margin-bottom: 10px;
+    }
 
     .actionBar {
       display: flex;
@@ -32,11 +35,32 @@
       transition: 0.2s ease;
     }
 
-    .btnPrimary { background: #2563eb; color: #fff; }
-    .btnPrimary:hover { background: #1e4fd8; }
+    .btnPrimary {
+      background: #2563eb;
+      color: #fff;
+    }
 
-    .btnDark { background: #111827; color: #fff; }
-    .btnDanger { background: #dc2626; color: #fff; }
+    .btnPrimary:hover {
+      background: #1e4fd8;
+    }
+
+    .btnDark {
+      background: #111827;
+      color: #fff;
+    }
+
+    .btnDark:hover {
+      background: #000;
+    }
+
+    .btnDanger {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .btnDanger:hover {
+      background: #b91c1c;
+    }
 
     .card {
       background: #fff;
@@ -46,63 +70,62 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
-    .ok { background:#e6f9f0; color:#15803d; padding:10px; border-radius:6px; }
-    .warn { background:#fff3cd; color:#856404; padding:10px; border-radius:6px; }
-
-    input, select, textarea {
-      width:100%;
-      padding:8px;
-      margin:6px 0 12px;
-      border-radius:6px;
-      border:1px solid #ddd;
-      font-size:14px;
+    .ok {
+      background: #e6f9f0;
+      color: #15803d;
+      padding: 10px;
+      border-radius: 6px;
     }
 
-    textarea { min-height:80px; resize:vertical; }
+    .warn {
+      background: #fff3cd;
+      color: #856404;
+      padding: 10px;
+      border-radius: 6px;
+    }
 
-    .row { display:flex; gap:15px; flex-wrap:wrap; }
-    .row > div { flex:1; min-width:220px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .row > div {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    hr {
+      margin: 20px 0;
+    }
   </style>
 </head>
 
 <body>
 
 <script>
-const token = localStorage.getItem("token");
-const role = localStorage.getItem("role");
-
-if (!token || role !== "institute") {
-  window.location.href = "login.html";
-}
-
-/* ===== COMMON AUTH FETCH ===== */
-async function apiFetch(url, options = {}) {
-  options.headers = {
-    ...(options.headers || {}),
-    "Authorization": "Bearer " + token,
-    "Content-Type": "application/json"
-  };
-
-  const res = await fetch(url, options);
-
-  if (res.status === 401) {
-    alert("Session expired. Please login again.");
-    localStorage.clear();
-    window.location.href = "login.html";
-    return null;
-  }
-
-  return res;
-}
-
-function logout() {
-  localStorage.clear();
+if (!localStorage.uid || localStorage.role !== "institute") {
   window.location.href = "login.html";
 }
 </script>
 
 <h2>Institute Dashboard</h2>
 
+<!-- 🔥 PROFESSIONAL ACTION BUTTONS -->
 <div class="actionBar">
   <button class="btn btnPrimary"
     onclick="location.href='institute-applications.html'">
@@ -119,7 +142,8 @@ function logout() {
     📌 My Jobs
   </button>
 
-  <button class="btn btnDanger" onclick="logout()">
+  <button class="btn btnDanger"
+    onclick="logout()">
     Logout
   </button>
 </div>
@@ -132,6 +156,7 @@ function logout() {
   </div>
 </div>
 
+<!-- ================= CREATE JOB ================= -->
 <div class="card">
   <h3>Create Job</h3>
 
@@ -179,12 +204,21 @@ function logout() {
 
 <script>
 
+const uid = localStorage.getItem("uid");
+
+/* ================= LOGOUT ================= */
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+/* ================= POST JOB ================= */
 async function postJob() {
 
   const title = document.getElementById("jobTitle").value.trim();
   const city = document.getElementById("jobCity").value.trim();
   const subject = document.getElementById("jobSubject").value.trim();
-  const roleVal = document.getElementById("jobRole").value;
+  const role = document.getElementById("jobRole").value;
   const salary = document.getElementById("jobSalary").value.trim();
   const description = document.getElementById("jobDescription").value.trim();
 
@@ -202,10 +236,11 @@ async function postJob() {
     const res = await apiFetch(`${BASE_URL}/api/job/create`, {
       method: "POST",
       body: JSON.stringify({
+        instituteUid: uid,
         title,
         subject,
         city,
-        role: roleVal,
+        role,
         salary,
         description
       })

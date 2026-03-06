@@ -11,103 +11,47 @@
 
 <body>
 
-  <!-- NAV -->
-  <div class="nav">
-    <div class="container navInner">
-      <a class="brand" href="index.html">
-        <div class="logo"></div>
-        <div>Lets Teach</div>
-      </a>
-
-      <div class="navLinks">
-        <a class="pill" href="jobs.html">Jobs</a>
-        <a class="pill" href="interview/index.html">Interview Preps</a>
-        <a class="pill" href="index.html">Home</a>
-      </div>
-    </div>
+<div class="nav">
+  <div class="container navInner">
+    <a class="brand" href="index.html">
+      <div class="logo"></div>
+      <div>Lets Teach</div>
+    </a>
   </div>
+</div>
 
-  <div class="container">
+<div class="container">
+  <div class="hero">
+    <div class="heroGrid">
 
-    <div class="hero">
-      <div class="heroGrid">
+      <div class="card cardPad">
+        <h1 class="hTitle">Login</h1>
+        <p class="hSub">Enter your Email and Password</p>
 
-        <!-- LEFT: LOGIN CARD -->
-        <div class="card cardPad">
-          <h1 class="hTitle" style="font-size:34px;">Login</h1>
-          <p class="hSub">
-            Enter your Email and Password to continue.
-          </p>
+        <div class="sectionTitle">Email</div>
+        <input class="input" id="email" type="email" placeholder="Enter Email" />
 
-          <div class="sectionTitle">Email</div>
-          <input class="input" id="email" type="email" placeholder="Enter Email" autocomplete="off" />
+        <div class="sectionTitle" style="margin-top:10px;">Password</div>
+        <input class="input" id="password" type="password" placeholder="Enter Password" />
 
-          <div class="sectionTitle" style="margin-top:10px;">Password</div>
-          <input class="input" id="password" type="password" placeholder="Enter Password" />
-
-          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
-            <button class="btn" onclick="login('teacher')">Login as Teacher</button>
-            <button class="btn" onclick="login('institute')">Login as Institute</button>
-          </div>
-
-          <p class="meta" style="margin-top:10px;">
-            Don’t have an account?
-            <a href="register.html">Create account</a>
-          </p>
-
-          <hr class="sep" />
-
-          <div class="meta">
-            Secure login powered by JWT authentication.
-          </div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+          <button class="btn" onclick="login('teacher')">Login as Teacher</button>
+          <button class="btn" onclick="login('institute')">Login as Institute</button>
         </div>
 
-        <!-- RIGHT: INFO CARD -->
-        <div class="card cardPad">
-          <div class="sectionTitle">How it works</div>
-          <div class="meta">
-            1) Enter Email & Password<br>
-            2) System verifies account<br>
-            3) JWT token generated<br>
-            4) Dashboard access granted
-          </div>
-
-          <div class="kpis" style="margin-top:14px;">
-            <div class="kpi">
-              <b>Invite</b>
-              <span>Send / accept invites</span>
-            </div>
-            <div class="kpi">
-              <b>Chat</b>
-              <span>Unlock after acceptance</span>
-            </div>
-            <div class="kpi">
-              <b>Jobs</b>
-              <span>Apply after resume</span>
-            </div>
-          </div>
-
-          <hr class="sep" />
-
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <a class="pill" href="index.html">Public Search</a>
-            <a class="pill" href="jobs.html">Browse Jobs</a>
-            <a class="pill" href="privacy.html">Privacy</a>
-          </div>
-        </div>
-
+        <p class="meta" style="margin-top:10px;">
+          Don’t have an account?
+          <a href="teacher-register.html">Register as Teacher</a> |
+          <a href="institute-register.html">Register as Institute</a>
+        </p>
       </div>
-    </div>
 
-    <div class="footer">
-      © Lets Teach · 
-      <a class="smallLink" href="index.html">Home</a> ·
-      <a class="smallLink" href="jobs.html">Jobs</a>
     </div>
-
   </div>
+</div>
 
 <script>
+
 function getFormData() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
@@ -121,15 +65,21 @@ function getFormData() {
 }
 
 async function login(role) {
+
   const form = getFormData();
   if (!form) return;
 
+  const url =
+    role === "teacher"
+      ? `${BASE_URL}/api/teacher/login`
+      : `${BASE_URL}/api/institute/login`;
+
   try {
-    const res = await fetch(`${BASE_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+
+    const res = await fetch(url,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
-        role,
         email: form.email,
         password: form.password
       })
@@ -137,24 +87,35 @@ async function login(role) {
 
     const data = await res.json();
 
-    if (!data.success) {
+    if(!data.success){
       alert(data.message || "Login failed");
       return;
     }
 
+    /* ===== SAVE LOGIN DATA ===== */
+
     localStorage.setItem("token", data.token);
-    localStorage.setItem("role", data.role);
+    localStorage.setItem("role", role);
 
-    window.location.href =
-      role === "teacher"
-        ? "teacher-dashboard.html"
-        : "institute-dashboard.html";
+    if(data.uid){
+      localStorage.setItem("uid", data.uid);
+    }
 
-  } catch (err) {
+    /* ===== REDIRECT ===== */
+
+    if(role === "teacher"){
+      window.location.href = "teacher-dashboard.html";
+    }else{
+      window.location.href = "institute-dashboard.html";
+    }
+
+  } catch(err){
     console.error("Login error:", err);
     alert("Server error");
   }
+
 }
+
 </script>
 
 </body>
