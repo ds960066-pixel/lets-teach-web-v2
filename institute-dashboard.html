@@ -13,18 +13,13 @@
       padding: 20px;
       margin: 0;
     }
-
-    h2 {
-      margin-bottom: 10px;
-    }
-
+    h2 { margin-bottom: 10px; }
     .actionBar {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       margin-bottom: 15px;
     }
-
     .btn {
       padding: 8px 14px;
       border-radius: 6px;
@@ -32,86 +27,37 @@
       cursor: pointer;
       font-weight: 600;
       font-size: 14px;
-      transition: 0.2s ease;
     }
-
-    .btnPrimary {
-      background: #2563eb;
-      color: #fff;
-    }
-
-    .btnPrimary:hover {
-      background: #1e4fd8;
-    }
-
-    .btnDark {
-      background: #111827;
-      color: #fff;
-    }
-
-    .btnDark:hover {
-      background: #000;
-    }
-
-    .btnDanger {
-      background: #dc2626;
-      color: #fff;
-    }
-
-    .btnDanger:hover {
-      background: #b91c1c;
-    }
-
+    .btnPrimary { background: #2563eb; color: #fff; }
+    .btnDark { background: #111827; color: #fff; }
+    .btnDanger { background: #dc2626; color: #fff; }
     .card {
       background: #fff;
       padding: 18px;
       margin-bottom: 15px;
       border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
-
     .ok {
       background: #e6f9f0;
       color: #15803d;
       padding: 10px;
       border-radius: 6px;
     }
-
     .warn {
       background: #fff3cd;
       color: #856404;
       padding: 10px;
       border-radius: 6px;
     }
-
     input, select, textarea {
       width: 100%;
       padding: 8px;
       margin: 6px 0 12px;
       border-radius: 6px;
       border: 1px solid #ddd;
-      font-size: 14px;
     }
-
-    textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
-
-    .row {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-
-    .row > div {
-      flex: 1;
-      min-width: 220px;
-    }
-
-    hr {
-      margin: 20px 0;
-    }
+    .row { display: flex; gap: 15px; flex-wrap: wrap; }
+    .row > div { flex: 1; min-width: 220px; }
   </style>
 </head>
 
@@ -119,10 +65,19 @@
 
 <script>
 const instituteId = localStorage.getItem("instituteId");
+const role = localStorage.getItem("role");
 
-if (!instituteId || localStorage.getItem("role") !== "institute") {
-  window.location.href = "login.html";
-}
+// DEBUG (important)
+console.log("InstituteId:", instituteId);
+console.log("Role:", role);
+
+// SAFE REDIRECT (fix white screen issue)
+setTimeout(() => {
+  if (!instituteId || role !== "institute") {
+    alert("Please login first");
+    window.location.href = "login.html";
+  }
+}, 100);
 </script>
 
 <h2>Institute Dashboard</h2>
@@ -143,8 +98,7 @@ if (!instituteId || localStorage.getItem("role") !== "institute") {
     📌 My Jobs
   </button>
 
-  <button class="btn btnDanger"
-    onclick="logout()">
+  <button class="btn btnDanger" onclick="logout()">
     Logout
   </button>
 </div>
@@ -152,30 +106,27 @@ if (!instituteId || localStorage.getItem("role") !== "institute") {
 <hr>
 
 <div class="card">
-  <div class="ok">
-    ✅ You can post jobs.
-  </div>
+  <div class="ok">✅ You can post jobs.</div>
 </div>
 
-<!-- ================= CREATE JOB ================= -->
 <div class="card">
   <h3>Create Job</h3>
 
   <div class="row">
     <div>
       <label>Job Title *</label>
-      <input id="jobTitle" placeholder="e.g. Maths Teacher" />
+      <input id="jobTitle" />
     </div>
     <div>
       <label>City *</label>
-      <input id="jobCity" placeholder="e.g. Delhi" />
+      <input id="jobCity" />
     </div>
   </div>
 
   <div class="row">
     <div>
       <label>Subject *</label>
-      <input id="jobSubject" placeholder="e.g. Maths" />
+      <input id="jobSubject" />
     </div>
     <div>
       <label>Role</label>
@@ -188,33 +139,28 @@ if (!instituteId || localStorage.getItem("role") !== "institute") {
   </div>
 
   <label>Salary</label>
-  <input id="jobSalary" placeholder="e.g. 15000-25000" />
+  <input id="jobSalary" />
 
   <label>Description</label>
-  <textarea id="jobDescription"
-    placeholder="Timing, requirements..."></textarea>
+  <textarea id="jobDescription"></textarea>
 
-  <button id="postJobBtn"
-    class="btn btnPrimary"
-    onclick="postJob()">
+  <button id="postJobBtn" class="btn btnPrimary" onclick="postJob()">
     Post Job
   </button>
 
-  <div id="jobResult" style="margin-top:10px;"></div>
+  <div id="jobResult"></div>
 </div>
 
 <script>
 
-const instituteId = localStorage.getItem("instituteId");
-
-/* ================= LOGOUT ================= */
 function logout() {
   localStorage.clear();
   window.location.href = "login.html";
 }
 
-/* ================= POST JOB ================= */
 async function postJob() {
+
+  const instituteId = localStorage.getItem("instituteId");
 
   const title = document.getElementById("jobTitle").value.trim();
   const city = document.getElementById("jobCity").value.trim();
@@ -224,20 +170,16 @@ async function postJob() {
   const description = document.getElementById("jobDescription").value.trim();
 
   if (!title || !city || !subject) {
-    alert("Title, City and Subject required");
+    alert("Fill required fields");
     return;
   }
-
-  const btn = document.getElementById("postJobBtn");
-  btn.disabled = true;
-  btn.innerText = "Posting...";
 
   try {
 
     const res = await apiFetch(`${BASE_URL}/api/job/create`, {
       method: "POST",
       body: JSON.stringify({
-        instituteId: instituteId,
+        instituteId,
         title,
         subject,
         city,
@@ -247,31 +189,20 @@ async function postJob() {
       })
     });
 
-    if (!res) return;
-
     const data = await res.json();
 
     if (!data.success) {
       document.getElementById("jobResult").innerHTML =
-        `<div class="warn">${data.message || "Failed"}</div>`;
+        `<div class="warn">${data.message}</div>`;
       return;
     }
 
     document.getElementById("jobResult").innerHTML =
-      `<div class="ok">✅ Job posted successfully</div>`;
+      `<div class="ok">Job posted</div>`;
 
-    document.getElementById("jobTitle").value = "";
-    document.getElementById("jobCity").value = "";
-    document.getElementById("jobSubject").value = "";
-    document.getElementById("jobSalary").value = "";
-    document.getElementById("jobDescription").value = "";
-
-  } catch (e) {
+  } catch {
     document.getElementById("jobResult").innerHTML =
       `<div class="warn">Server error</div>`;
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Post Job";
   }
 }
 
