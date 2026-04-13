@@ -8,16 +8,20 @@ const BASE_URL = "https://lets-teach-backend-v38i.onrender.com";
 
 async function apiFetch(url, options = {}) {
   const role = localStorage.getItem("role");
-  const uid = localStorage.getItem("uid");
+
+  // ✅ NEW (_id based)
+  const teacherId = localStorage.getItem("teacherId");
+  const instituteId = localStorage.getItem("instituteId");
 
   const isFormData = options.body instanceof FormData;
 
   const defaultHeaders = {
     "x-role": role || "",
-    "x-uid": uid || ""
+    "x-teacher-id": teacherId || "",
+    "x-institute-id": instituteId || ""
   };
 
-  // ❗ Only add Content-Type if NOT FormData
+  // Only add Content-Type if NOT FormData
   if (!isFormData) {
     defaultHeaders["Content-Type"] = "application/json";
   }
@@ -30,7 +34,7 @@ async function apiFetch(url, options = {}) {
     }
   });
 
-  // 🔥 Handle unauthorized safely
+  // Handle unauthorized
   if (response.status === 401 || response.status === 403) {
     alert("Session expired or unauthorized");
     localStorage.clear();
