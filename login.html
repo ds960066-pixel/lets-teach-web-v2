@@ -1,3 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login | Lets Teach</title>
+
+  <script src="./config.js"></script>
+</head>
+
+<body>
+
+<h2>Login</h2>
+
+<input id="email" type="email" placeholder="Email" />
+<br><br>
+
+<input id="password" type="password" placeholder="Password" />
+<br><br>
+
+<button onclick="login('teacher')">Login as Teacher</button>
+<button onclick="login('institute')">Login as Institute</button>
+
 <script>
 
 function getFormData() {
@@ -27,10 +50,7 @@ async function login(role) {
     const res = await fetch(url,{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        email: form.email,
-        password: form.password
-      })
+      body: JSON.stringify(form)
     });
 
     const data = await res.json();
@@ -40,28 +60,21 @@ async function login(role) {
       return;
     }
 
-    /* ===== SAVE LOGIN DATA ===== */
-
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", role);
 
-    // ✅ TEACHER LOGIN
     if(role === "teacher" && data.teacher){
       localStorage.setItem("teacherId", data.teacher._id);
     }
 
-    // ✅ INSTITUTE LOGIN (IMPORTANT FIX)
     if(role === "institute" && data.institute){
       localStorage.setItem("instituteId", data.institute._id);
     }
 
-    /* ===== REDIRECT ===== */
-
-    if(role === "teacher"){
-      window.location.href = "teacher-dashboard.html";
-    }else{
-      window.location.href = "institute-dashboard.html";
-    }
+    window.location.href =
+      role === "teacher"
+        ? "teacher-dashboard.html"
+        : "institute-dashboard.html";
 
   } catch(err){
     console.error("Login error:", err);
@@ -71,3 +84,6 @@ async function login(role) {
 }
 
 </script>
+
+</body>
+</html>
