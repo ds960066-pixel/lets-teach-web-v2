@@ -5,21 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login | Lets Teach</title>
 
+  <!-- ✅ CSS -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- ✅ CONFIG -->
   <script src="./config.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6fb;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btnTeacher {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .btnInstitute {
+      background: #16a34a;
+      color: #fff;
+    }
+
+    .btnTeacher:hover { background: #1e4fd8; }
+    .btnInstitute:hover { background: #12863c; }
+
+  </style>
 </head>
 
 <body>
 
-<h2>Login</h2>
+<div class="container">
+  <h2>Login</h2>
 
-<input id="email" type="email" placeholder="Email" />
-<br><br>
+  <input id="email" type="email" placeholder="Enter Email" />
+  <input id="password" type="password" placeholder="Enter Password" />
 
-<input id="password" type="password" placeholder="Password" />
-<br><br>
+  <button class="btnTeacher" onclick="login('teacher')">
+    Login as Teacher
+  </button>
 
-<button onclick="login('teacher')">Login as Teacher</button>
-<button onclick="login('institute')">Login as Institute</button>
+  <button class="btnInstitute" onclick="login('institute')">
+    Login as Institute
+  </button>
+</div>
 
 <script>
 
@@ -55,21 +118,37 @@ async function login(role) {
 
     const data = await res.json();
 
+    console.log("LOGIN RESPONSE:", data);
+
     if(!data.success){
       alert(data.message || "Login failed");
       return;
     }
 
+    /* ===== SAVE ===== */
+
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", role);
 
-    if(role === "teacher" && data.teacher){
-      localStorage.setItem("teacherId", data.teacher._id);
+    if(role === "teacher"){
+      if(data.teacher && data.teacher._id){
+        localStorage.setItem("teacherId", data.teacher._id);
+      } else {
+        alert("Teacher data missing");
+        return;
+      }
     }
 
-    if(role === "institute" && data.institute){
-      localStorage.setItem("instituteId", data.institute._id);
+    if(role === "institute"){
+      if(data.institute && data.institute._id){
+        localStorage.setItem("instituteId", data.institute._id);
+      } else {
+        alert("Institute data missing");
+        return;
+      }
     }
+
+    /* ===== REDIRECT ===== */
 
     window.location.href =
       role === "teacher"
