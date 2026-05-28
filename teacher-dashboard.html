@@ -12,184 +12,308 @@
 <body>
 
 <script>
+
 /* ================= AUTH GUARD ================= */
-const uid = localStorage.getItem("uid");
+
+const teacherId = localStorage.getItem("teacherId");
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
-if (!uid || !token || role !== "teacher") {
+if (!teacherId || !token || role !== "teacher") {
   window.location.href = "login.html";
 }
 
-/* ================= COMMON API FETCH ================= */
+/* ================= API FETCH ================= */
+
 async function apiFetch(url, options = {}) {
+
   options.headers = {
     ...(options.headers || {}),
-    "Authorization": "Bearer " + token
+    Authorization: `Bearer ${token}`
   };
 
   try {
+
     const res = await fetch(url, options);
 
     if (res.status === 401) {
-      alert("Session expired. Please login again.");
-      logout();
+
+      alert("Session expired");
+
+      localStorage.clear();
+
+      window.location.href = "login.html";
+
       return null;
     }
 
     return res;
+
   } catch (err) {
-    console.error("API error:", err);
+
+    console.error("API ERROR:", err);
+
     return null;
   }
 }
 
+/* ================= LOGOUT ================= */
+
 function logout() {
+
   localStorage.clear();
+
   window.location.href = "login.html";
 }
+
 </script>
 
 <!-- NAV -->
+
 <div class="nav">
+
   <div class="container navInner">
+
     <a class="brand" href="index.html">
       <div class="logo"></div>
       <div>Lets Teach</div>
     </a>
 
     <div class="navLinks">
-      <a class="pill" href="jobs.html">Jobs</a>
-      <a class="pill" href="teacher-applications.html">My Applications</a>
-      <a class="pill" href="chat-list.html">My Chats</a>
-      <a class="pill" href="#" onclick="logout();return false;">Logout</a>
+
+      <a class="pill" href="jobs.html">
+        Jobs
+      </a>
+
+      <a class="pill" href="teacher-applications.html">
+        My Applications
+      </a>
+
+      <a class="pill" href="chat-list.html">
+        My Chats
+      </a>
+
+      <a
+        class="pill"
+        href="#"
+        onclick="logout();return false;"
+      >
+        Logout
+      </a>
+
     </div>
+
   </div>
+
 </div>
 
 <div class="container">
 
   <!-- HERO -->
-  <div class="card cardPad" style="margin-top:20px;">
-    <h1 style="margin-bottom:10px;">Teacher Dashboard</h1>
+
+  <div
+    class="card cardPad"
+    style="margin-top:20px;"
+  >
+
+    <h1 style="margin-bottom:10px;">
+      Teacher Dashboard
+    </h1>
 
     <div class="kpis">
+
       <div class="kpi">
         <b id="resumeBadge">—</b>
         <span>Resume Status</span>
       </div>
+
       <div class="kpi">
         <b id="inviteBadge">0</b>
         <span>Invites</span>
       </div>
+
       <div class="kpi">
         <b id="pdfBadge">—</b>
         <span>Resume PDF</span>
       </div>
+
     </div>
+
   </div>
 
   <!-- RESUME -->
-  <div class="card cardPad" style="margin-top:15px;">
-    <div class="sectionTitle">My Resume</div>
-    <div id="resumeStatus" class="meta">Checking resume status…</div>
+
+  <div
+    class="card cardPad"
+    style="margin-top:15px;"
+  >
+
+    <div class="sectionTitle">
+      My Resume
+    </div>
+
+    <div
+      id="resumeStatus"
+      class="meta"
+    >
+      Checking resume status...
+    </div>
 
     <div style="margin-top:10px;">
-      <button class="btn" onclick="location.href='teacher-resume-edit.html'">
+
+      <button
+        class="btn"
+        onclick="location.href='teacher-resume-edit.html'"
+      >
         Edit Resume
       </button>
+
     </div>
 
     <hr class="sep" />
 
-    <div class="sectionTitle">Upload Resume (PDF)</div>
-    <input type="file" id="resumeFile" accept="application/pdf" />
-    <button class="btn" onclick="uploadResume()">Upload</button>
+    <!-- PDF -->
 
-    <div id="uploadStatus" class="meta" style="margin-top:10px;"></div>
+    <div class="sectionTitle">
+      Upload Resume (PDF)
+    </div>
+
+    <input
+      type="file"
+      id="resumeFile"
+      accept="application/pdf"
+    />
+
+    <button
+      class="btn"
+      onclick="uploadResume()"
+    >
+      Upload
+    </button>
+
+    <div
+      id="uploadStatus"
+      class="meta"
+      style="margin-top:10px;"
+    ></div>
+
   </div>
 
 </div>
 
 <script>
 
+/* ================= LOAD STATUS ================= */
+
+async function loadResumeStatus() {
+
+  const res = await apiFetch(
+    `${BASE_URL}/api/teacher/profile/${teacherId}`
+  );
+
+  if (!res) return;
+
+  const data = await res.json();
+
+  const t = data.teacher || {};
+
+  const detailsOk =
+    !!t.about &&
+    !!t.education &&
+    Array.isArray(t.skills) &&
+    t.skills.length > 0;
+
+  const pdfOk = !!t.resumeUrl;
+
+  document.getElementById("resumeBadge").innerText =
+    detailsOk
+      ? "✅ Completed"
+      : "❌ Incomplete";
+
+  document.getElementById("pdfBadge").innerText =
+    pdfOk
+      ? "✅ Uploaded"
+      : "❌ Missing";
+
+  document.getElementById("resumeStatus").innerText =
+    detailsOk
+      ? "Resume details completed."
+      : "Please complete your resume.";
+
+}
+
 /* ================= UPLOAD PDF ================= */
+
 async function uploadResume() {
 
-  const file = document.getElementById("resumeFile").files[0];
-  const status = document.getElementById("uploadStatus");
+  const file =
+    document.getElementById("resumeFile").files[0];
+
+  const status =
+    document.getElementById("uploadStatus");
 
   if (!file) {
-    alert("Please select a PDF file");
+    alert("Please select PDF");
     return;
   }
 
   if (file.type !== "application/pdf") {
-    alert("Only PDF files allowed");
+    alert("Only PDF allowed");
     return;
   }
 
   status.innerText = "Uploading...";
 
   const fd = new FormData();
+
   fd.append("resume", file);
 
   try {
+
     const res = await fetch(
-      `${BASE_URL}/api/teacher/upload-resume/${uid}`,
+      `${BASE_URL}/api/teacher/upload-resume/${teacherId}`,
       {
         method: "POST",
+
         headers: {
-          "Authorization": "Bearer " + token
+          Authorization: `Bearer ${token}`
         },
+
         body: fd
       }
     );
 
     const data = await res.json();
 
-    if (!res.ok) {
-      status.innerText = data.message || "Upload failed";
+    if (!data.success) {
+
+      status.innerText =
+        data.message || "Upload failed";
+
       return;
     }
 
-    status.innerText = "✅ Resume uploaded successfully";
-    document.getElementById("resumeFile").value = "";
+    status.innerText =
+      "✅ Resume uploaded successfully";
+
+    document.getElementById("resumeFile").value =
+      "";
+
     loadResumeStatus();
 
   } catch (err) {
+
     console.error(err);
-    status.innerText = "Server error during upload";
+
+    status.innerText =
+      "Server error during upload";
+
   }
-}
 
-/* ================= LOAD RESUME STATUS ================= */
-async function loadResumeStatus() {
-  const res = await apiFetch(`${BASE_URL}/api/teacher/${uid}`);
-  if (!res) return;
-
-  const data = await res.json();
-  const t = data.teacher || {};
-
-  const detailsOk =
-    !!t.about && !!t.education &&
-    Array.isArray(t.skills) && t.skills.length;
-
-  const pdfOk = !!t.resumeUrl;
-
-  document.getElementById("resumeBadge").innerText =
-    detailsOk && pdfOk ? "✅ Completed" : "❌ Incomplete";
-
-  document.getElementById("pdfBadge").innerText =
-    pdfOk ? "✅ Uploaded" : "❌ Missing";
-
-  document.getElementById("resumeStatus").innerText =
-    detailsOk && pdfOk
-      ? "Resume complete. You can apply for jobs."
-      : "Fill details and upload PDF.";
 }
 
 /* ================= INIT ================= */
+
 loadResumeStatus();
 
 </script>
