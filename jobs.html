@@ -78,6 +78,40 @@
 /* AUTH */
 const teacherId = localStorage.getItem("teacherId");
 const role = localStorage.getItem("role");
+const token = localStorage.getItem("token");
+
+async function apiFetch(url, options = {}) {
+
+  options.headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+    Authorization: `Bearer ${token}`
+  };
+
+  try {
+
+    const res = await fetch(url, options);
+
+    if (res.status === 401) {
+
+      alert("Session expired");
+
+      localStorage.clear();
+
+      window.location.href = "login.html";
+
+      return null;
+    }
+
+    return res;
+
+  } catch (err) {
+
+    console.error(err);
+
+    return null;
+  }
+}
 
 if (!teacherId || role !== "teacher") {
   document.getElementById("loginHint").style.display = "block";
