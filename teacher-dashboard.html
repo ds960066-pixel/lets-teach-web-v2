@@ -207,13 +207,19 @@ function logout() {
 
 async function loadResumeStatus() {
 
+  console.log("teacherId =", teacherId);
+
   const res = await apiFetch(
-  `${BASE_URL}/api/teacher/profile/${teacherId}`
-);
+    `${BASE_URL}/api/teacher/profile/${teacherId}`
+  );
+
+  console.log("profile response =", res);
 
   if (!res) return;
 
   const data = await res.json();
+
+  console.log("profile data =", data);
 
   const t = data.teacher || {};
 
@@ -241,6 +247,8 @@ async function loadResumeStatus() {
       : "Please complete your resume.";
 
 }
+
+ 
 
 /* ================= UPLOAD PDF ================= */
 
@@ -271,7 +279,7 @@ async function uploadResume() {
   try {
 
     const res = await fetch(
-      `${BASE_URL}/api/teacher/upload-resume/${teacherId}`
+       `${BASE_URL}/api/teacher/upload-resume/${teacherId}`,
       {
         method: "POST",
 
