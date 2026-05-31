@@ -119,6 +119,7 @@ async function login(role) {
     const data = await res.json();
 
     console.log("LOGIN RESPONSE:", data);
+alert(JSON.stringify(data));
 
     if(!data.success){
       alert(data.message || "Login failed");
