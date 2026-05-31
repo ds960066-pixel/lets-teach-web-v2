@@ -15,11 +15,11 @@
 
 /* ================= AUTH GUARD ================= */
 
-const uid = localStorage.getItem("uid");
+const teacherId = localStorage.getItem("teacherId");
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
-if (!uid || !token || role !== "teacher") {
+if (!teacherId || !token || role !== "teacher") {
   window.location.href = "login.html";
 }
 
@@ -208,8 +208,8 @@ function logout() {
 async function loadResumeStatus() {
 
   const res = await apiFetch(
-    `${BASE_URL}/api/teacher/${uid}`
-  );
+  `${BASE_URL}/api/teacher/profile/${teacherId}`
+);
 
   if (!res) return;
 
@@ -271,7 +271,7 @@ async function uploadResume() {
   try {
 
     const res = await fetch(
-      `${BASE_URL}/api/teacher/upload-resume/${uid}`,
+      `${BASE_URL}/api/teacher/upload-resume/${teacherId}`
       {
         method: "POST",
 
