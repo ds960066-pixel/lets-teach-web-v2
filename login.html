@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login | Lets Teach</title>
 
-  <!-- ✅ CSS -->
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- ✅ CONFIG -->
   <script src="./config.js"></script>
 
   <style>
@@ -39,6 +37,7 @@
       margin: 8px 0;
       border-radius: 6px;
       border: 1px solid #ccc;
+      box-sizing: border-box;
     }
 
     button {
@@ -61,46 +60,175 @@
       color: #fff;
     }
 
-    .btnTeacher:hover { background: #1e4fd8; }
-    .btnInstitute:hover { background: #12863c; }
+    .btnTeacher:hover {
+      background: #1e4fd8;
+    }
 
+    .btnInstitute:hover {
+      background: #12863c;
+    }
+
+    .registerBox {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      text-align: center;
+    }
+
+    .registerBox p {
+      margin: 0 0 12px;
+      color: #555;
+    }
+
+    .registerBtn {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .teacherRegister {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #2563eb;
+    }
+
+    .instituteRegister {
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #15803d;
+    }
+
+    .message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+      text-align: center;
+    }
+
+    .message.error {
+      display: block;
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .message.info {
+      display: block;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
   </style>
 </head>
 
 <body>
 
 <div class="container">
+
   <h2>Login</h2>
 
-  <input id="email" type="email" placeholder="Enter Email" />
-  <input id="password" type="password" placeholder="Enter Password" />
+  <input
+    id="email"
+    type="email"
+    placeholder="Enter Email"
+    autocomplete="email"
+  />
 
-  <button class="btnTeacher" onclick="login('teacher')">
+  <input
+    id="password"
+    type="password"
+    placeholder="Enter Password"
+    autocomplete="current-password"
+  />
+
+  <button
+    class="btnTeacher"
+    onclick="login('teacher')"
+  >
     Login as Teacher
   </button>
 
-  <button class="btnInstitute" onclick="login('institute')">
+  <button
+    class="btnInstitute"
+    onclick="login('institute')"
+  >
     Login as Institute
   </button>
+
+  <div id="message" class="message"></div>
+
+  <div class="registerBox">
+
+    <p>New to Lets Teach?</p>
+
+    <a
+      class="registerBtn teacherRegister"
+      href="teacher-register.html"
+    >
+      Register as Teacher
+    </a>
+
+    <a
+      class="registerBtn instituteRegister"
+      href="institute-register.html"
+    >
+      Register as Institute
+    </a>
+
+  </div>
+
 </div>
 
 <script>
 
+/* ================= FORM DATA ================= */
+
 function getFormData() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value.trim();
 
   if (!email || !password) {
+
     alert("Email and Password required");
+
     return null;
   }
 
-  return { email, password };
+  return {
+    email,
+    password
+  };
 }
+
+
+/* ================= MESSAGE ================= */
+
+function showMessage(text, type) {
+
+  const box =
+    document.getElementById("message");
+
+  box.innerText = text || "";
+
+  box.className =
+    "message " + (type || "info");
+}
+
+
+/* ================= LOGIN ================= */
 
 async function login(role) {
 
   const form = getFormData();
+
   if (!form) return;
 
   const url =
@@ -108,12 +236,20 @@ async function login(role) {
       ? `${BASE_URL}/api/teacher/login`
       : `${BASE_URL}/api/institute/login`;
 
+  showMessage("Logging in...", "info");
+
   try {
 
-    const res = await fetch(url,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
+    const res = await fetch(url, {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
       body: JSON.stringify(form)
+
     });
 
     const data = await res.json();
@@ -121,44 +257,109 @@ async function login(role) {
     console.log("LOGIN RESPONSE:", data);
 
 
-    if(!data.success){
-      alert(data.message || "Login failed");
+    /* ================= ACCOUNT NOT FOUND ================= */
+
+    if (res.status === 404) {
+
+      showMessage(
+        "Account not found. Please register first.",
+        "error"
+      );
+
       return;
     }
 
-    /* ===== SAVE ===== */
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("role", role);
+    /* ================= OTHER LOGIN ERROR ================= */
 
-    if(role === "teacher"){
-      if(data.teacher && data.teacher._id){
-        localStorage.setItem("teacherId", data.teacher._id);
+    if (!data.success) {
+
+      showMessage(
+        data.message || "Login failed",
+        "error"
+      );
+
+      return;
+    }
+
+
+    /* ================= SAVE JWT ================= */
+
+    localStorage.setItem(
+      "token",
+      data.token
+    );
+
+    localStorage.setItem(
+      "role",
+      role
+    );
+
+
+    /* ================= TEACHER ================= */
+
+    if (role === "teacher") {
+
+      if (
+        data.teacher &&
+        data.teacher._id
+      ) {
+
+        localStorage.setItem(
+          "teacherId",
+          data.teacher._id
+        );
+
       } else {
+
         alert("Teacher data missing");
+
         return;
       }
     }
 
-    if(role === "institute"){
-      if(data.institute && data.institute._id){
-        localStorage.setItem("instituteId", data.institute._id);
+
+    /* ================= INSTITUTE ================= */
+
+    if (role === "institute") {
+
+      if (
+        data.institute &&
+        data.institute._id
+      ) {
+
+        localStorage.setItem(
+          "instituteId",
+          data.institute._id
+        );
+
       } else {
+
         alert("Institute data missing");
+
         return;
       }
     }
 
-    /* ===== REDIRECT ===== */
+
+    /* ================= REDIRECT ================= */
 
     window.location.href =
       role === "teacher"
         ? "teacher-dashboard.html"
         : "institute-dashboard.html";
 
-  } catch(err){
-    console.error("Login error:", err);
-    alert("Server error");
+  } catch (err) {
+
+    console.error(
+      "Login error:",
+      err
+    );
+
+    showMessage(
+      "Server error. Please try again later.",
+      "error"
+    );
   }
 
 }
