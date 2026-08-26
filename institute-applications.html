@@ -1,149 +1,458 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+
   <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+
   <title>Received Applications | Lets Teach</title>
+
   <script src="./config.js"></script>
+
 </head>
 
-<body style="font-family: Arial; padding: 20px; background:#f4f4f4;">
+
+<body
+  style="
+    font-family: Arial;
+    padding: 20px;
+    background:#f4f4f4;
+  "
+>
+
 
 <script>
-if (!localStorage.uid || localStorage.role !== "institute") {
-  window.location.href = "login.html";
+
+/* =================================================
+   INSTITUTE AUTH CHECK
+================================================= */
+
+const token =
+  localStorage.getItem("token");
+
+const role =
+  localStorage.getItem("role");
+
+const instituteId =
+  localStorage.getItem("instituteId");
+
+
+console.log(
+  "Institute Applications Auth:",
+  {
+    token: !!token,
+    role,
+    instituteId
+  }
+);
+
+
+/* ===============================
+   AUTH GUARD
+=============================== */
+
+if (
+  !token ||
+  role !== "institute" ||
+  !instituteId
+) {
+
+  alert("Please login first.");
+
+  window.location.href =
+    "login.html";
 }
+
 </script>
 
+
 <h2>📄 Received Applications</h2>
-<button onclick="location.href='institute-dashboard.html'"
-        style="padding:6px 12px;margin-bottom:10px;">
+
+
+<button
+  onclick="location.href='institute-dashboard.html'"
+  style="
+    padding:6px 12px;
+    margin-bottom:10px;
+  "
+>
   ← Back
 </button>
+
+
 <hr>
 
-<div id="box">Loading applications...</div>
+
+<div id="box">
+  Loading applications...
+</div>
+
 
 <script>
 
-const uid = localStorage.getItem("uid");
 
-/* ================= LOAD APPLICATIONS ================= */
+/* =================================================
+   LOAD APPLICATIONS
+================================================= */
+
 async function loadApplications() {
+
   try {
-    const res = await apiFetch(`${BASE_URL}/api/job-application/institute/${uid}`);
-    if (!res) return;
 
-    const data = await res.json();
+    const res =
+      await apiFetch(
+        `${BASE_URL}/api/job-application/institute`,
+        {
+          method: "GET"
+        }
+      );
 
-    const box = document.getElementById("box");
-    box.innerHTML = "";
 
-    if (!data.success || !data.applications || data.applications.length === 0) {
-      box.innerHTML = "<p>No applications received yet.</p>";
+    if (!res) {
       return;
     }
 
+
+    const data =
+      await res.json();
+
+
+    console.log(
+      "APPLICATION RESPONSE:",
+      data
+    );
+
+
+    const box =
+      document.getElementById("box");
+
+
+    box.innerHTML = "";
+
+
+    /* ===============================
+       ERROR
+    =============================== */
+
+    if (!data.success) {
+
+      box.innerHTML = `
+        <p style="color:#c62828;">
+          ${data.message || "Unable to load applications"}
+        </p>
+      `;
+
+      return;
+    }
+
+
+    /* ===============================
+       NO APPLICATIONS
+    =============================== */
+
+    if (
+      !data.applications ||
+      data.applications.length === 0
+    ) {
+
+      box.innerHTML =
+        "<p>No applications received yet.</p>";
+
+      return;
+    }
+
+
+    /* ===============================
+       APPLICATION LIST
+    =============================== */
+
     data.applications.forEach(app => {
 
-      const teacher = app.teacher || {};
-      const status = app.status || "applied";
+      const teacher =
+        app.teacher || {};
 
-      let statusColor = "#1565c0";
-      if (status === "shortlisted") statusColor = "#2e7d32";
-      if (status === "rejected") statusColor = "#c62828";
+      const status =
+        app.status || "applied";
+
+
+      /* ===============================
+         STATUS COLOR
+      =============================== */
+
+      let statusColor =
+        "#1565c0";
+
+      if (
+        status === "shortlisted"
+      ) {
+        statusColor =
+          "#2e7d32";
+      }
+
+      if (
+        status === "rejected"
+      ) {
+        statusColor =
+          "#c62828";
+      }
+
+
+      /* ===============================
+         ACTION BUTTONS
+      =============================== */
 
       let actionButtons = "";
 
-      /* 🔹 If APPLIED → show Shortlist + Reject */
-      if (status === "applied") {
+
+      /* APPLIED */
+
+      if (
+        status === "applied"
+      ) {
+
         actionButtons = `
-          <button onclick="updateStatus('${app._id}','shortlisted')" 
-                  style="background:#2e86de;color:#fff;padding:6px 12px;border:none;border-radius:4px;margin-right:6px;">
+
+          <button
+            onclick="updateStatus(
+              '${app._id}',
+              'shortlisted'
+            )"
+            style="
+              background:#2e86de;
+              color:#fff;
+              padding:6px 12px;
+              border:none;
+              border-radius:4px;
+              margin-right:6px;
+              cursor:pointer;
+            "
+          >
             Shortlist
           </button>
 
-          <button onclick="updateStatus('${app._id}','rejected')" 
-                  style="background:#e74c3c;color:#fff;padding:6px 12px;border:none;border-radius:4px;">
+
+          <button
+            onclick="updateStatus(
+              '${app._id}',
+              'rejected'
+            )"
+            style="
+              background:#e74c3c;
+              color:#fff;
+              padding:6px 12px;
+              border:none;
+              border-radius:4px;
+              cursor:pointer;
+            "
+          >
             Reject
           </button>
+
         `;
       }
 
-      /* 🔹 If SHORTLISTED → show Chat button */
-      if (status === "shortlisted") {
+
+      /* SHORTLISTED */
+
+      if (
+        status === "shortlisted"
+      ) {
+
         actionButtons = `
-          <button onclick="openChat('${app.teacherUid}')"
-                  style="background:#27ae60;color:#fff;padding:6px 12px;border:none;border-radius:4px;">
+
+          <button
+            onclick="openChat(
+              '${app.teacherUid}'
+            )"
+            style="
+              background:#27ae60;
+              color:#fff;
+              padding:6px 12px;
+              border:none;
+              border-radius:4px;
+              cursor:pointer;
+            "
+          >
             💬 Chat
           </button>
+
         `;
       }
 
-      const div = document.createElement("div");
-      div.style.background = "#fff";
-      div.style.padding = "14px";
-      div.style.marginBottom = "14px";
-      div.style.borderRadius = "8px";
-      div.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+
+      /* ===============================
+         CARD
+      =============================== */
+
+      const div =
+        document.createElement("div");
+
+
+      div.style.background =
+        "#fff";
+
+      div.style.padding =
+        "14px";
+
+      div.style.marginBottom =
+        "14px";
+
+      div.style.borderRadius =
+        "8px";
+
+      div.style.boxShadow =
+        "0 2px 8px rgba(0,0,0,0.08)";
+
 
       div.innerHTML = `
-        <b>Teacher Name:</b> ${teacher.name || app.teacherUid} <br>
-        <b>City:</b> ${teacher.city || "-"} <br>
-        <b>Subject:</b> ${teacher.subject || "-"} <br>
-        <b>Job:</b> ${app.jobId?.title || "N/A"} <br>
-        <b>Status:</b> 
-          <span style="color:${statusColor}; font-weight:bold;">
-            ${status.toUpperCase()}
-          </span>
+
+        <b>Teacher Name:</b>
+        ${teacher.name || app.teacherUid}
+        <br>
+
+        <b>City:</b>
+        ${teacher.city || "-"}
+        <br>
+
+        <b>Subject:</b>
+        ${teacher.subject || "-"}
+        <br>
+
+        <b>Job:</b>
+        ${app.jobId?.title || "N/A"}
+        <br>
+
+        <b>Status:</b>
+
+        <span
+          style="
+            color:${statusColor};
+            font-weight:bold;
+          "
+        >
+          ${status.toUpperCase()}
+        </span>
+
         <br><br>
+
         ${actionButtons}
+
       `;
 
+
       box.appendChild(div);
+
     });
 
+
   } catch (err) {
-    console.error(err);
-    document.getElementById("box").innerHTML = "Server error";
+
+    console.error(
+      "Load applications error:",
+      err
+    );
+
+
+    document.getElementById(
+      "box"
+    ).innerHTML =
+      "<p style='color:#c62828;'>Server error</p>";
   }
 }
 
 
-/* ================= UPDATE STATUS ================= */
-async function updateStatus(applicationId, status) {
+/* =================================================
+   UPDATE STATUS
+================================================= */
+
+async function updateStatus(
+  applicationId,
+  status
+) {
+
   try {
-    const res = await apiFetch(`${BASE_URL}/api/job-application/update-status`, {
-      method: "POST",
-      body: JSON.stringify({
-        applicationId,
-        status
-      })
-    });
 
-    if (!res) return;
+    const res =
+      await apiFetch(
+        `${BASE_URL}/api/job-application/update-status`,
+        {
+          method: "POST",
 
-    const data = await res.json();
-    alert(data.message || "Updated");
+          body: JSON.stringify({
+            applicationId,
+            status
+          })
+        }
+      );
 
-    loadApplications();
+
+    if (!res) {
+      return;
+    }
+
+
+    const data =
+      await res.json();
+
+
+    alert(
+      data.message ||
+      "Updated"
+    );
+
+
+    if (data.success) {
+      loadApplications();
+    }
+
 
   } catch (err) {
-    alert("Failed to update status");
+
+    console.error(
+      "Update status error:",
+      err
+    );
+
+    alert(
+      "Failed to update status"
+    );
   }
 }
 
 
-/* ================= OPEN CHAT ================= */
-function openChat(teacherUid) {
-  if (!teacherUid) return;
-  location.href = `chat.html?receiverUid=${teacherUid}`;
+/* =================================================
+   OPEN CHAT
+================================================= */
+
+function openChat(
+  teacherUid
+) {
+
+  if (!teacherUid) {
+    return;
+  }
+
+
+  location.href =
+    `chat.html?receiverUid=${encodeURIComponent(
+      teacherUid
+    )}`;
 }
 
 
-/* INIT */
+/* =================================================
+   INIT
+================================================= */
+
 loadApplications();
 
 </script>
+
 
 </body>
 </html>
