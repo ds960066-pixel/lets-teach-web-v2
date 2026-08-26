@@ -2,113 +2,446 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Institute Registration | Lets Teach</title>
 
+  <link rel="stylesheet" href="styles.css" />
   <script src="./config.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
+      background: #f4f6fb;
+      margin: 0;
+      padding: 0;
     }
-    input {
-      padding: 8px;
-      width: 260px;
-      margin-bottom: 10px;
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     }
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      margin: 7px 0 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
     button {
-      padding: 10px 16px;
-      background: #2e86de;
-      color: white;
+      width: 100%;
+      padding: 11px;
+      margin-top: 8px;
       border: none;
+      border-radius: 6px;
+      background: #16a34a;
+      color: white;
       cursor: pointer;
+      font-weight: bold;
+      font-size: 15px;
     }
+
     button:hover {
-      background: #1b4f72;
+      background: #12863c;
+    }
+
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .success {
+      display: block;
+      background: #e6f9f0;
+      color: #15803d;
+    }
+
+    .error {
+      display: block;
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .loginLink {
+      text-align: center;
+      margin-top: 18px;
+    }
+
+    .loginLink a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
 
+<div class="container">
+
+  <h2>Institute Registration</h2>
+
+  <div class="subtitle">
+    Create your institute account on Lets Teach.
+  </div>
+
+  <!-- EMAIL -->
+  <label>Email *</label>
+  <input
+    id="email"
+    type="email"
+    placeholder="Enter institute email"
+  />
+
+  <!-- PASSWORD -->
+  <label>Password *</label>
+  <input
+    id="password"
+    type="password"
+    placeholder="Create password"
+  />
+
+  <!-- NAME -->
+  <label>Institute Name *</label>
+  <input
+    id="name"
+    placeholder="Institute / School / Coaching Name"
+  />
+
+  <!-- PHONE -->
+  <label>Phone *</label>
+  <input
+    id="phone"
+    placeholder="Phone number"
+  />
+
+  <!-- CITY -->
+  <label>City *</label>
+  <input
+    id="city"
+    placeholder="City"
+  />
+
+  <!-- ADDRESS -->
+  <label>Address</label>
+  <textarea
+    id="address"
+    placeholder="Institute address"
+  ></textarea>
+
+  <!-- SUBJECTS -->
+  <label>Subjects Needed</label>
+  <input
+    id="subjectsNeeded"
+    placeholder="Example: English, Maths, Physics"
+  />
+
+  <!-- REGISTER -->
+  <button onclick="registerInstitute()">
+    Register & Continue
+  </button>
+
+  <div
+    id="result"
+    class="result"
+  ></div>
+
+  <div class="loginLink">
+    Already have an account?
+    <a href="login.html">Login</a>
+  </div>
+
+</div>
+
+
 <script>
-/* ================= AUTH + ROLE GUARD ================= */
-if (!localStorage.uid || localStorage.role !== "institute") {
-  window.location.href = "login.html";
+
+/* ================= MESSAGE ================= */
+
+function showResult(message, type) {
+
+  const result =
+    document.getElementById("result");
+
+  result.innerText = message;
+
+  result.className =
+    "result " + type;
 }
-</script>
 
-<h2>Institute Registration</h2>
-<p>Please complete your institute details</p>
-
-<p><b>UID:</b> <span id="uidText"></span></p>
-
-<input id="name" placeholder="Institute Name" />
-<input id="phone" placeholder="Phone" />
-<input id="city" placeholder="City" />
-<input id="address" placeholder="Address" />
-<input id="subjectsNeeded" placeholder="Subjects Needed (comma separated)" />
-
-<br>
-<button onclick="registerInstitute()">Register & Continue</button>
-
-<p id="result"></p>
-
-<script>
-
-
-/* ================= SOURCE OF TRUTH ================= */
-const uid = localStorage.getItem("uid");
-document.getElementById("uidText").innerText = uid;
 
 /* ================= REGISTER ================= */
-async function registerInstitute() {
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const city = document.getElementById("city").value.trim();
-  const address = document.getElementById("address").value.trim();
-  const subjectsRaw = document
-    .getElementById("subjectsNeeded")
-    .value.trim();
 
-  if (!name || !phone || !city) {
-    alert("Please fill required fields");
+async function registerInstitute() {
+
+  const email =
+    document.getElementById("email")
+      .value
+      .trim();
+
+  const password =
+    document.getElementById("password")
+      .value
+      .trim();
+
+  const name =
+    document.getElementById("name")
+      .value
+      .trim();
+
+  const phone =
+    document.getElementById("phone")
+      .value
+      .trim();
+
+  const city =
+    document.getElementById("city")
+      .value
+      .trim();
+
+  const address =
+    document.getElementById("address")
+      .value
+      .trim();
+
+  const subjectsRaw =
+    document.getElementById("subjectsNeeded")
+      .value
+      .trim();
+
+
+  /* ================= VALIDATION ================= */
+
+  if (
+    !email ||
+    !password ||
+    !name ||
+    !phone ||
+    !city
+  ) {
+
+    showResult(
+      "All required fields must be filled.",
+      "error"
+    );
+
     return;
   }
 
-  const subjectsNeeded = subjectsRaw
-    ? subjectsRaw.split(",").map(s => s.trim())
-    : [];
+
+  if (password.length < 6) {
+
+    showResult(
+      "Password must be at least 6 characters.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  /* ================= SUBJECTS ================= */
+
+  const subjectsNeeded =
+    subjectsRaw
+      ? subjectsRaw
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean)
+      : [];
+
+
+  showResult(
+    "Registering institute...",
+    "success"
+  );
+
 
   try {
-    const res = await fetch(`${BASE_URL}/api/institute/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        uid,
-        name,
-        phone,
-        city,
-        address,
-        subjectsNeeded
-      })
-    });
+
+    const res = await fetch(
+      `${BASE_URL}/api/institute/create`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+          email,
+          password,
+          name,
+          phone,
+          city,
+          address,
+          subjectsNeeded
+
+        })
+      }
+    );
+
 
     const data = await res.json();
 
+    console.log(
+      "INSTITUTE REGISTER RESPONSE:",
+      data
+    );
+
+
+    /* ================= ERROR ================= */
+
     if (!data.success) {
-      document.getElementById("result").innerText =
-        data.message || "Registration failed";
+
+      showResult(
+        data.message ||
+        "Registration failed.",
+        "error"
+      );
+
       return;
     }
 
-    // ✅ AUTO REDIRECT TO DASHBOARD
-    window.location.href = "institute-dashboard.html";
+
+    /* ================= AUTO LOGIN ================= */
+
+    showResult(
+      "Registration successful. Logging in...",
+      "success"
+    );
+
+
+    const loginRes =
+      await fetch(
+        `${BASE_URL}/api/institute/login`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            email,
+            password
+          })
+        }
+      );
+
+
+    const loginData =
+      await loginRes.json();
+
+
+    console.log(
+      "INSTITUTE LOGIN RESPONSE:",
+      loginData
+    );
+
+
+    if (
+      !loginData.success ||
+      !loginData.token ||
+      !loginData.institute ||
+      !loginData.institute._id
+    ) {
+
+      showResult(
+        "Registration successful. Please login manually.",
+        "success"
+      );
+
+      setTimeout(() => {
+        window.location.href =
+          "login.html";
+      }, 1500);
+
+      return;
+    }
+
+
+    /* ================= SAVE LOGIN ================= */
+
+    localStorage.setItem(
+      "token",
+      loginData.token
+    );
+
+    localStorage.setItem(
+      "role",
+      "institute"
+    );
+
+    localStorage.setItem(
+      "instituteId",
+      loginData.institute._id
+    );
+
+
+    /* ================= DASHBOARD ================= */
+
+    showResult(
+      "Registration successful! Redirecting...",
+      "success"
+    );
+
+    setTimeout(() => {
+
+      window.location.href =
+        "institute-dashboard.html";
+
+    }, 500);
+
+
   } catch (err) {
-    document.getElementById("result").innerText =
-      "Server error. Try again.";
+
+    console.error(
+      "Institute registration error:",
+      err
+    );
+
+    showResult(
+      "Server error. Please try again.",
+      "error"
+    );
   }
+
 }
+
 </script>
 
 </body>

@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Institute Dashboard | Lets Teach</title>
 
   <script src="./config.js"></script>
 
   <style>
+
     body {
       font-family: Arial;
       background: #f4f6fb;
       padding: 20px;
       margin: 0;
     }
-    h2 { margin-bottom: 10px; }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
     .actionBar {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       margin-bottom: 15px;
     }
+
     .btn {
       padding: 8px 14px;
       border-radius: 6px;
@@ -28,185 +39,512 @@
       font-weight: 600;
       font-size: 14px;
     }
-    .btnPrimary { background: #2563eb; color: #fff; }
-    .btnDark { background: #111827; color: #fff; }
-    .btnDanger { background: #dc2626; color: #fff; }
+
+    .btnPrimary {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .btnDark {
+      background: #111827;
+      color: #fff;
+    }
+
+    .btnDanger {
+      background: #dc2626;
+      color: #fff;
+    }
+
     .card {
       background: #fff;
       padding: 18px;
       margin-bottom: 15px;
       border-radius: 8px;
     }
+
     .ok {
       background: #e6f9f0;
       color: #15803d;
       padding: 10px;
       border-radius: 6px;
     }
+
     .warn {
       background: #fff3cd;
       color: #856404;
       padding: 10px;
       border-radius: 6px;
     }
-    input, select, textarea {
+
+    input,
+    select,
+    textarea {
       width: 100%;
       padding: 8px;
       margin: 6px 0 12px;
       border-radius: 6px;
       border: 1px solid #ddd;
+      box-sizing: border-box;
     }
-    .row { display: flex; gap: 15px; flex-wrap: wrap; }
-    .row > div { flex: 1; min-width: 220px; }
+
+    .row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .row > div {
+      flex: 1;
+      min-width: 220px;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
+
 <script>
+
+/* =================================================
+   AUTH DATA
+================================================= */
+
+const token = localStorage.getItem("token");
 const instituteId = localStorage.getItem("instituteId");
 const role = localStorage.getItem("role");
 
-// DEBUG (important)
-console.log("InstituteId:", instituteId);
+
+/* =================================================
+   DEBUG
+================================================= */
+
+console.log("Institute ID:", instituteId);
 console.log("Role:", role);
+console.log("Token:", token);
 
-// SAFE REDIRECT (fix white screen issue)
-setTimeout(() => {
-  if (!instituteId || role !== "institute") {
-    alert("Please login first");
-    window.location.href = "login.html";
-  }
-}, 100);
-</script>
 
-<h2>Institute Dashboard</h2>
+/* =================================================
+   LOGIN GUARD
+================================================= */
 
-<div class="actionBar">
-  <button class="btn btnPrimary"
-    onclick="location.href='institute-applications.html'">
-    📄 View Applications
-  </button>
+if (!token || !instituteId || role !== "institute") {
 
-  <button class="btn btnPrimary"
-    onclick="location.href='chat-list.html'">
-    💬 My Chats
-  </button>
+  alert("Please login first");
 
-  <button class="btn btnDark"
-    onclick="location.href='institute-my-jobs.html'">
-    📌 My Jobs
-  </button>
-
-  <button class="btn btnDanger" onclick="logout()">
-    Logout
-  </button>
-</div>
-
-<hr>
-
-<div class="card">
-  <div class="ok">✅ You can post jobs.</div>
-</div>
-
-<div class="card">
-  <h3>Create Job</h3>
-
-  <div class="row">
-    <div>
-      <label>Job Title *</label>
-      <input id="jobTitle" />
-    </div>
-    <div>
-      <label>City *</label>
-      <input id="jobCity" />
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>Subject *</label>
-      <input id="jobSubject" />
-    </div>
-    <div>
-      <label>Role</label>
-      <select id="jobRole">
-        <option value="both">Both</option>
-        <option value="part-time">Part-time</option>
-        <option value="full-time">Full-time</option>
-      </select>
-    </div>
-  </div>
-
-  <label>Salary</label>
-  <input id="jobSalary" />
-
-  <label>Description</label>
-  <textarea id="jobDescription"></textarea>
-
-  <button id="postJobBtn" class="btn btnPrimary" onclick="postJob()">
-    Post Job
-  </button>
-
-  <div id="jobResult"></div>
-</div>
-
-<script>
-
-function logout() {
-  localStorage.clear();
   window.location.href = "login.html";
+
 }
 
-async function postJob() {
 
-  const instituteId = localStorage.getItem("instituteId");
+/* =================================================
+   API FETCH
+================================================= */
 
-  const title = document.getElementById("jobTitle").value.trim();
-  const city = document.getElementById("jobCity").value.trim();
-  const subject = document.getElementById("jobSubject").value.trim();
-  const role = document.getElementById("jobRole").value;
-  const salary = document.getElementById("jobSalary").value.trim();
-  const description = document.getElementById("jobDescription").value.trim();
+async function apiFetch(url, options = {}) {
 
-  if (!title || !city || !subject) {
-    alert("Fill required fields");
-    return;
-  }
+  options.headers = {
+
+    ...(options.headers || {}),
+
+    "Authorization": `Bearer ${token}`,
+
+    "Content-Type": "application/json"
+
+  };
+
 
   try {
 
-    const res = await apiFetch(`${BASE_URL}/api/job/create`, {
-      method: "POST",
-      body: JSON.stringify({
-        instituteId,
-        title,
-        subject,
-        city,
-        role,
-        salary,
-        description
-      })
-    });
+    const res = await fetch(url, options);
 
-    const data = await res.json();
 
-    if (!data.success) {
-      document.getElementById("jobResult").innerHTML =
-        `<div class="warn">${data.message}</div>`;
-      return;
+    /* ===============================
+       AUTH ERROR
+    =============================== */
+
+    if (res.status === 401 || res.status === 403) {
+
+      console.error(
+        "AUTH ERROR:",
+        res.status,
+        url
+      );
+
+      alert("Session expired or unauthorized");
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("instituteId");
+
+      window.location.href = "login.html";
+
+      return null;
+
     }
 
-    document.getElementById("jobResult").innerHTML =
-      `<div class="ok">Job posted</div>`;
 
-  } catch {
-    document.getElementById("jobResult").innerHTML =
-      `<div class="warn">Server error</div>`;
+    return res;
+
+  } catch (err) {
+
+    console.error("API ERROR:", err);
+
+    return null;
+
   }
+
+}
+
+
+/* =================================================
+   LOGOUT
+================================================= */
+
+function logout() {
+
+  localStorage.clear();
+
+  window.location.href = "login.html";
+
 }
 
 </script>
 
+
+
+<h2>Institute Dashboard</h2>
+
+
+<div class="actionBar">
+
+
+  <button
+    class="btn btnPrimary"
+    onclick="location.href='institute-applications.html'"
+  >
+    📄 View Applications
+  </button>
+
+
+  <button
+    class="btn btnPrimary"
+    onclick="location.href='chat-list.html'"
+  >
+    💬 My Chats
+  </button>
+
+
+  <button
+    class="btn btnDark"
+    onclick="location.href='institute-my-jobs.html'"
+  >
+    📌 My Jobs
+  </button>
+
+
+  <button
+    class="btn btnDanger"
+    onclick="logout()"
+  >
+    Logout
+  </button>
+
+
+</div>
+
+
+<hr>
+
+
+<div class="card">
+
+  <div class="ok">
+    ✅ You can post jobs.
+  </div>
+
+</div>
+
+
+
+<div class="card">
+
+  <h3>Create Job</h3>
+
+
+  <div class="row">
+
+    <div>
+
+      <label>Job Title *</label>
+
+      <input
+        id="jobTitle"
+      />
+
+    </div>
+
+
+    <div>
+
+      <label>City *</label>
+
+      <input
+        id="jobCity"
+      />
+
+    </div>
+
+  </div>
+
+
+
+  <div class="row">
+
+    <div>
+
+      <label>Subject *</label>
+
+      <input
+        id="jobSubject"
+      />
+
+    </div>
+
+
+    <div>
+
+      <label>Role</label>
+
+      <select id="jobRole">
+
+        <option value="both">
+          Both
+        </option>
+
+        <option value="part-time">
+          Part-time
+        </option>
+
+        <option value="full-time">
+          Full-time
+        </option>
+
+      </select>
+
+    </div>
+
+  </div>
+
+
+
+  <label>Salary</label>
+
+  <input
+    id="jobSalary"
+  />
+
+
+
+  <label>Description</label>
+
+  <textarea
+    id="jobDescription"
+  ></textarea>
+
+
+
+  <button
+    id="postJobBtn"
+    class="btn btnPrimary"
+    onclick="postJob()"
+  >
+    Post Job
+  </button>
+
+
+  <div
+    id="jobResult"
+    style="margin-top:10px;"
+  ></div>
+
+
+</div>
+
+
+
+<script>
+
+/* =================================================
+   POST JOB
+================================================= */
+
+async function postJob() {
+
+
+  const title =
+    document.getElementById("jobTitle")
+      .value
+      .trim();
+
+
+  const city =
+    document.getElementById("jobCity")
+      .value
+      .trim();
+
+
+  const subject =
+    document.getElementById("jobSubject")
+      .value
+      .trim();
+
+
+  const jobRole =
+    document.getElementById("jobRole")
+      .value;
+
+
+  const salary =
+    document.getElementById("jobSalary")
+      .value
+      .trim();
+
+
+  const description =
+    document.getElementById("jobDescription")
+      .value
+      .trim();
+
+
+  const result =
+    document.getElementById("jobResult");
+
+
+  /* ===============================
+     VALIDATION
+  =============================== */
+
+  if (!title || !city || !subject) {
+
+    alert("Fill required fields");
+
+    return;
+
+  }
+
+
+  result.innerHTML =
+    `<div class="warn">Posting job...</div>`;
+
+
+  try {
+
+
+    /* ===============================
+       JWT AUTHENTICATED REQUEST
+    =============================== */
+
+    const res = await apiFetch(
+      `${BASE_URL}/api/job/create`,
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+
+          title: title,
+
+          subject: subject,
+
+          city: city,
+
+          role: jobRole,
+
+          salary: salary,
+
+          description: description
+
+        })
+      }
+    );
+
+
+    if (!res) {
+      return;
+    }
+
+
+    const data = await res.json();
+
+
+    console.log(
+      "CREATE JOB RESPONSE:",
+      data
+    );
+
+
+    /* ===============================
+       ERROR
+    =============================== */
+
+    if (!data.success) {
+
+      result.innerHTML =
+        `<div class="warn">
+          ${data.message || "Job posting failed"}
+        </div>`;
+
+      return;
+
+    }
+
+
+    /* ===============================
+       SUCCESS
+    =============================== */
+
+    result.innerHTML =
+      `<div class="ok">
+        ✅ Job posted successfully
+      </div>`;
+
+
+    /* ===============================
+       CLEAR FORM
+    =============================== */
+
+    document.getElementById("jobTitle").value = "";
+
+    document.getElementById("jobCity").value = "";
+
+    document.getElementById("jobSubject").value = "";
+
+    document.getElementById("jobSalary").value = "";
+
+    document.getElementById("jobDescription").value = "";
+
+
+  } catch (err) {
+
+    console.error(
+      "Post job error:",
+      err
+    );
+
+    result.innerHTML =
+      `<div class="warn">
+        Server error
+      </div>`;
+
+  }
+
+}
+
+</script>
+
+
 </body>
+
 </html>
