@@ -3,44 +3,73 @@
 const BASE_URL = "https://lets-teach-backend-v38i.onrender.com";
 
 /* ===========================
-   Secure Fetch Helper
+   API FETCH HELPER
 =========================== */
 
 async function apiFetch(url, options = {}) {
-  const role = localStorage.getItem("role");
 
-  // ✅ NEW (_id based)
-  const teacherId = localStorage.getItem("teacherId");
-  const instituteId = localStorage.getItem("instituteId");
+  const token = localStorage.getItem("token");
 
-  const isFormData = options.body instanceof FormData;
+  const isFormData =
+    options.body instanceof FormData;
 
-  const defaultHeaders = {
-    "x-role": role || "",
-    "x-teacher-id": teacherId || "",
-    "x-institute-id": instituteId || ""
+  const headers = {
+    ...(options.headers || {})
   };
 
-  // Only add Content-Type if NOT FormData
+  /* ===========================
+     JWT TOKEN
+  =========================== */
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  /* ===========================
+     CONTENT TYPE
+     FormData ke saath Content-Type
+     manually set nahi karna
+  =========================== */
+
   if (!isFormData) {
-    defaultHeaders["Content-Type"] = "application/json";
+    headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...(options.headers || {})
+  try {
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    /* ===========================
+       AUTH ERROR
+    =========================== */
+
+    if (response.status === 401) {
+
+      alert("Session expired. Please login again.");
+
+      localStorage.clear();
+
+      window.location.href = "login.html";
+
+      return null;
     }
-  });
 
-  // Handle unauthorized
-  if (response.status === 401 || response.status === 403) {
-    alert("Session expired or unauthorized");
-    localStorage.clear();
-    window.location.href = "login.html";
-    throw new Error("Unauthorized");
+    if (response.status === 403) {
+
+      alert("Unauthorized access.");
+
+      return null;
+    }
+
+    return response;
+
+  } catch (err) {
+
+    console.error("API FETCH ERROR:", err);
+
+    throw err;
   }
-
-  return response;
 }
