@@ -1,184 +1,710 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+
   <title>Teacher Profile | Lets Teach</title>
 
-  <link rel="stylesheet" href="styles.css" />
+  <link
+    rel="stylesheet"
+    href="./styles.css"
+  />
 
-  <!-- 🔒 SINGLE SOURCE OF TRUTH -->
-  <script src="/lets-teach-web-v2/config.js"></script>"/lets-teach-web-v2/config.js"></script>
+  <!-- CONFIG -->
+  <script src="./config.js"></script>
+
 </head>
 
 <body>
 
-<!-- NAV -->
+
+<!-- ================= NAV ================= -->
+
 <div class="nav">
+
   <div class="container navInner">
-    <a class="brand" href="index.html">
+
+    <a
+      class="brand"
+      href="index.html"
+    >
+
       <div class="logo"></div>
-      <div>Lets Teach</div>
+
+      <div>
+        Lets Teach
+      </div>
+
     </a>
 
+
     <div class="navLinks">
-      <a class="pill" href="index.html">Home</a>
-      <a class="pill" href="jobs.html">Jobs</a>
-      <a class="pill" href="interview/index.html">Interview Preps</a>
-      <a class="pill" href="login.html">Login</a>
+
+      <a
+        class="pill"
+        href="index.html"
+      >
+        Home
+      </a>
+
+      <a
+        class="pill"
+        href="jobs.html"
+      >
+        Jobs
+      </a>
+
+      <a
+        class="pill"
+        href="interview/index.html"
+      >
+        Interview Preps
+      </a>
+
+      <a
+        class="pill"
+        href="login.html"
+      >
+        Login
+      </a>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <div class="container">
 
-<!-- HERO -->
-<div class="hero">
-  <div class="card cardPad">
-    <h1 class="hTitle" style="font-size:34px;margin:0 0 8px;">Teacher Profile</h1>
-    <p class="hSub" style="margin:0;">
-      Public profile view. Invite / chat ke liye <b>Institute login</b> required.
-    </p>
 
-    <div class="kpis">
-      <div class="kpi">
-        <b id="statusKpi">Loading…</b>
-        <span>Status</span>
+  <!-- ================= HERO ================= -->
+
+  <div class="hero">
+
+    <div
+      class="card cardPad"
+      style="margin-top:20px;"
+    >
+
+      <h1
+        class="hTitle"
+        style="
+          font-size:34px;
+          margin:0 0 8px;
+        "
+      >
+        Teacher Profile
+      </h1>
+
+
+      <p
+        class="hSub"
+        style="margin:0;"
+      >
+        Public profile view.
+        Invite / chat ke liye
+        <b>Institute login</b>
+        required.
+      </p>
+
+
+      <!-- KPIs -->
+
+      <div class="kpis">
+
+
+        <div class="kpi">
+
+          <b id="statusKpi">
+            Loading…
+          </b>
+
+          <span>
+            Status
+          </span>
+
+        </div>
+
+
+        <div class="kpi">
+
+          <b>
+            Teacher
+          </b>
+
+          <span>
+            Profile Type
+          </span>
+
+        </div>
+
+
+        <div class="kpi">
+
+          <b id="uidKpi">
+            —
+          </b>
+
+          <span>
+            Teacher UID
+          </span>
+
+        </div>
+
+
       </div>
-      <div class="kpi">
-        <b>Teacher</b>
-        <span>Profile Type</span>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ================= PROFILE ================= -->
+
+  <div
+    class="card cardPad"
+    style="margin-top:15px;"
+  >
+
+
+    <div
+      style="
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        flex-wrap:wrap;
+      "
+    >
+
+
+      <div>
+
+        <div
+          id="name"
+          style="
+            font-size:22px;
+            font-weight:800;
+          "
+        >
+          Loading…
+        </div>
+
+
+        <div
+          id="metaLine"
+          class="meta"
+          style="margin-top:6px;"
+        >
+          Fetching details…
+        </div>
+
       </div>
+
+
+      <span
+        id="statusBadge"
+        class="badge"
+        style="display:none;"
+      >
+        —
+      </span>
+
+
+    </div>
+
+
+
+    <hr class="sep">
+
+
+
+    <!-- BASIC DETAILS -->
+
+    <div class="grid2">
+
+
       <div class="kpi">
-        <b id="uidKpi">—</b>
-        <span>Teacher UID</span>
+
+        <b id="subject">
+          —
+        </b>
+
+        <span>
+          Subject
+        </span>
+
       </div>
+
+
+      <div class="kpi">
+
+        <b id="city">
+          —
+        </b>
+
+        <span>
+          City
+        </span>
+
+      </div>
+
+
+      <div class="kpi">
+
+        <b>
+
+          <span id="experience">
+            0
+          </span>
+
+          yrs
+
+        </b>
+
+        <span>
+          Experience
+        </span>
+
+      </div>
+
+
     </div>
-  </div>
-</div>
 
-<!-- PROFILE -->
-<div class="card cardPad">
-  <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-    <div>
-      <div id="name" style="font-size:22px;font-weight:800;">Loading…</div>
-      <div id="metaLine" class="meta" style="margin-top:6px;">Fetching details…</div>
+
+
+    <hr class="sep">
+
+
+
+    <!-- RESUME -->
+
+    <div class="kpi">
+
+      <b>
+        Resume
+      </b>
+
+      <span>
+
+        <a
+          class="smallLink"
+          id="resumeLink"
+          href="#"
+          target="_blank"
+        >
+          Open Resume Page
+        </a>
+
+      </span>
+
     </div>
-    <span id="statusBadge" class="badge" style="display:none;">—</span>
-  </div>
 
-  <hr class="sep">
 
-  <div class="grid2">
-    <div class="kpi"><b id="subject">—</b><span>Subject</span></div>
-    <div class="kpi"><b id="city">—</b><span>City</span></div>
-    <div class="kpi"><b><span id="experience">0</span> yrs</b><span>Experience</span></div>
-  </div>
 
-  <hr class="sep">
+    <hr class="sep">
 
-  <div class="kpi">
-    <b>Resume</b>
-    <span>
-      <a class="smallLink" id="resumeLink" href="#" target="_blank">
-        Open Resume Page
-      </a>
-    </span>
-  </div>
 
-  <hr class="sep">
 
-  <div class="kpi">
-    <b>Interested?</b>
-    <span>Invite / chat ke liye institute login required.</span>
-    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-      <a class="btn" href="login.html">Login / Register</a>
-      <a class="pill" href="index.html">Back</a>
+    <!-- LOGIN / CONTACT -->
+
+    <div class="kpi">
+
+      <b>
+        Interested?
+      </b>
+
+      <span>
+        Invite / chat ke liye
+        institute login required.
+      </span>
+
+
+      <div
+        style="
+          margin-top:12px;
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+        "
+      >
+
+        <a
+          class="btn"
+          href="login.html"
+        >
+          Login / Register
+        </a>
+
+
+        <a
+          class="pill"
+          href="index.html"
+        >
+          Back
+        </a>
+
+      </div>
+
     </div>
+
+
+
+    <!-- ERROR BOX -->
+
+    <div
+      id="errorBox"
+      class="meta"
+      style="
+        margin-top:14px;
+        display:none;
+      "
+    ></div>
+
+
   </div>
 
-  <div id="errorBox" class="meta" style="margin-top:14px;display:none;"></div>
+
+
+  <!-- ================= FOOTER ================= -->
+
+  <div class="footer">
+
+    © Lets Teach ·
+
+    <a
+      class="smallLink"
+      href="privacy.html"
+    >
+      Privacy
+    </a>
+
+  </div>
+
+
 </div>
 
-<div class="footer">
-  © Lets Teach · <a class="smallLink" href="privacy.html">Privacy</a>
-</div>
 
-</div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const teacherUid = params.get("uid");
 
-document.getElementById("uidKpi").innerText = teacherUid || "—";
+/* =================================================
+   GET UID FROM URL
+================================================= */
+
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+const teacherUid =
+  params.get("uid");
+
+
+/* =================================================
+   SHOW UID
+================================================= */
+
+document.getElementById(
+  "uidKpi"
+).innerText =
+  teacherUid || "—";
+
+
+/* =================================================
+   CHECK UID
+================================================= */
 
 if (!teacherUid) {
-  alert("Invalid profile (UID missing)");
-  window.location.href = "index.html";
+
+  document.getElementById(
+    "name"
+  ).innerText =
+    "Invalid Profile";
+
+  document.getElementById(
+    "metaLine"
+  ).innerText =
+    "Teacher UID missing.";
+
+  throw new Error(
+    "Teacher UID missing"
+  );
+
 }
 
-function escapeHtml(str) {
-  return String(str || "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+
+/* =================================================
+   ERROR MESSAGE
+================================================= */
+
+function setError(message) {
+
+  const box =
+    document.getElementById(
+      "errorBox"
+    );
+
+  box.style.display =
+    "block";
+
+  box.innerText =
+    message;
+
 }
 
-function setError(msg){
-  const box = document.getElementById("errorBox");
-  box.style.display = "block";
-  box.innerText = msg;
-}
 
-function setBadge(status){
-  const badge = document.getElementById("statusBadge");
-  const kpi = document.getElementById("statusKpi");
-  badge.style.display = "inline-block";
+/* =================================================
+   STATUS BADGE
+================================================= */
 
-  if (status === "verified") {
-    badge.textContent = "Verified";
-    kpi.innerText = "Verified";
+function setBadge(status) {
+
+  const badge =
+    document.getElementById(
+      "statusBadge"
+    );
+
+  const kpi =
+    document.getElementById(
+      "statusKpi"
+    );
+
+
+  badge.style.display =
+    "inline-block";
+
+
+  if (
+    status === "verified"
+  ) {
+
+    badge.innerText =
+      "Verified";
+
+    kpi.innerText =
+      "Verified";
+
   } else {
-    badge.textContent = "Unverified";
-    kpi.innerText = "Unverified";
-    badge.style.opacity = "0.6";
+
+    badge.innerText =
+      "Unverified";
+
+    kpi.innerText =
+      "Unverified";
+
+    badge.style.opacity =
+      "0.6";
+
   }
+
 }
 
-async function loadProfile(){
-  try {
-    const res = await fetch(`${BASE_URL}/api/teacher/${encodeURIComponent(teacherUid)}`);
-    const data = await res.json();
 
-    if (!data || !data.teacher) {
-      setError("Teacher not found");
-      return;
+/* =================================================
+   LOAD PUBLIC TEACHER PROFILE
+================================================= */
+
+async function loadProfile() {
+
+  try {
+
+
+    /* =========================================
+       CURRENT BACKEND ROUTE:
+
+       GET /api/teacher/:uid
+
+       NO LOGIN REQUIRED
+    ========================================= */
+
+    const url =
+      `${BASE_URL}/api/teacher/${encodeURIComponent(teacherUid)}`;
+
+
+    console.log(
+      "Loading teacher profile:",
+      url
+    );
+
+
+    const res =
+      await fetch(url);
+
+
+    console.log(
+      "Teacher profile status:",
+      res.status
+    );
+
+
+    let data = {};
+
+
+    try {
+
+      data =
+        await res.json();
+
+    } catch (jsonError) {
+
+      console.error(
+        "JSON error:",
+        jsonError
+      );
+
     }
 
-    const t = data.teacher;
 
-    document.getElementById("name").innerText = t.name || "Teacher";
-    document.getElementById("subject").innerText = t.subject || "—";
-    document.getElementById("city").innerText = t.city || "—";
-    document.getElementById("experience").innerText = Number(t.experience || 0);
+    console.log(
+      "Teacher profile response:",
+      data
+    );
 
-    document.getElementById("metaLine").innerText =
+
+    /* =========================================
+       HTTP ERROR
+    ========================================= */
+
+    if (!res.ok) {
+
+      setError(
+        data.message ||
+        `Profile request failed (${res.status})`
+      );
+
+      return;
+
+    }
+
+
+    /* =========================================
+       TEACHER NOT FOUND
+    ========================================= */
+
+    if (
+      !data ||
+      !data.teacher
+    ) {
+
+      setError(
+        "Teacher not found"
+      );
+
+      return;
+
+    }
+
+
+    /* =========================================
+       TEACHER DATA
+    ========================================= */
+
+    const t =
+      data.teacher;
+
+
+    /* NAME */
+
+    document.getElementById(
+      "name"
+    ).innerText =
+      t.name ||
+      "Teacher";
+
+
+    /* SUBJECT */
+
+    document.getElementById(
+      "subject"
+    ).innerText =
+      t.subject ||
+      "—";
+
+
+    /* CITY */
+
+    document.getElementById(
+      "city"
+    ).innerText =
+      t.city ||
+      "—";
+
+
+    /* EXPERIENCE */
+
+    document.getElementById(
+      "experience"
+    ).innerText =
+      Number(
+        t.experience || 0
+      );
+
+
+    /* META */
+
+    document.getElementById(
+      "metaLine"
+    ).innerText =
       `${t.subject || "—"} · ${t.city || "—"} · ${Number(t.experience || 0)} yrs`;
 
-    document.getElementById("resumeLink").href =
+
+    /* RESUME PAGE */
+
+    document.getElementById(
+      "resumeLink"
+    ).href =
       `teacher-resume-view.html?uid=${encodeURIComponent(teacherUid)}`;
 
-    setBadge(t.verificationStatus || "unverified");
 
-  } catch {
-    setError("Server error. Please try again later.");
+    /* STATUS */
+
+    setBadge(
+      t.verificationStatus ||
+      "unverified"
+    );
+
+
+    console.log(
+      "Teacher profile loaded successfully:",
+      t
+    );
+
+
+  } catch (err) {
+
+
+    console.error(
+      "Teacher profile error:",
+      err
+    );
+
+
+    setError(
+      "Server error. Please try again later."
+    );
+
   }
+
 }
 
+
+/* =================================================
+   START
+================================================= */
+
 loadProfile();
+
 </script>
+
 
 </body>
 </html>

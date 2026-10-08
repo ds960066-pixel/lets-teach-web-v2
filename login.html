@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+
   <title>Login | Lets Teach</title>
 
   <link rel="stylesheet" href="styles.css" />
@@ -10,6 +17,7 @@
   <script src="./config.js"></script>
 
   <style>
+
     body {
       font-family: Arial;
       background: #f4f6fb;
@@ -122,7 +130,9 @@
       background: #eff6ff;
       color: #1d4ed8;
     }
+
   </style>
+
 </head>
 
 <body>
@@ -159,7 +169,10 @@
     Login as Institute
   </button>
 
-  <div id="message" class="message"></div>
+  <div
+    id="message"
+    class="message"
+  ></div>
 
   <div class="registerBox">
 
@@ -183,6 +196,7 @@
 
 </div>
 
+
 <script>
 
 /* ================= FORM DATA ================= */
@@ -190,36 +204,57 @@
 function getFormData() {
 
   const email =
-    document.getElementById("email").value.trim();
+    document
+      .getElementById("email")
+      .value
+      .trim();
 
   const password =
-    document.getElementById("password").value.trim();
+    document
+      .getElementById("password")
+      .value
+      .trim();
+
 
   if (!email || !password) {
 
-    alert("Email and Password required");
+    alert(
+      "Email and Password required"
+    );
 
     return null;
+
   }
+
 
   return {
     email,
     password
   };
+
 }
 
 
 /* ================= MESSAGE ================= */
 
-function showMessage(text, type) {
+function showMessage(
+  text,
+  type
+) {
 
   const box =
-    document.getElementById("message");
+    document
+      .getElementById("message");
 
-  box.innerText = text || "";
+
+  box.innerText =
+    text || "";
+
 
   box.className =
-    "message " + (type || "info");
+    "message " +
+    (type || "info");
+
 }
 
 
@@ -227,34 +262,56 @@ function showMessage(text, type) {
 
 async function login(role) {
 
-  const form = getFormData();
+  const form =
+    getFormData();
 
-  if (!form) return;
+
+  if (!form) {
+    return;
+  }
+
 
   const url =
     role === "teacher"
+
       ? `${BASE_URL}/api/teacher/login`
+
       : `${BASE_URL}/api/institute/login`;
 
-  showMessage("Logging in...", "info");
+
+  showMessage(
+    "Logging in...",
+    "info"
+  );
+
 
   try {
 
-    const res = await fetch(url, {
+    const res =
+      await fetch(
+        url,
+        {
+          method: "POST",
 
-      method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-      headers: {
-        "Content-Type": "application/json"
-      },
+          body:
+            JSON.stringify(form)
+        }
+      );
 
-      body: JSON.stringify(form)
 
-    });
+    const data =
+      await res.json();
 
-    const data = await res.json();
 
-    console.log("LOGIN RESPONSE:", data);
+    console.log(
+      "LOGIN RESPONSE:",
+      data
+    );
 
 
     /* ================= ACCOUNT NOT FOUND ================= */
@@ -267,23 +324,37 @@ async function login(role) {
       );
 
       return;
+
     }
 
 
-    /* ================= OTHER LOGIN ERROR ================= */
+    /* ================= LOGIN ERROR ================= */
 
     if (!data.success) {
 
       showMessage(
-        data.message || "Login failed",
+        data.message ||
+        "Login failed",
         "error"
       );
 
       return;
+
     }
 
 
     /* ================= SAVE JWT ================= */
+
+    if (!data.token) {
+
+      showMessage(
+        "Login token missing",
+        "error"
+      );
+
+      return;
+
+    }
 
     localStorage.setItem(
       "token",
@@ -296,49 +367,117 @@ async function login(role) {
     );
 
 
-    /* ================= TEACHER ================= */
+    /* ================= TEACHER LOGIN ================= */
 
     if (role === "teacher") {
 
+      /* ---------- TEACHER DATA CHECK ---------- */
+
       if (
-        data.teacher &&
-        data.teacher._id
+        !data.teacher ||
+        !data.teacher._id
       ) {
 
-        localStorage.setItem(
-          "teacherId",
-          data.teacher._id
+        showMessage(
+          "Teacher data missing",
+          "error"
         );
 
-      } else {
+        return;
 
-        alert("Teacher data missing");
+      }
+
+
+      /* ---------- SAVE MONGO ID ---------- */
+
+      localStorage.setItem(
+        "teacherId",
+        data.teacher._id
+      );
+
+
+      /* ---------- SAVE TEACHER UID ---------- */
+
+      if (!data.teacher.uid) {
+
+        showMessage(
+          "Teacher UID missing",
+          "error"
+        );
 
         return;
+
       }
+
+
+      localStorage.setItem(
+        "uid",
+        data.teacher.uid
+      );
+
+
+      console.log(
+        "Teacher UID saved:",
+        data.teacher.uid
+      );
+
     }
 
 
-    /* ================= INSTITUTE ================= */
+    /* ================= INSTITUTE LOGIN ================= */
 
     if (role === "institute") {
 
+      /* ---------- INSTITUTE DATA CHECK ---------- */
+
       if (
-        data.institute &&
-        data.institute._id
+        !data.institute ||
+        !data.institute._id
       ) {
 
-        localStorage.setItem(
-          "instituteId",
-          data.institute._id
+        showMessage(
+          "Institute data missing",
+          "error"
         );
 
-      } else {
+        return;
 
-        alert("Institute data missing");
+      }
+
+
+      /* ---------- SAVE MONGO ID ---------- */
+
+      localStorage.setItem(
+        "instituteId",
+        data.institute._id
+      );
+
+
+      /* ---------- SAVE INSTITUTE UID ---------- */
+
+      if (!data.institute.uid) {
+
+        showMessage(
+          "Institute UID missing",
+          "error"
+        );
 
         return;
+
       }
+
+
+      localStorage.setItem(
+        "uid",
+        data.institute.uid
+      );
+
+
+      console.log(
+        "Institute UID saved:",
+        data.institute.uid
+      );
+
     }
 
 
@@ -346,8 +485,11 @@ async function login(role) {
 
     window.location.href =
       role === "teacher"
+
         ? "teacher-dashboard.html"
+
         : "institute-dashboard.html";
+
 
   } catch (err) {
 
@@ -356,10 +498,12 @@ async function login(role) {
       err
     );
 
+
     showMessage(
       "Server error. Please try again later.",
       "error"
     );
+
   }
 
 }

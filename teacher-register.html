@@ -1,152 +1,535 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+
   <title>Teacher Registration | Lets Teach</title>
 
   <link rel="stylesheet" href="styles.css" />
+
   <script src="./config.js"></script>
+
 </head>
 
 <body>
 
 <div class="nav">
+
   <div class="container navInner">
+
     <div class="brand">
+
       <div class="logo"></div>
+
       <div>Lets Teach</div>
+
     </div>
 
+
     <div class="navLinks">
-      <a class="pill" href="index.html">Home</a>
-      <a class="pill" href="jobs.html">Jobs</a>
-      <a class="pill" href="login.html">Login</a>
+
+      <a
+        class="pill"
+        href="index.html"
+      >
+        Home
+      </a>
+
+      <a
+        class="pill"
+        href="jobs.html"
+      >
+        Jobs
+      </a>
+
+      <a
+        class="pill"
+        href="login.html"
+      >
+        Login
+      </a>
+
     </div>
+
   </div>
+
 </div>
+
 
 <div class="container">
 
-<div class="card cardPad" style="max-width:760px;margin:0 auto;">
-  <h1 style="margin:0 0 8px;">Teacher Registration</h1>
-  <p class="meta">Create your account to continue.</p>
+  <div
+    class="card cardPad"
+    style="max-width:760px;margin:0 auto;"
+  >
 
-  <hr class="sep" />
+    <h1 style="margin:0 0 8px;">
+      Teacher Registration
+    </h1>
 
-  <!-- AUTH FIELDS -->
-  <div class="searchGrid">
-    <input class="input" id="email" type="email" placeholder="Email" />
-    <input class="input" id="password" type="password" placeholder="Password" />
+    <p class="meta">
+      Create your account to continue.
+    </p>
+
+
+    <hr class="sep" />
+
+
+    <!-- AUTH FIELDS -->
+
+    <div class="searchGrid">
+
+      <input
+        class="input"
+        id="email"
+        type="email"
+        placeholder="Email"
+      />
+
+      <input
+        class="input"
+        id="password"
+        type="password"
+        placeholder="Password"
+      />
+
+    </div>
+
+
+    <div style="height:10px;"></div>
+
+
+    <!-- BASIC INFO -->
+
+    <div class="searchGrid">
+
+      <input
+        class="input"
+        id="name"
+        placeholder="Full Name"
+      />
+
+      <input
+        class="input"
+        id="phone"
+        placeholder="Phone (10 digits)"
+      />
+
+    </div>
+
+
+    <div style="height:10px;"></div>
+
+
+    <div class="searchGrid">
+
+      <input
+        class="input"
+        id="subject"
+        placeholder="Subject"
+      />
+
+      <input
+        class="input"
+        id="city"
+        placeholder="City"
+      />
+
+      <input
+        class="input"
+        id="experience"
+        placeholder="Experience (years)"
+      />
+
+    </div>
+
+
+    <div style="margin-top:15px;">
+
+      <button
+        class="btn"
+        type="button"
+        onclick="registerTeacher()"
+      >
+        Register
+      </button>
+
+    </div>
+
+
+    <div
+      id="msg"
+      class="meta"
+      style="margin-top:12px;"
+    ></div>
+
   </div>
 
-  <div style="height:10px;"></div>
-
-  <!-- BASIC INFO -->
-  <div class="searchGrid">
-    <input class="input" id="name" placeholder="Full Name" />
-    <input class="input" id="phone" placeholder="Phone (10 digits)" />
-  </div>
-
-  <div style="height:10px;"></div>
-
-  <div class="searchGrid">
-    <input class="input" id="subject" placeholder="Subject" />
-    <input class="input" id="city" placeholder="City" />
-    <input class="input" id="experience" placeholder="Experience (years)" />
-  </div>
-
-  <div style="margin-top:15px;">
-    <button class="btn" onclick="registerTeacher()">Register</button>
-  </div>
-
-  <div id="msg" class="meta" style="margin-top:12px;"></div>
 </div>
-</div>
+
 
 <script>
 
+/* ==========================================
+   MESSAGE
+========================================== */
+
 function setMsg(text) {
-  document.getElementById("msg").innerText = text || "";
+
+  document.getElementById("msg").innerText =
+    text || "";
+
 }
 
+
+/* ==========================================
+   ONLY DIGITS
+========================================== */
+
 function onlyDigits(s) {
-  return String(s || "").replace(/\D/g, "");
+
+  return String(s || "")
+    .replace(/\D/g, "");
+
 }
+
+
+/* ==========================================
+   REGISTER TEACHER
+========================================== */
 
 async function registerTeacher() {
 
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const name = document.getElementById("name").value.trim();
-  const phone = onlyDigits(document.getElementById("phone").value.trim());
-  const subject = document.getElementById("subject").value.trim();
-  const city = document.getElementById("city").value.trim();
-  const experience = Number(document.getElementById("experience").value.trim() || 0);
+  const email =
+    document
+      .getElementById("email")
+      .value
+      .trim();
 
-  if (!email || !password || !name || !phone || !subject || !city) {
-    alert("All fields are required");
+
+  const password =
+    document
+      .getElementById("password")
+      .value
+      .trim();
+
+
+  const name =
+    document
+      .getElementById("name")
+      .value
+      .trim();
+
+
+  const phone =
+    onlyDigits(
+      document
+        .getElementById("phone")
+        .value
+        .trim()
+    );
+
+
+  const subject =
+    document
+      .getElementById("subject")
+      .value
+      .trim();
+
+
+  const city =
+    document
+      .getElementById("city")
+      .value
+      .trim();
+
+
+  const experience =
+    Number(
+      document
+        .getElementById("experience")
+        .value
+        .trim() || 0
+    );
+
+
+  /* ==========================================
+     VALIDATION
+  ========================================== */
+
+  if (
+    !email ||
+    !password ||
+    !name ||
+    !phone ||
+    !subject ||
+    !city
+  ) {
+
+    alert(
+      "All fields are required"
+    );
+
     return;
+
   }
+
 
   if (phone.length < 10) {
-    alert("Enter valid phone number");
+
+    alert(
+      "Enter valid phone number"
+    );
+
     return;
+
   }
 
-  setMsg("Registering...");
+
+  setMsg(
+    "Registering..."
+  );
+
 
   try {
 
-    const res = await fetch(`${BASE_URL}/api/teacher/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        password,
-        name,
-        phone,
-        subject,
-        city,
-        experience
-      })
-    });
+    /* ========================================
+       CREATE TEACHER
+    ======================================== */
 
-    const data = await res.json();
+    const res =
+      await fetch(
+        `${BASE_URL}/api/teacher/create`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              email,
+              password,
+              name,
+              phone,
+              subject,
+              city,
+              experience
+            })
+        }
+      );
+
+
+    const data =
+      await res.json();
+
+
+    console.log(
+      "REGISTER RESPONSE:",
+      data
+    );
+
 
     if (!data.success) {
+
       setMsg("");
-      alert(data.message || "Registration failed");
+
+      alert(
+        data.message ||
+        "Registration failed"
+      );
+
       return;
+
     }
 
-    // AUTO LOGIN AFTER REGISTER
-    const loginRes = await fetch(`${BASE_URL}/api/teacher/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
 
-    const loginData = await loginRes.json();
+    /* ========================================
+       AUTO LOGIN AFTER REGISTER
+    ======================================== */
 
-    if (!loginData.success) {
-      alert("Registration done. Please login manually.");
-      window.location.href = "login.html";
+    setMsg(
+      "Registration successful. Logging in..."
+    );
+
+
+    const loginRes =
+      await fetch(
+        `${BASE_URL}/api/teacher/login`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              email,
+              password
+            })
+        }
+      );
+
+
+    const loginData =
+      await loginRes.json();
+
+
+    console.log(
+      "AUTO LOGIN RESPONSE:",
+      loginData
+    );
+
+
+    /* ========================================
+       AUTO LOGIN FAILED
+    ======================================== */
+
+    if (
+      !loginRes.ok ||
+      !loginData.success
+    ) {
+
+      alert(
+        "Registration done. Please login manually."
+      );
+
+      window.location.href =
+        "login.html";
+
       return;
+
     }
 
-    localStorage.setItem("token", loginData.token);
-    localStorage.setItem("uid", loginData.uid);
-    localStorage.setItem("role", loginData.role);
 
-    setMsg("Registered successfully! Redirecting...");
-    window.location.href = "teacher-dashboard.html";
+    /* ========================================
+       VERIFY TEACHER DATA
+    ======================================== */
+
+    if (
+      !loginData.teacher ||
+      !loginData.teacher._id ||
+      !loginData.teacher.uid
+    ) {
+
+      console.error(
+        "Teacher login data missing:",
+        loginData
+      );
+
+      alert(
+        "Registration successful, but teacher data is missing. Please login manually."
+      );
+
+      window.location.href =
+        "login.html";
+
+      return;
+
+    }
+
+
+    /* ========================================
+       SAVE JWT
+    ======================================== */
+
+    localStorage.setItem(
+      "token",
+      loginData.token
+    );
+
+
+    /* ========================================
+       SAVE ROLE
+    ======================================== */
+
+    localStorage.setItem(
+      "role",
+      "teacher"
+    );
+
+
+    /* ========================================
+       SAVE MONGO ID
+       
+       Used by:
+       Resume
+       Profile
+       Teacher dashboard
+    ======================================== */
+
+    localStorage.setItem(
+      "teacherId",
+      loginData.teacher._id
+    );
+
+
+    /* ========================================
+       SAVE TEACHER UID
+       
+       Used by:
+       Chat
+       Public profile
+       Invites
+    ======================================== */
+
+    localStorage.setItem(
+      "uid",
+      loginData.teacher.uid
+    );
+
+
+    console.log(
+      "Teacher ID saved:",
+      loginData.teacher._id
+    );
+
+
+    console.log(
+      "Teacher UID saved:",
+      loginData.teacher.uid
+    );
+
+
+    /* ========================================
+       REDIRECT
+    ======================================== */
+
+    setMsg(
+      "Registered successfully! Redirecting..."
+    );
+
+
+    window.location.href =
+      "teacher-dashboard.html";
+
 
   } catch (err) {
-    console.error(err);
+
+    console.error(
+      "Teacher registration error:",
+      err
+    );
+
+
     setMsg("");
-    alert("Server error");
+
+    alert(
+      "Server error"
+    );
+
   }
+
 }
 
 </script>
