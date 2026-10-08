@@ -1,77 +1,365 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
   <title>My Jobs | Lets Teach</title>
+
   <script src="./config.js"></script>
+
+  <link
+    rel="stylesheet"
+    href="styles.css"
+  >
+
 </head>
 
-<body style="font-family:Arial;padding:20px;background:#f4f4f4;">
+
+<body
+  style="
+    font-family:Arial;
+    padding:20px;
+    background:#f4f4f4;
+  "
+>
+
 
 <script>
-if (!localStorage.uid || localStorage.role !== "institute") {
-  window.location.href = "login.html";
+
+/* ==========================================
+   AUTH CHECK
+========================================== */
+
+const token =
+  localStorage.getItem("token");
+
+const role =
+  localStorage.getItem("role");
+
+
+if (
+  !token ||
+  role !== "institute"
+) {
+
+  window.location.href =
+    "login.html";
+
 }
+
 </script>
 
+
 <h2>📌 My Created Jobs</h2>
-<button onclick="location.href='institute-dashboard.html'">← Back</button>
+
+
+<button
+  onclick="location.href='institute-dashboard.html'"
+>
+  ← Back
+</button>
+
+
 <hr>
 
-<div id="box">Loading...</div>
+
+<div id="box">
+  Loading...
+</div>
+
 
 <script>
 
-const uid = localStorage.getItem("uid");
+/* ==========================================
+   LOAD MY JOBS
+========================================== */
 
-/* ================= LOAD JOBS ================= */
 async function loadJobs() {
+
+  const box =
+    document.getElementById("box");
+
+
   try {
 
-    // ✅ IMPORTANT — use apiFetch (not fetch)
-    const res = await apiFetch(`${BASE_URL}/api/job/institute/${uid}`);
+    /*
+      IMPORTANT:
+
+      Backend route is:
+
+      GET /api/job/my-jobs
+
+      It gets institute identity
+      directly from JWT.
+
+      UID is NOT sent in URL.
+    */
+
+    const res =
+      await apiFetch(
+        `${BASE_URL}/api/job/my-jobs`
+      );
+
 
     if (!res) {
-      document.getElementById("box").innerHTML = "Unauthorized";
+
+      box.innerHTML =
+        "<p>Unable to load jobs.</p>";
+
       return;
+
     }
 
-    const data = await res.json();
-    const box = document.getElementById("box");
+
+    const data =
+      await res.json();
+
+
+    console.log(
+      "MY JOBS RESPONSE:",
+      data
+    );
+
+
+    if (!data.success) {
+
+      box.innerHTML =
+        `<p>${data.message || "Unable to load jobs."}</p>`;
+
+      return;
+
+    }
+
+
+    if (
+      !data.jobs ||
+      data.jobs.length === 0
+    ) {
+
+      box.innerHTML =
+        "<p>No jobs created yet.</p>";
+
+      return;
+
+    }
+
+
     box.innerHTML = "";
 
-    if (!data.success || !data.jobs || data.jobs.length === 0) {
-      box.innerHTML = "<p>No jobs created yet.</p>";
+
+    /* ======================================
+       DISPLAY JOBS
+    ====================================== */
+
+    data.jobs.forEach(
+      job => {
+
+        const div =
+          document.createElement("div");
+
+
+        div.style.background =
+          "#fff";
+
+        div.style.padding =
+          "16px";
+
+        div.style.marginBottom =
+          "15px";
+
+        div.style.borderRadius =
+          "8px";
+
+        div.style.boxShadow =
+          "0 2px 8px rgba(0,0,0,0.1)";
+
+
+        div.innerHTML = `
+
+          <h3 style="margin-top:0;">
+            ${job.title || ""}
+          </h3>
+
+          <p>
+            <b>Subject:</b>
+            ${job.subject || "-"}
+          </p>
+
+          <p>
+            <b>City:</b>
+            ${job.city || "-"}
+          </p>
+
+          <p>
+            <b>Role:</b>
+            ${job.role || "-"}
+          </p>
+
+          <p>
+            <b>Salary:</b>
+            ${job.salary || "Negotiable"}
+          </p>
+
+          <p>
+            <b>Status:</b>
+            ${job.status || "-"}
+          </p>
+
+          <p>
+            <b>Description:</b>
+            ${job.description || "-"}
+          </p>
+
+        `;
+
+
+        /* ==================================
+           CLOSE JOB BUTTON
+        ================================== */
+
+        if (
+          job.status === "open"
+        ) {
+
+          const closeBtn =
+            document.createElement("button");
+
+
+          closeBtn.innerText =
+            "Close Job";
+
+
+          closeBtn.style.marginTop =
+            "10px";
+
+
+          closeBtn.onclick =
+            () => closeJob(job._id);
+
+
+          div.appendChild(
+            closeBtn
+          );
+
+        }
+
+
+        box.appendChild(
+          div
+        );
+
+      }
+    );
+
+
+  } catch (err) {
+
+    console.error(
+      "Load jobs error:",
+      err
+    );
+
+
+    box.innerHTML =
+      "<p>Server error. Please try again.</p>";
+
+  }
+
+}
+
+
+/* ==========================================
+   CLOSE JOB
+========================================== */
+
+async function closeJob(
+  jobId
+) {
+
+  if (
+    !confirm(
+      "Are you sure you want to close this job?"
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const res =
+      await apiFetch(
+        `${BASE_URL}/api/job/close/${encodeURIComponent(jobId)}`,
+        {
+          method: "POST"
+        }
+      );
+
+
+    if (!res) {
       return;
     }
 
-    data.jobs.forEach(job => {
-      const div = document.createElement("div");
-      div.style.background = "#fff";
-      div.style.padding = "12px";
-      div.style.marginBottom = "12px";
-      div.style.borderRadius = "6px";
-      div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
 
-      div.innerHTML = `
-        <b>Title:</b> ${job.title} <br>
-        <b>City:</b> ${job.city} <br>
-        <b>Subject:</b> ${job.subject} <br>
-        <b>Status:</b> ${job.status} <br>
-        <b>Salary:</b> ${job.salary} <br>
-      `;
+    const data =
+      await res.json();
 
-      box.appendChild(div);
-    });
+
+    if (!data.success) {
+
+      alert(
+        data.message ||
+        "Unable to close job"
+      );
+
+      return;
+
+    }
+
+
+    alert(
+      "Job closed successfully"
+    );
+
+
+    loadJobs();
+
 
   } catch (err) {
-    document.getElementById("box").innerHTML = "Server error";
+
+    console.error(
+      "Close job error:",
+      err
+    );
+
+
+    alert(
+      "Server error"
+    );
+
   }
+
 }
+
+
+/* ==========================================
+   INIT
+========================================== */
 
 loadJobs();
 
 </script>
 
+
 </body>
+
 </html>
